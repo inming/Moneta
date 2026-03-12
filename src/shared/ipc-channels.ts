@@ -1,0 +1,36 @@
+export const IPC_CHANNELS = {
+  // 交易
+  TRANSACTION_LIST: 'db:transaction:list',
+  TRANSACTION_CREATE: 'db:transaction:create',
+  TRANSACTION_UPDATE: 'db:transaction:update',
+  TRANSACTION_DELETE: 'db:transaction:delete',
+  TRANSACTION_BATCH_CREATE: 'db:transaction:batch-create',
+
+  // 分类
+  CATEGORY_LIST: 'db:category:list',
+  CATEGORY_CREATE: 'db:category:create',
+  CATEGORY_UPDATE: 'db:category:update',
+  CATEGORY_DELETE: 'db:category:delete',
+  CATEGORY_REORDER: 'db:category:reorder',
+
+  // 操作人
+  OPERATOR_LIST: 'db:operator:list',
+  OPERATOR_CREATE: 'db:operator:create',
+
+  // 统计
+  STATS_CROSS_TABLE: 'db:stats:cross-table',
+  STATS_SUMMARY: 'db:stats:summary',
+  STATS_TREND: 'db:stats:trend',
+
+  // 导入导出
+  IMPORT_PREVIEW: 'io:import:preview',
+  IMPORT_EXECUTE: 'io:import:execute',
+  EXPORT_EXECUTE: 'io:export:execute',
+
+  // AI 识别
+  AI_RECOGNIZE: 'ai:recognize',
+
+  // 文件对话框
+  DIALOG_OPEN_FILE: 'dialog:open-file',
+  DIALOG_SAVE_FILE: 'dialog:save-file'
+} as const
