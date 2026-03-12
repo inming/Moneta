@@ -4,6 +4,7 @@ import zhCN from 'antd/locale/zh_CN'
 import Layout from './components/Layout'
 import Transactions from './pages/Transactions'
 import ImportExport from './pages/ImportExport'
+import Settings from './pages/Settings'
 
 function App(): React.JSX.Element {
   return (
@@ -13,6 +14,7 @@ function App(): React.JSX.Element {
           <Route element={<Layout />}>
             <Route path="/" element={<Transactions />} />
             <Route path="/import" element={<ImportExport />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </HashRouter>

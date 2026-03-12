@@ -8,4 +8,33 @@ export function registerOperatorHandlers(): void {
     const db = getDatabase()
     return operatorRepo.findAll(db)
   })
+
+  ipcMain.handle(IPC_CHANNELS.OPERATOR_CREATE, (_event, name: string) => {
+    const db = getDatabase()
+    try {
+      return operatorRepo.create(db, name)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('UNIQUE constraint')) {
+        throw new Error('该操作人名称已存在')
+      }
+      throw err
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.OPERATOR_UPDATE, (_event, id: number, name: string) => {
+    const db = getDatabase()
+    try {
+      return operatorRepo.update(db, id, name)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('UNIQUE constraint')) {
+        throw new Error('该操作人名称已存在')
+      }
+      throw err
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.OPERATOR_DELETE, (_event, id: number) => {
+    const db = getDatabase()
+    operatorRepo.remove(db, id)
+  })
 }

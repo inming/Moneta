@@ -18,14 +18,17 @@ export interface MonetaAPI {
   }
   category: {
     list(type?: TransactionType): Promise<Category[]>
+    listAll(type?: TransactionType): Promise<Category[]>
     create(data: CreateCategoryDTO): Promise<Category>
     update(id: number, data: UpdateCategoryDTO): Promise<Category>
-    delete(id: number): Promise<void>
-    reorder(ids: number[]): Promise<void>
+    delete(id: number): Promise<{ softDeleted: boolean }>
+    reorder(type: TransactionType, ids: number[]): Promise<void>
   }
   operator: {
     list(): Promise<Operator[]>
     create(name: string): Promise<Operator>
+    update(id: number, name: string): Promise<Operator>
+    delete(id: number): Promise<void>
   }
   stats: {
     crossTable(params: CrossTableParams): Promise<CrossTableData>

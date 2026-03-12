@@ -8,6 +8,7 @@ export const IPC_CHANNELS = {
 
   // 分类
   CATEGORY_LIST: 'db:category:list',
+  CATEGORY_LIST_ALL: 'db:category:list-all',
   CATEGORY_CREATE: 'db:category:create',
   CATEGORY_UPDATE: 'db:category:update',
   CATEGORY_DELETE: 'db:category:delete',
@@ -16,6 +17,8 @@ export const IPC_CHANNELS = {
   // 操作人
   OPERATOR_LIST: 'db:operator:list',
   OPERATOR_CREATE: 'db:operator:create',
+  OPERATOR_UPDATE: 'db:operator:update',
+  OPERATOR_DELETE: 'db:operator:delete',
 
   // 统计
   STATS_CROSS_TABLE: 'db:stats:cross-table',
