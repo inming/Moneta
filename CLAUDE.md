@@ -119,10 +119,29 @@ npm run db:migrate        # 执行数据库迁移
 | 数据库列 | snake_case | `category_id`, `created_at` |
 | IPC 频道 | kebab-case + 命名空间 | `db:transaction:create` |
 
+### IPC 通道命名规范
+
+通道名格式：`<namespace>:<entity>:<action>`
+
+| 命名空间 | 用途 | 示例 |
+|----------|------|------|
+| `db` | 数据库 CRUD 操作 | `db:category:create`, `db:operator:delete` |
+| `io` | 导入导出 | `io:import:preview`, `io:export:execute` |
+| `ai` | AI 功能 | `ai:recognize` |
+| `dialog` | 系统对话框 | `dialog:open-file`, `dialog:save-file` |
+
+常用 action：`list`、`list-all`（含停用数据）、`create`、`update`、`delete`、`reorder`
+
+新增 IPC 通道时需同步修改三处：
+1. `src/shared/ipc-channels.ts` — 通道常量定义
+2. `src/main/ipc/<entity>.ipc.ts` — 主进程 handler
+3. `src/preload/index.ts` + `index.d.ts` — 渲染进程 API 桥接及类型声明
+
 ### 文件组织
 
 - 每个组件一个文件，如果组件有专属子组件可建同名目录
-- 共享类型放在 `src/shared/types/`
+- 页面级组件放在 `src/renderer/src/pages/<PageName>/` 目录下，入口为 `index.tsx`，子组件同目录平铺（如 `Settings/CategoryManager.tsx`）
+- 共享类型放在 `src/shared/types/`，并在 `index.ts` 中统一导出
 - 业务逻辑尽量放在主进程（`src/main/services/`），渲染进程保持轻量
 
 ## Git 提交规范
@@ -151,7 +170,8 @@ chore: 升级 electron-vite 版本
 
 ## 关键业务概念
 
-- **交易（Transaction）**：一条收入或支出记录，包含日期、类型、金额、分类、描述、操作人
-- **分类（Category）**：交易的归类标签，分为消费分类和收入分类，支持用户自定义
-- **操作人（Operator）**：记录这笔账的人，简单文本标识，不涉及用户认证
+- **交易（Transaction）**：一条收支或投资记录，包含日期、类型、金额、分类、描述、操作人
+- **类型（TransactionType）**：`expense`（消费）、`income`（收入）、`investment`（投资）三种，investment 用于区分非消费性支出
+- **分类（Category）**：交易的归类标签，按类型独立管理（消费/收入/投资各有独立分类体系）。支持新增、编辑、排序、软删除（有关联交易时停用而非物理删除）
+- **操作人（Operator）**：记录这笔账的人，简单文本标识，不涉及用户认证。支持新增、重命名、删除（有关联交易时阻止删除）
 - **记账日期**：每次开始记账时选定，本次会话所有条目默认使用该日期
