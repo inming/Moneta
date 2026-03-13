@@ -6,6 +6,7 @@ interface CategoryRow {
   name: string
   type: string
   icon: string | null
+  description: string
   sort_order: number
   is_system: number
   is_active: number
@@ -61,10 +62,10 @@ export function findByNameAndType(
 export function create(db: Database.Database, dto: CreateCategoryDTO): Category {
   const result = db
     .prepare(
-      `INSERT INTO categories (name, type, icon, sort_order, is_system)
-       VALUES (?, ?, ?, ?, 0)`
+      `INSERT INTO categories (name, type, icon, description, sort_order, is_system)
+       VALUES (?, ?, ?, ?, ?, 0)`
     )
-    .run(dto.name, dto.type, dto.icon ?? null, dto.sort_order ?? 0)
+    .run(dto.name, dto.type, dto.icon ?? null, dto.description ?? '', dto.sort_order ?? 0)
 
   const row = db
     .prepare('SELECT * FROM categories WHERE id = ?')
@@ -84,6 +85,10 @@ export function update(db: Database.Database, id: number, dto: UpdateCategoryDTO
   if (dto.icon !== undefined) {
     sets.push('icon = ?')
     params.push(dto.icon)
+  }
+  if (dto.description !== undefined) {
+    sets.push('description = ?')
+    params.push(dto.description)
   }
   if (dto.is_active !== undefined) {
     sets.push('is_active = ?')

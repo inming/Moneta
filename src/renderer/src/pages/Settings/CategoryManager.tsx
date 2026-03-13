@@ -46,7 +46,7 @@ export default function CategoryManager(): React.JSX.Element {
 
   const handleEdit = (record: Category): void => {
     setEditingCategory(record)
-    form.setFieldsValue({ name: record.name })
+    form.setFieldsValue({ name: record.name, description: record.description })
     setModalOpen(true)
   }
 
@@ -54,11 +54,11 @@ export default function CategoryManager(): React.JSX.Element {
     try {
       const values = await form.validateFields()
       if (editingCategory) {
-        const dto: UpdateCategoryDTO = { name: values.name }
+        const dto: UpdateCategoryDTO = { name: values.name, description: values.description ?? '' }
         await window.api.category.update(editingCategory.id, dto)
         message.success('分类已更新')
       } else {
-        const dto: CreateCategoryDTO = { name: values.name, type: activeType }
+        const dto: CreateCategoryDTO = { name: values.name, type: activeType, description: values.description ?? '' }
         await window.api.category.create(dto)
         message.success('分类已创建')
       }
@@ -141,6 +141,12 @@ export default function CategoryManager(): React.JSX.Element {
     },
     { title: '名称', dataIndex: 'name', width: 150 },
     {
+      title: 'AI 描述',
+      dataIndex: 'description',
+      ellipsis: true,
+      render: (val: string) => val || <span style={{ color: '#bbb' }}>未设置</span>
+    },
+    {
       title: '系统分类',
       dataIndex: 'is_system',
       width: 90,
@@ -211,7 +217,7 @@ export default function CategoryManager(): React.JSX.Element {
         afterOpenChange={(open) => {
           if (open) {
             if (editingCategory) {
-              form.setFieldsValue({ name: editingCategory.name })
+              form.setFieldsValue({ name: editingCategory.name, description: editingCategory.description })
             }
             setTimeout(() => inputRef.current?.focus(), 0)
           }
@@ -224,6 +230,14 @@ export default function CategoryManager(): React.JSX.Element {
             rules={[{ required: true, message: '请输入分类名称' }]}
           >
             <Input ref={inputRef} placeholder="请输入分类名称" />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label="AI 描述"
+            extra="辅助 AI 图片识别时进行分类匹配，如：外卖、堂食、食堂"
+            rules={[{ max: 100, message: 'AI 描述不超过 100 字符' }]}
+          >
+            <Input placeholder="输入该分类的典型场景或关键词（选填）" maxLength={100} showCount />
           </Form.Item>
         </Form>
       </Modal>
