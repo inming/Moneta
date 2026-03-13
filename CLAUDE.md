@@ -220,3 +220,34 @@ chore: 升级 electron-vite 版本
 | 投资（investment） | blue | `#e6f4ff` |
 
 新增涉及类型颜色的 UI 时，应保持与此体系一致。
+
+## 数据浏览与可编辑表格模式
+
+### 服务端分页、排序与筛选
+
+- 列表查询统一通过 `TransactionListParams` 传参，由 `findAll()` 在 SQL 层完成排序和筛选，确保对全量数据生效
+- 排序参数：`sortField`（白名单：`date` / `amount`）+ `sortOrder`（`ascend` / `descend`），默认按日期降序
+- 筛选参数：支持单值（`type`、`category_id`、`operator_id`）和多值（`types[]`、`category_ids[]`、`operator_ids[]`），多值使用 `IN (...)` 参数化查询
+- 关键字搜索：`keyword` 参数对应 `description LIKE %keyword%`
+- Ant Design Table 的 `sorter` 和 `filters` 仅用于 UI 指示器（`sorter: true`、`filters: [...]`），不在前端做实际排序/筛选（即不使用 comparator 函数或 `onFilter` 回调）
+
+### 行内编辑模式
+
+- 采用 `editingKey` + `editingRow` 状态控制：`editingKey` 记录正在编辑的行 ID，`editingRow` 存储编辑中的临时值
+- 新增行使用独立的 `newRow` 状态，与编辑互斥（同一时间只能处于「新增」或「编辑某行」之一）
+- `renderCell()` 函数根据 `isEditing` 判断渲染只读态或编辑控件
+- 类型变更时需检查分类是否仍属于新类型（`getCategoriesForType()`），不匹配则自动清空
+- `update` API 使用动态 SET 子句，仅发送变更字段（`UpdateTransactionDTO`）
+- 日期记忆：`lastInputDate` 在新增行保存后更新，会话内有效
+
+### Repository 层 CRUD 模式
+
+- `create()`：INSERT 后通过 `result.lastInsertRowid` 查回完整行返回
+- `update()`：动态构建 SET 子句（仅更新非 `undefined` 字段），始终追加 `updated_at = datetime('now', 'localtime')`
+- `remove()`：交易物理删除（不同于分类的软删除）
+- `batchDelete()`：`WHERE id IN (...)` 参数化，包裹在 `db.transaction()` 中
+
+### 金额显示
+
+- 金额在只读态使用 `toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })` 显示千分号
+- 编辑态使用 `InputNumber` 组件，`precision=2`、`min=0.01`
