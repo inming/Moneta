@@ -30,8 +30,15 @@ export const IPC_CHANNELS = {
   IMPORT_EXECUTE: 'io:import:execute',
   EXPORT_EXECUTE: 'io:export:execute',
 
+  // AI 模型配置
+  AI_PROVIDER_LIST: 'ai:provider:list',
+  AI_PROVIDER_UPDATE: 'ai:provider:update',
+  AI_PROVIDER_SET_DEFAULT: 'ai:provider:set-default',
+  AI_PROVIDER_TEST: 'ai:provider:test',
+
   // AI 识别
   AI_RECOGNIZE: 'ai:recognize',
+  AI_RECOGNIZE_LOGS: 'ai:recognize:logs',
 
   // 文件对话框
   DIALOG_OPEN_FILE: 'dialog:open-file',

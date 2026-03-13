@@ -1,11 +1,12 @@
 import { Layout as AntLayout, Menu } from 'antd'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { TableOutlined, ImportOutlined, SettingOutlined } from '@ant-design/icons'
+import { TableOutlined, ImportOutlined, SettingOutlined, CameraOutlined } from '@ant-design/icons'
 
 const { Sider, Content } = AntLayout
 
 const menuItems = [
   { key: '/', icon: <TableOutlined />, label: '数据浏览' },
+  { key: '/ai-recognition', icon: <CameraOutlined />, label: 'AI 识别' },
   { key: '/import', icon: <ImportOutlined />, label: '导入数据' },
   { key: '/settings', icon: <SettingOutlined />, label: '设置' }
 ]

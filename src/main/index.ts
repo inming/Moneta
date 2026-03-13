@@ -6,6 +6,8 @@ import { registerImportExportHandlers } from './ipc/import-export.ipc'
 import { registerTransactionHandlers } from './ipc/transaction.ipc'
 import { registerCategoryHandlers } from './ipc/category.ipc'
 import { registerOperatorHandlers } from './ipc/operator.ipc'
+import { registerAIProviderHandlers } from './ipc/ai-provider.ipc'
+import { registerAIHandlers } from './ipc/ai.ipc'
 
 app.whenReady().then(() => {
   // Initialize database and run migrations
@@ -17,6 +19,8 @@ app.whenReady().then(() => {
   registerTransactionHandlers()
   registerCategoryHandlers()
   registerOperatorHandlers()
+  registerAIProviderHandlers()
+  registerAIHandlers()
 
   createWindow()
 
