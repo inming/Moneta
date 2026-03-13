@@ -130,6 +130,7 @@ npm run db:migrate        # 执行数据库迁移
 | `db` | 数据库 CRUD 操作 | `db:category:create`, `db:operator:delete` |
 | `io` | 导入导出 | `io:import:preview`, `io:export:execute` |
 | `ai` | AI 功能 | `ai:recognize` |
+| `auth` | 认证与安全 | `auth:pin:verify`, `auth:auto-lock:set` |
 | `dialog` | 系统对话框 | `dialog:open-file`, `dialog:save-file` |
 
 常用 action：`list`、`list-all`（含停用数据）、`create`、`update`、`delete`、`reorder`
@@ -207,7 +208,34 @@ chore: 升级 electron-vite 版本
   - 自动添加新版本引入的内置模型
   - 自动清理旧版本已移除的模型
   - 验证 `defaultProviderId` 的有效性，失效时自动重置
+  - 新增配置字段时，在 `loadConfig()` 中检查 `=== undefined` 并补默认值，确保旧配置文件自动升级
 - 用户升级应用后无需手动操作配置文件
+
+## 应用安全与锁屏架构
+
+### PIN 码存储
+
+- PIN 存储在 `config.json`（应用级配置），不存数据库（非业务数据）
+- 使用 SHA-256 + 随机 salt 哈希，格式 `salt:hash`，再通过 Electron `safeStorage` 加密存储
+- `config.service.ts` 导出通用的 `encryptString()` / `decryptString()` 辅助函数，供 PIN 和 API Key 等场景复用
+- 安全逻辑（连续错误锁定、计数重置）在 `src/main/services/pin.service.ts` 中实现
+
+### 锁屏流程
+
+- `App.tsx` 通过 Zustand store（`auth.store.ts`）的状态做条件渲染：`!initialized` → 加载中 | `!hasPIN` → 首次设置 | `isLocked` → 锁屏 | 否则 → 正常路由
+- `MainApp` 作为独立组件提取，确保 `useAutoLock()` hook 仅在解锁后运行
+- 锁屏不创建独立 Electron 窗口，保持单窗口简单架构
+
+### 自动锁屏
+
+- `useAutoLock()` hook 监听 6 种用户活动事件（mousedown、mousemove、keydown、scroll、touchstart、click），使用 `passive: true`
+- 超时后调用 `authStore.lock()`，`autoLockMinutes <= 0` 时禁用自动锁屏
+- 配置存储在 `config.json` 的 `autoLockMinutes` 字段
+
+### 可复用组件模式
+
+- `PinInput` 组件使用 `forwardRef` + `useImperativeHandle` 暴露 `clear()`、`shake()`、`focus()` 方法，供父组件控制状态
+- 该组件被 `LockScreen`、`PinSetup`、`PinManager` 三处复用
 
 ## 颜色体系
 
