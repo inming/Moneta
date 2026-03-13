@@ -21,6 +21,10 @@ interface StoredProvider {
 interface AppConfig {
   aiProviders: StoredProvider[]
   defaultProviderId: string
+  pinEncrypted: string
+  pinFailCount: number
+  pinLockedUntil: string
+  autoLockMinutes: number
 }
 
 /** 内置模型列表，后续新增模型只需往这里加一项 */
@@ -36,6 +40,25 @@ const BUILTIN_MODELS: Omit<StoredProvider, 'apiKeyEncrypted'>[] = [
 
 function getConfigPath(): string {
   return path.join(app.getPath('userData'), CONFIG_NAME)
+}
+
+export function encryptString(plain: string): string {
+  if (!plain) return ''
+  if (safeStorage.isEncryptionAvailable()) {
+    const encrypted = safeStorage.encryptString(plain)
+    return encrypted.toString('base64')
+  }
+  console.warn('[config] safeStorage encryption not available, storing as base64 only')
+  return Buffer.from(plain).toString('base64')
+}
+
+export function decryptString(encrypted: string): string {
+  if (!encrypted) return ''
+  if (safeStorage.isEncryptionAvailable()) {
+    const buffer = Buffer.from(encrypted, 'base64')
+    return safeStorage.decryptString(buffer)
+  }
+  return Buffer.from(encrypted, 'base64').toString()
 }
 
 function encryptApiKey(plainKey: string): string {
@@ -68,7 +91,11 @@ export function maskApiKey(key: string): string {
 function createDefaultConfig(): AppConfig {
   return {
     aiProviders: BUILTIN_MODELS.map((m) => ({ ...m, apiKeyEncrypted: '' })),
-    defaultProviderId: BUILTIN_MODELS.length === 1 ? BUILTIN_MODELS[0].id : ''
+    defaultProviderId: BUILTIN_MODELS.length === 1 ? BUILTIN_MODELS[0].id : '',
+    pinEncrypted: '',
+    pinFailCount: 0,
+    pinLockedUntil: '',
+    autoLockMinutes: 30
   }
 }
 
@@ -100,6 +127,12 @@ export function loadConfig(): AppConfig {
 
     // Remove providers that are no longer in the built-in list (cleanup from old versions)
     config.aiProviders = config.aiProviders.filter((p) => builtinIds.has(p.id))
+
+    // Forward-compatibility: ensure PIN fields exist (for upgrades from older versions)
+    if (config.pinEncrypted === undefined) config.pinEncrypted = ''
+    if (config.pinFailCount === undefined) config.pinFailCount = 0
+    if (config.pinLockedUntil === undefined) config.pinLockedUntil = ''
+    if (config.autoLockMinutes === undefined) config.autoLockMinutes = 30
 
     // Validate default provider
     if (!config.defaultProviderId || !config.aiProviders.find((p) => p.id === config.defaultProviderId)) {

@@ -41,6 +41,14 @@ export const IPC_CHANNELS = {
   AI_RECOGNIZE: 'ai:recognize',
   AI_RECOGNIZE_LOGS: 'ai:recognize:logs',
 
+  // 认证
+  AUTH_HAS_PIN: 'auth:pin:has',
+  AUTH_SET_PIN: 'auth:pin:set',
+  AUTH_VERIFY_PIN: 'auth:pin:verify',
+  AUTH_CHANGE_PIN: 'auth:pin:change',
+  AUTH_GET_AUTO_LOCK: 'auth:auto-lock:get',
+  AUTH_SET_AUTO_LOCK: 'auth:auto-lock:set',
+
   // 文件对话框
   DIALOG_OPEN_FILE: 'dialog:open-file',
   DIALOG_SAVE_FILE: 'dialog:save-file'
