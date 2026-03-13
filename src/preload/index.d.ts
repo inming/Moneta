@@ -7,7 +7,8 @@ import type {
   SummaryParams, SummaryData,
   TrendParams, TrendData,
   AIProviderView, UpdateAIProviderDTO, AITestResult,
-  RecognizeRequest, RecognizeResponse
+  RecognizeRequest, RecognizeResponse,
+  VerifyPINResult, ChangePINResult
 } from '../shared/types'
 
 export interface MonetaAPI {
@@ -52,6 +53,14 @@ export interface MonetaAPI {
   ai: {
     recognize(request: RecognizeRequest): Promise<RecognizeResponse>
     getLogs(): Promise<string[]>
+  }
+  auth: {
+    hasPIN(): Promise<boolean>
+    setPIN(pin: string): Promise<void>
+    verifyPIN(pin: string): Promise<VerifyPINResult>
+    changePIN(currentPin: string, newPin: string): Promise<ChangePINResult>
+    getAutoLockMinutes(): Promise<number>
+    setAutoLockMinutes(minutes: number): Promise<void>
   }
   dialog: {
     openFile(filters: unknown[]): Promise<string | null>

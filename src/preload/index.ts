@@ -44,6 +44,16 @@ const api = {
     recognize: (request: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE, request),
     getLogs: () => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE_LOGS)
   },
+  auth: {
+    hasPIN: () => ipcRenderer.invoke(IPC_CHANNELS.AUTH_HAS_PIN),
+    setPIN: (pin: string) => ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_PIN, pin),
+    verifyPIN: (pin: string) => ipcRenderer.invoke(IPC_CHANNELS.AUTH_VERIFY_PIN, pin),
+    changePIN: (currentPin: string, newPin: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_CHANGE_PIN, currentPin, newPin),
+    getAutoLockMinutes: () => ipcRenderer.invoke(IPC_CHANNELS.AUTH_GET_AUTO_LOCK),
+    setAutoLockMinutes: (minutes: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_AUTO_LOCK, minutes)
+  },
   dialog: {
     openFile: (filters: unknown[]) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE, filters),
     saveFile: (filters: unknown[], defaultName: string) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SAVE_FILE, filters, defaultName)
