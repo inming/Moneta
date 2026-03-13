@@ -171,11 +171,27 @@ chore: 升级 electron-vite 版本
 - 应用启动时自动执行未运行的迁移
 - 迁移必须是幂等的，先检查再执行
 
+## 数据库迁移模式
+
+### 新增列 + 数据回填
+
+当需要为现有表添加新列并为已有行回填数据时（如 `006_add_category_description.sql`）：
+
+1. 使用 `ALTER TABLE ... ADD COLUMN ... DEFAULT ''` 添加列（SQLite 要求 ADD COLUMN 有默认值）
+2. 紧跟 `UPDATE` 语句回填系统预置数据（通过 `is_system = 1` 限定范围）
+3. **不修改旧迁移文件**（004/005 等已执行的迁移），通过新迁移回填数据
+4. 迁移器按文件名排序执行，新用户首次安装时 004 → 005 → 006 依次执行，006 的 UPDATE 会覆盖 004/005 INSERT 时的空默认值
+
+### IPC 层透传模式
+
+- IPC handler 和 preload 桥接层使用 `unknown` 泛型传递 DTO，新增字段时**无需修改**这两层
+- 类型安全由 `src/shared/types/` 的接口定义保证，`src/preload/index.d.ts` 通过 import 自动跟随更新
+
 ## 关键业务概念
 
 - **交易（Transaction）**：一条收支或投资记录，包含日期、类型、金额、分类、描述、操作人
 - **类型（TransactionType）**：`expense`（消费）、`income`（收入）、`investment`（投资）三种，investment 用于区分非消费性支出
-- **分类（Category）**：交易的归类标签，按类型独立管理（消费/收入/投资各有独立分类体系）。支持新增、编辑、排序、软删除（有关联交易时停用而非物理删除）
+- **分类（Category）**：交易的归类标签，按类型独立管理（消费/收入/投资各有独立分类体系）。支持新增、编辑、排序、软删除（有关联交易时停用而非物理删除）。每个分类可设置可选的「AI 描述」字段（`description`），用于辅助 AI 图片识别时的分类匹配
 - **操作人（Operator）**：记录这笔账的人，简单文本标识，不涉及用户认证。支持新增、重命名、删除（有关联交易时阻止删除）
 - **记账日期**：每次开始记账时选定，本次会话所有条目默认使用该日期
 
@@ -200,7 +216,8 @@ chore: 升级 electron-vite 版本
 
 - AI 响应解析采用**容错策略**：查找第一个 `[` 和最后一个 `]` 来提取 JSON 数组
 - 该策略兼容各种模型输出格式（Markdown 代码块、特殊 token 包裹、前后缀文字等）
-- Prompt 中将用户现有分类列表作为上下文传入，引导 AI 通过 `suggestedCategory` 字段建议分类
+- Prompt 中将用户现有分类列表以 **JSON 数组**格式传入（每项含 `name` 和可选 `description`），引导 AI 通过 `suggestedCategory` 字段建议分类
+- 分类无描述时 JSON 中省略 `description` key，避免冗余；有描述时格式如 `{"name":"正餐","description":"外卖、堂食、食堂"}`
 
 ### 配置文件升级策略
 
