@@ -36,9 +36,14 @@ export interface TransactionListParams {
   dateFrom?: string
   dateTo?: string
   type?: TransactionType
+  types?: TransactionType[]
   category_id?: number
+  category_ids?: number[]
   operator_id?: number
+  operator_ids?: number[]
   keyword?: string
+  sortField?: 'date' | 'amount'
+  sortOrder?: 'ascend' | 'descend'
 }
 
 export interface PaginatedResult<T> {
