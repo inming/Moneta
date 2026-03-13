@@ -17,6 +17,7 @@ export interface MonetaAPI {
     update(id: number, data: UpdateTransactionDTO): Promise<Transaction>
     delete(id: number): Promise<void>
     batchCreate(items: CreateTransactionDTO[]): Promise<Transaction[]>
+    batchDelete(ids: number[]): Promise<{ count: number }>
   }
   category: {
     list(type?: TransactionType): Promise<Category[]>

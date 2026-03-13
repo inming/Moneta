@@ -5,6 +5,7 @@ export const IPC_CHANNELS = {
   TRANSACTION_UPDATE: 'db:transaction:update',
   TRANSACTION_DELETE: 'db:transaction:delete',
   TRANSACTION_BATCH_CREATE: 'db:transaction:batch-create',
+  TRANSACTION_BATCH_DELETE: 'db:transaction:batch-delete',
 
   // 分类
   CATEGORY_LIST: 'db:category:list',

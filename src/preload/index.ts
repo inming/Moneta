@@ -7,7 +7,8 @@ const api = {
     create: (data: unknown) => ipcRenderer.invoke(IPC_CHANNELS.TRANSACTION_CREATE, data),
     update: (id: number, data: unknown) => ipcRenderer.invoke(IPC_CHANNELS.TRANSACTION_UPDATE, id, data),
     delete: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.TRANSACTION_DELETE, id),
-    batchCreate: (items: unknown[]) => ipcRenderer.invoke(IPC_CHANNELS.TRANSACTION_BATCH_CREATE, items)
+    batchCreate: (items: unknown[]) => ipcRenderer.invoke(IPC_CHANNELS.TRANSACTION_BATCH_CREATE, items),
+    batchDelete: (ids: number[]) => ipcRenderer.invoke(IPC_CHANNELS.TRANSACTION_BATCH_DELETE, ids)
   },
   category: {
     list: (type?: string) => ipcRenderer.invoke(IPC_CHANNELS.CATEGORY_LIST, type),
