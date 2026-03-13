@@ -26,7 +26,7 @@ export function getLastLogs(): string[] {
 }
 
 function buildPrompt(categories: Category[]): string {
-  const grouped: Record<string, string[]> = {
+  const grouped: Record<string, Array<{ name: string; description?: string }>> = {
     消费: [],
     收入: [],
     投资: []
@@ -40,13 +40,17 @@ function buildPrompt(categories: Category[]): string {
   for (const cat of categories) {
     const label = typeLabel[cat.type]
     if (grouped[label]) {
-      grouped[label].push(cat.name)
+      const item: { name: string; description?: string } = { name: cat.name }
+      if (cat.description) {
+        item.description = cat.description
+      }
+      grouped[label].push(item)
     }
   }
 
   const categoryList = Object.entries(grouped)
-    .filter(([, names]) => names.length > 0)
-    .map(([label, names]) => `[${label}]: ${names.join(', ')}`)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => `[${label}]:\n${JSON.stringify(items)}`)
     .join('\n')
 
   return `你是一个记账助手。请从提供的图片中提取所有交易记录。
