@@ -6,6 +6,8 @@
 
 Moneta 是一款面向个人/家庭的桌面端记账软件，支持手动录入、AI 截图识别、分类统计和数据导入导出。
 
+> **开发模式**：个人独立开发项目，直接在 `master` 分支上开发和推送，无需创建 PR。
+
 ## 技术栈
 
 | 层级 | 技术 | 说明 |
@@ -175,3 +177,46 @@ chore: 升级 electron-vite 版本
 - **分类（Category）**：交易的归类标签，按类型独立管理（消费/收入/投资各有独立分类体系）。支持新增、编辑、排序、软删除（有关联交易时停用而非物理删除）
 - **操作人（Operator）**：记录这笔账的人，简单文本标识，不涉及用户认证。支持新增、重命名、删除（有关联交易时阻止删除）
 - **记账日期**：每次开始记账时选定，本次会话所有条目默认使用该日期
+
+## AI 模型与识别架构
+
+### 模型配置
+
+- 内置模型定义在 `src/main/services/config.service.ts` 的 `BUILTIN_MODELS` 数组中
+- 新增模型只需往 `BUILTIN_MODELS` 加一项，`loadConfig()` 会自动同步到用户配置文件
+- `loadConfig()` 同步策略：仅从内置定义覆盖 `name` 和 `format`，**不覆盖** `endpoint` 和 `model`（这两者是用户可编辑的）
+- 用户配置存储路径：`app.getPath('userData')` 下的 `config.json`（Windows: `%APPDATA%/moneta/`）
+- API Key 使用 Electron `safeStorage` 加密后以 base64 存储
+
+### AI 适配器
+
+- 适配器模式：`src/main/services/ai-adapters/`，通过 `AIAdapter` 接口抽象
+- 当前仅保留 `OpenAIAdapter`（OpenAI 兼容格式），所有内置模型统一使用此适配器
+- `fetchWithTimeout` 默认超时 300 秒（多图识别场景需要较长时间）
+- 新增 API 格式时：在 `ai-adapters/` 下创建新适配器，在 `getAdapter()` 中按 `format` 分发
+
+### AI 响应解析
+
+- AI 响应解析采用**容错策略**：查找第一个 `[` 和最后一个 `]` 来提取 JSON 数组
+- 该策略兼容各种模型输出格式（Markdown 代码块、特殊 token 包裹、前后缀文字等）
+- Prompt 中将用户现有分类列表作为上下文传入，引导 AI 通过 `suggestedCategory` 字段建议分类
+
+### 配置文件升级策略
+
+- `loadConfig()` 负责配置文件的前向兼容：
+  - 自动添加新版本引入的内置模型
+  - 自动清理旧版本已移除的模型
+  - 验证 `defaultProviderId` 的有效性，失效时自动重置
+- 用户升级应用后无需手动操作配置文件
+
+## 颜色体系
+
+交易类型在整个应用中使用统一的颜色体系（定义在 `src/shared/constants/transaction-type.ts`）：
+
+| 类型 | Tag 颜色 | 行背景色（淡色） |
+|------|----------|-----------------|
+| 消费（expense） | orange | `#fff7e6` |
+| 收入（income） | green | `#f6ffed` |
+| 投资（investment） | blue | `#e6f4ff` |
+
+新增涉及类型颜色的 UI 时，应保持与此体系一致。

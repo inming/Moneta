@@ -33,8 +33,15 @@ const api = {
     executeImport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_EXECUTE, config),
     executeExport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.EXPORT_EXECUTE, config)
   },
+  aiProvider: {
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_LIST),
+    update: (id: string, dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_UPDATE, id, dto),
+    setDefault: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_SET_DEFAULT, id),
+    test: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_TEST, id)
+  },
   ai: {
-    recognize: (imageBase64: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE, imageBase64)
+    recognize: (request: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE, request),
+    getLogs: () => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE_LOGS)
   },
   dialog: {
     openFile: (filters: unknown[]) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE, filters),

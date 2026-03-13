@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import Transactions from './pages/Transactions'
 import ImportExport from './pages/ImportExport'
 import Settings from './pages/Settings'
+import AIRecognition from './pages/AIRecognition'
 
 function App(): React.JSX.Element {
   return (
@@ -13,6 +14,7 @@ function App(): React.JSX.Element {
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Transactions />} />
+            <Route path="/ai-recognition" element={<AIRecognition />} />
             <Route path="/import" element={<ImportExport />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

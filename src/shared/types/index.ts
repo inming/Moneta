@@ -2,3 +2,5 @@ export type { Transaction, TransactionType, CreateTransactionDTO, UpdateTransact
 export type { Category, CreateCategoryDTO, UpdateCategoryDTO } from './category'
 export type { Operator, CreateOperatorDTO, UpdateOperatorDTO } from './operator'
 export type { CrossTableParams, CrossTableData, CrossTableRow, SummaryParams, SummaryData, TrendParams, TrendData } from './stats'
+export type { AIProviderFormat, AIProviderConfig, UpdateAIProviderDTO, AIProviderView, AITestResult } from './ai-provider'
+export type { AIRecognizedItem, RecognitionResultRow, RecognizeRequest, RecognizeResponse } from './ai-recognition'

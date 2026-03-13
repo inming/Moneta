@@ -5,7 +5,9 @@ import type {
   Operator,
   CrossTableParams, CrossTableData,
   SummaryParams, SummaryData,
-  TrendParams, TrendData
+  TrendParams, TrendData,
+  AIProviderView, UpdateAIProviderDTO, AITestResult,
+  RecognizeRequest, RecognizeResponse
 } from '../shared/types'
 
 export interface MonetaAPI {
@@ -40,8 +42,15 @@ export interface MonetaAPI {
     executeImport(config: unknown): Promise<unknown>
     executeExport(config: unknown): Promise<string>
   }
+  aiProvider: {
+    list(): Promise<AIProviderView[]>
+    update(id: string, dto: UpdateAIProviderDTO): Promise<AIProviderView>
+    setDefault(id: string): Promise<void>
+    test(id: string): Promise<AITestResult>
+  }
   ai: {
-    recognize(imageBase64: string): Promise<unknown[]>
+    recognize(request: RecognizeRequest): Promise<RecognizeResponse>
+    getLogs(): Promise<string[]>
   }
   dialog: {
     openFile(filters: unknown[]): Promise<string | null>
