@@ -295,7 +295,6 @@ export default function AIRecognition(): React.JSX.Element {
         <InputNumber
           size="small"
           value={amount}
-          min={0.01}
           precision={2}
           style={{ width: '100%' }}
           onChange={(val) => updateRow(record.key, 'amount', val || 0)}

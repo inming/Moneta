@@ -92,7 +92,7 @@ export function parseExcel(filePath: string): PreviewResult {
 
     // Validate amount
     const amount = Number(raw['金额'])
-    if (!amount || amount <= 0) {
+    if (!amount || amount === 0) {
       errors.push(`第 ${rowNum} 行：金额无效 "${raw['金额']}"`)
       continue
     }
