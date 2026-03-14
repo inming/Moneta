@@ -8,7 +8,7 @@ interface ContentPart {
 }
 
 export class OpenAIAdapter implements AIAdapter {
-  async recognize(config: AIProviderConfig, images: string[], prompt: string): Promise<string> {
+  async recognize(config: AIProviderConfig, images: string[], prompt: string, signal?: AbortSignal): Promise<string> {
     const content: ContentPart[] = [{ type: 'text', text: prompt }]
     for (const img of images) {
       content.push({
@@ -28,7 +28,7 @@ export class OpenAIAdapter implements AIAdapter {
         messages: [{ role: 'user', content }],
         max_tokens: 4096
       })
-    })
+    }, undefined, signal)
 
     if (!response.ok) {
       const errorText = await response.text()

@@ -1,10 +1,18 @@
-import { useState } from 'react'
-import { Button, Card, Alert, Descriptions, Modal, Spin, Space, Tag, Typography, message } from 'antd'
-import { UploadOutlined, ImportOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons'
-import type { TransactionType } from '@shared/types'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  Button, Card, Alert, Descriptions, Modal, Spin, Space, Tag, Typography,
+  message, Radio, DatePicker, Checkbox, Select, Input, Collapse
+} from 'antd'
+import {
+  UploadOutlined, ImportOutlined, DeleteOutlined, WarningOutlined,
+  DownloadOutlined
+} from '@ant-design/icons'
+import type { TransactionType, Category, Operator, TransactionListParams } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
+import type { Dayjs } from 'dayjs'
 
 const { Text } = Typography
+const { RangePicker } = DatePicker
 
 interface PreviewData {
   rowCount: number
@@ -19,13 +27,103 @@ interface ImportResultData {
   categoriesCreated: number
 }
 
+type ExportFormat = 'xlsx' | 'csv'
+
 export default function DataManager(): React.JSX.Element {
+  // ── 导入状态 ──
   const [filePath, setFilePath] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewData | null>(null)
   const [importResult, setImportResult] = useState<ImportResultData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // ── 导出状态 ──
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('xlsx')
+  const [exportDateRange, setExportDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
+  const [exportTypes, setExportTypes] = useState<TransactionType[]>([])
+  const [exportCategoryIds, setExportCategoryIds] = useState<number[]>([])
+  const [exportOperatorIds, setExportOperatorIds] = useState<number[]>([])
+  const [exportKeyword, setExportKeyword] = useState('')
+  const [exportCount, setExportCount] = useState<number | null>(null)
+  const [exportLoading, setExportLoading] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [operators, setOperators] = useState<Operator[]>([])
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── 构建导出筛选参数 ──
+  const buildExportParams = useCallback((): TransactionListParams => {
+    const params: TransactionListParams = {}
+    if (exportDateRange && exportDateRange[0]) {
+      params.dateFrom = exportDateRange[0].format('YYYY-MM-DD')
+    }
+    if (exportDateRange && exportDateRange[1]) {
+      params.dateTo = exportDateRange[1].format('YYYY-MM-DD')
+    }
+    if (exportTypes.length > 0) params.types = exportTypes
+    if (exportCategoryIds.length > 0) params.category_ids = exportCategoryIds
+    if (exportOperatorIds.length > 0) params.operator_ids = exportOperatorIds
+    if (exportKeyword.trim()) params.keyword = exportKeyword.trim()
+    return params
+  }, [exportDateRange, exportTypes, exportCategoryIds, exportOperatorIds, exportKeyword])
+
+  // ── 加载分类和操作人列表 ──
+  useEffect(() => {
+    const load = async (): Promise<void> => {
+      const [cats, ops] = await Promise.all([
+        window.api.category.listAll(),
+        window.api.operator.list()
+      ])
+      setCategories(cats)
+      setOperators(ops)
+    }
+    load()
+  }, [])
+
+  // ── 筛选条件变化时刷新 count（debounce 300ms）──
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        const count = await window.api.importExport.exportCount(buildExportParams())
+        setExportCount(count)
+      } catch {
+        setExportCount(null)
+      }
+    }, 300)
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [buildExportParams])
+
+  // ── 导出 ──
+  const handleExport = async (): Promise<void> => {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const ext = exportFormat === 'csv' ? 'csv' : 'xlsx'
+    const defaultName = `Moneta_导出_${today}.${ext}`
+    const filters = exportFormat === 'csv'
+      ? [{ name: 'CSV Files', extensions: ['csv'] }]
+      : [{ name: 'Excel Files', extensions: ['xlsx'] }]
+
+    const savePath = await window.api.dialog.saveFile(filters, defaultName)
+    if (!savePath) return
+
+    setExportLoading(true)
+    try {
+      const params = buildExportParams()
+      const result = await window.api.importExport.executeExport({
+        format: exportFormat,
+        filePath: savePath,
+        ...params
+      })
+      message.success(`成功导出 ${result.exported} 条记录`)
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '导出失败')
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  // ── 导入 ──
   const handleSelectFile = async (): Promise<void> => {
     setError(null)
     setPreview(null)
@@ -111,6 +209,11 @@ export default function DataManager(): React.JSX.Element {
       }
     })
   }
+
+  // ── 按类型过滤的分类选项 ──
+  const filteredCategories = exportTypes.length > 0
+    ? categories.filter((c) => exportTypes.includes(c.type))
+    : categories
 
   return (
     <div>
@@ -198,6 +301,121 @@ export default function DataManager(): React.JSX.Element {
                 <Descriptions.Item label="新建分类">{importResult.categoriesCreated} 个</Descriptions.Item>
               </Descriptions>
             }
+            showIcon
+            style={{ marginTop: 12 }}
+          />
+        )}
+      </Card>
+
+      {/* 数据导出 */}
+      <Card title="数据导出" size="small" style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 12 }}>
+          <Text style={{ marginRight: 8 }}>导出格式：</Text>
+          <Radio.Group
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value)}
+          >
+            <Radio.Button value="xlsx">Excel (.xlsx)</Radio.Button>
+            <Radio.Button value="csv">CSV (.csv)</Radio.Button>
+          </Radio.Group>
+        </div>
+
+        <Collapse
+          size="small"
+          items={[
+            {
+              key: 'filters',
+              label: '筛选条件（可选，默认导出全部）',
+              children: (
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  <div>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>日期范围</Text>
+                    <RangePicker
+                      style={{ width: '100%' }}
+                      value={exportDateRange}
+                      onChange={(dates) => setExportDateRange(dates)}
+                      allowClear
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>交易类型</Text>
+                    <Checkbox.Group
+                      value={exportTypes}
+                      onChange={(values) => {
+                        setExportTypes(values as TransactionType[])
+                        setExportCategoryIds([])
+                      }}
+                      options={Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
+                        label: config.label,
+                        value
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>分类</Text>
+                    <Select
+                      mode="multiple"
+                      style={{ width: '100%' }}
+                      placeholder="不限"
+                      value={exportCategoryIds}
+                      onChange={setExportCategoryIds}
+                      allowClear
+                      options={filteredCategories.map((c) => ({
+                        label: `${c.name}（${TRANSACTION_TYPE_CONFIG[c.type]?.label}）`,
+                        value: c.id
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>操作人</Text>
+                    <Select
+                      mode="multiple"
+                      style={{ width: '100%' }}
+                      placeholder="不限"
+                      value={exportOperatorIds}
+                      onChange={setExportOperatorIds}
+                      allowClear
+                      options={operators.map((o) => ({
+                        label: o.name,
+                        value: o.id
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>关键词（搜索描述）</Text>
+                    <Input
+                      placeholder="输入关键词"
+                      value={exportKeyword}
+                      onChange={(e) => setExportKeyword(e.target.value)}
+                      allowClear
+                    />
+                  </div>
+                </Space>
+              )
+            }
+          ]}
+        />
+
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text type="secondary">
+            {exportCount !== null ? `符合条件的记录：${exportCount} 条` : '正在统计...'}
+          </Text>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={handleExport}
+            loading={exportLoading}
+            disabled={exportCount === 0}
+          >
+            导出
+          </Button>
+        </div>
+
+        {exportCount === 0 && (
+          <Alert
+            type="info"
+            message="没有符合条件的记录"
+            description="请调整筛选条件后重试"
             showIcon
             style={{ marginTop: 12 }}
           />

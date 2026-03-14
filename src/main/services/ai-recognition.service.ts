@@ -12,6 +12,16 @@ import type {
   TransactionType
 } from '../../shared/types'
 
+// --- 请求取消 ---
+let currentAbortController: AbortController | null = null
+
+export function abortRecognition(): void {
+  if (currentAbortController) {
+    currentAbortController.abort()
+    currentAbortController = null
+  }
+}
+
 // --- 日志收集 ---
 let lastLogs: string[] = []
 
@@ -69,8 +79,22 @@ ${categoryList}
 [{"amount": 25.5, "description": "午餐", "type": "expense", "suggestedCategory": "正餐"}]`
 }
 
+function extractArray(obj: unknown): unknown[] | null {
+  if (Array.isArray(obj)) return obj
+  if (obj && typeof obj === 'object') {
+    for (const value of Object.values(obj as Record<string, unknown>)) {
+      const found = extractArray(value)
+      if (found) return found
+    }
+  }
+  return null
+}
+
 function parseAIResponse(responseText: string): AIRecognizedItem[] {
   let text = responseText.trim()
+
+  // Strip XML-style tags (e.g. <tool_call>...</tool_call>, <output>...</output>)
+  text = text.replace(/<\/?[a-zA-Z_][a-zA-Z0-9_-]*>/g, '').trim()
 
   // Try to extract JSON from markdown code blocks
   const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
@@ -83,21 +107,43 @@ function parseAIResponse(responseText: string): AIRecognizedItem[] {
   const firstBracket = text.indexOf('[')
   const lastBracket = text.lastIndexOf(']')
   if (firstBracket !== -1 && lastBracket > firstBracket) {
-    text = text.slice(firstBracket, lastBracket + 1)
+    // Try parsing the array slice first
+    const arraySlice = text.slice(firstBracket, lastBracket + 1)
+    try {
+      const parsed = JSON.parse(arraySlice)
+      if (Array.isArray(parsed)) {
+        return toItems(parsed)
+      }
+    } catch {
+      // Array slice failed — fall through to full-text parse
+    }
+  }
+
+  // Fallback: parse the entire text (may be a JSON object containing a nested array)
+  const firstBrace = text.indexOf('{')
+  const lastBrace = text.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    text = text.slice(firstBrace, lastBrace + 1)
   }
 
   const parsed = JSON.parse(text)
-
-  if (!Array.isArray(parsed)) {
-    throw new Error('AI 返回的数据不是数组格式')
+  const arr = extractArray(parsed)
+  if (!arr) {
+    throw new Error('AI 返回的数据中未找到数组')
   }
+  return toItems(arr)
+}
 
-  return parsed.map((item: Record<string, unknown>) => ({
-    amount: Number(item.amount) || 0,
-    description: String(item.description || ''),
-    type: validateType(String(item.type || 'expense')),
-    suggestedCategory: item.suggestedCategory ? String(item.suggestedCategory) : null
-  }))
+function toItems(arr: unknown[]): AIRecognizedItem[] {
+  return arr.map((item: unknown) => {
+    const obj = item as Record<string, unknown>
+    return {
+      amount: Number(obj.amount) || 0,
+      description: String(obj.description || ''),
+      type: validateType(String(obj.type || 'expense')),
+      suggestedCategory: obj.suggestedCategory ? String(obj.suggestedCategory) : null
+    }
+  })
 }
 
 function validateType(type: string): TransactionType {
@@ -139,6 +185,13 @@ function matchCategory(
 }
 
 export async function recognize(request: RecognizeRequest): Promise<RecognizeResponse> {
+  // Abort any previous in-flight request
+  if (currentAbortController) {
+    currentAbortController.abort()
+  }
+  currentAbortController = new AbortController()
+  const { signal } = currentAbortController
+
   lastLogs = []
   log(`开始 AI 识别, 图片数: ${request.images.length}`)
 
@@ -171,7 +224,7 @@ export async function recognize(request: RecognizeRequest): Promise<RecognizeRes
   const adapter = getAdapter(providerConfig.format)
   log(`发送 API 请求: ${providerConfig.endpoint}, 模型: ${providerConfig.model}, 图片数: ${request.images.length}`)
 
-  const responseText = await adapter.recognize(providerConfig, request.images, prompt)
+  const responseText = await adapter.recognize(providerConfig, request.images, prompt, signal)
   log(`收到 API 响应, 长度: ${responseText.length} 字符`)
 
   const warnings: string[] = []

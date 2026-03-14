@@ -32,7 +32,8 @@ const api = {
   importExport: {
     preview: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_PREVIEW, filePath),
     executeImport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_EXECUTE, config),
-    executeExport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.EXPORT_EXECUTE, config)
+    executeExport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.EXPORT_EXECUTE, config),
+    exportCount: (params: unknown) => ipcRenderer.invoke(IPC_CHANNELS.EXPORT_COUNT, params)
   },
   data: {
     clearTransactions: () => ipcRenderer.invoke(IPC_CHANNELS.DATA_CLEAR_TRANSACTIONS),
@@ -46,6 +47,7 @@ const api = {
   },
   ai: {
     recognize: (request: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE, request),
+    abortRecognize: () => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE_ABORT),
     getLogs: () => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE_LOGS)
   },
   auth: {

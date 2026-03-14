@@ -52,3 +52,19 @@ export interface PaginatedResult<T> {
   page: number
   pageSize: number
 }
+
+export interface ExportConfig {
+  format: 'xlsx' | 'csv'
+  filePath: string
+  dateFrom?: string
+  dateTo?: string
+  types?: TransactionType[]
+  category_ids?: number[]
+  operator_ids?: number[]
+  keyword?: string
+}
+
+export interface ExportResult {
+  exported: number
+  filePath: string
+}
