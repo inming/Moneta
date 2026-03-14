@@ -214,10 +214,22 @@ chore: 升级 electron-vite 版本
 
 ### AI 响应解析
 
-- AI 响应解析采用**容错策略**：查找第一个 `[` 和最后一个 `]` 来提取 JSON 数组
-- 该策略兼容各种模型输出格式（Markdown 代码块、特殊 token 包裹、前后缀文字等）
+- AI 响应解析采用**多层容错策略**（`parseAIResponse()`）：
+  1. 先用正则 `/<\/?[a-zA-Z_][a-zA-Z0-9_-]*>/g` 剥离 XML 标签（如某些模型返回 `<tool_call>...</tool_call>` 包裹）
+  2. 尝试从 Markdown 代码块中提取 JSON
+  3. 查找第一个 `[` 和最后一个 `]` 提取 JSON 数组
+  4. 如果数组解析失败，回退到解析完整 JSON 对象并通过 `extractArray()` 递归查找嵌套数组
+- 该策略兼容各种模型输出格式（Markdown 代码块、XML 标签包裹、嵌套 JSON 对象、前后缀文字等）
 - Prompt 中将用户现有分类列表以 **JSON 数组**格式传入（每项含 `name` 和可选 `description`），引导 AI 通过 `suggestedCategory` 字段建议分类
 - 分类无描述时 JSON 中省略 `description` key，避免冗余；有描述时格式如 `{"name":"正餐","description":"外卖、堂食、食堂"}`
+
+### AI 识别取消机制
+
+- 使用模块级 `AbortController`（`ai-recognition.service.ts`），每次 `recognize()` 创建新实例
+- 渲染进程通过独立 IPC 通道 `ai:recognize:abort` 调用 `abortRecognition()` 触发取消
+- `fetchWithTimeout()` 接受 `externalSignal` 参数，将外部 abort 信号转发到内部 controller
+- 取消 vs 超时区分：检查 `externalSignal.aborted` 判断是用户取消还是超时，返回不同错误消息
+- 前端 AI 识别页显示耗时计时器（1 秒间隔）和取消按钮，取消后的错误消息被静默处理不弹 toast
 
 ### 配置文件升级策略
 
@@ -344,6 +356,23 @@ Tab 状态通过 URL search params（`?tab=xxx`）持久化，支持直接链接
 - 前端使用 `Modal.confirm` 二次确认，按钮为 `danger` 样式
 - `categoryRepo.deleteAllCustom()`：删除 `is_system = 0` 的分类
 - `categoryRepo.resetSystemCategories()`：将 `is_system = 1` 的分类重置为 `is_active = 1`
+
+### 数据导出
+
+- 导出入口位于设置页「数据管理」Tab，支持 Excel（.xlsx）和 CSV（.csv）两种格式
+- Excel 使用 `xlsx-js-style`（SheetJS 的样式增强 fork，**不是** `xlsx`），支持表头背景色（`#4472C4`）、白色粗体字体、金额千分位格式（`#,##0.00`）和列宽设置
+- CSV 使用 UTF-8 with BOM 编码（`\uFEFF` 前缀），确保 Excel 打开中文不乱码，字段转义遵循 RFC 4180
+- 工作表名 `detail`，列结构与导入格式一致（日期、类型、金额、分组、描述、操作人），导出文件可直接作为导入源（round-trip 兼容）
+- 导出按日期升序排列（与用户 Excel 习惯一致，区别于数据浏览页的默认降序）
+- `findAllForExport()` 独立于 `findAll()`：JOIN categories + operators 直接返回展示用字段，无分页，日期升序
+- `countForExport()` 用于筛选条件变化时的记录数预览，前端加 300ms debounce 防抖
+
+### SQL 筛选逻辑复用
+
+- `transaction.repo.ts` 中提取了 `buildWhereClause()` 公共函数，被 `findAll()`、`countForExport()`、`findAllForExport()` 三处复用
+- WHERE 条件中使用 `t.` 表别名前缀（如 `t.date`、`t.type`），兼容 JOIN 查询和单表查询
+- 支持的筛选参数：`dateFrom`/`dateTo`、`type`/`types[]`、`category_id`/`category_ids[]`、`operator_id`/`operator_ids[]`、`keyword`
+- 新增筛选条件时只需修改 `buildWhereClause()` 一处，所有查询自动生效
 
 ### 默认排序
 
