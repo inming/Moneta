@@ -1,6 +1,7 @@
 import type {
   Transaction, CreateTransactionDTO, UpdateTransactionDTO,
   TransactionListParams, PaginatedResult, TransactionType,
+  ExportConfig, ExportResult,
   Category, CreateCategoryDTO, UpdateCategoryDTO,
   Operator,
   CrossTableParams, CrossTableData,
@@ -42,7 +43,8 @@ export interface MonetaAPI {
   importExport: {
     preview(filePath: string): Promise<unknown>
     executeImport(config: unknown): Promise<unknown>
-    executeExport(config: unknown): Promise<string>
+    executeExport(config: ExportConfig): Promise<ExportResult>
+    exportCount(params: TransactionListParams): Promise<number>
   }
   data: {
     clearTransactions(): Promise<void>
@@ -56,6 +58,7 @@ export interface MonetaAPI {
   }
   ai: {
     recognize(request: RecognizeRequest): Promise<RecognizeResponse>
+    abortRecognize(): Promise<void>
     getLogs(): Promise<string[]>
   }
   auth: {

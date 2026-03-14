@@ -1,7 +1,8 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import type { ExportConfig, TransactionListParams } from '../../shared/types'
 import { getDatabase } from '../database/connection'
-import { parseExcel, executeImport } from '../services/import-export.service'
+import { parseExcel, executeImport, exportToExcel, exportToCsv } from '../services/import-export.service'
 import * as transactionRepo from '../database/repositories/transaction.repo'
 import * as operatorRepo from '../database/repositories/operator.repo'
 import * as categoryRepo from '../database/repositories/category.repo'
@@ -39,6 +40,22 @@ export function registerImportExportHandlers(): void {
     const db = getDatabase()
     const preview = parseExcel(filePath)
     return executeImport(db, preview)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.EXPORT_COUNT, (_event, params: TransactionListParams) => {
+    const db = getDatabase()
+    return transactionRepo.countForExport(db, params)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.EXPORT_EXECUTE, (_event, config: ExportConfig) => {
+    const db = getDatabase()
+    const rows = transactionRepo.findAllForExport(db, config)
+    if (config.format === 'csv') {
+      exportToCsv(config.filePath, rows)
+    } else {
+      exportToExcel(config.filePath, rows)
+    }
+    return { exported: rows.length, filePath: config.filePath }
   })
 
   ipcMain.handle(IPC_CHANNELS.DATA_CLEAR_TRANSACTIONS, () => {

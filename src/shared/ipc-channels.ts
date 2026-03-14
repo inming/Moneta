@@ -30,6 +30,7 @@ export const IPC_CHANNELS = {
   IMPORT_PREVIEW: 'io:import:preview',
   IMPORT_EXECUTE: 'io:import:execute',
   EXPORT_EXECUTE: 'io:export:execute',
+  EXPORT_COUNT: 'io:export:count',
 
   // 数据管理
   DATA_CLEAR_TRANSACTIONS: 'db:data:clear-transactions',
@@ -43,6 +44,7 @@ export const IPC_CHANNELS = {
 
   // AI 识别
   AI_RECOGNIZE: 'ai:recognize',
+  AI_RECOGNIZE_ABORT: 'ai:recognize:abort',
   AI_RECOGNIZE_LOGS: 'ai:recognize:logs',
 
   // 认证

@@ -1,11 +1,66 @@
 import type Database from 'better-sqlite3'
 import type {
   Transaction,
+  TransactionType,
   CreateTransactionDTO,
   UpdateTransactionDTO,
   TransactionListParams,
   PaginatedResult
 } from '../../../shared/types'
+
+export interface ExportRow {
+  date: string
+  type: TransactionType
+  amount: number
+  category_name: string
+  description: string
+  operator_name: string
+}
+
+function buildWhereClause(params: TransactionListParams): { where: string; values: unknown[] } {
+  const conditions: string[] = []
+  const values: unknown[] = []
+
+  if (params.dateFrom) {
+    conditions.push('t.date >= ?')
+    values.push(params.dateFrom)
+  }
+  if (params.dateTo) {
+    conditions.push('t.date <= ?')
+    values.push(params.dateTo)
+  }
+  if (params.types && params.types.length > 0) {
+    const placeholders = params.types.map(() => '?').join(',')
+    conditions.push(`t.type IN (${placeholders})`)
+    values.push(...params.types)
+  } else if (params.type) {
+    conditions.push('t.type = ?')
+    values.push(params.type)
+  }
+  if (params.category_ids && params.category_ids.length > 0) {
+    const placeholders = params.category_ids.map(() => '?').join(',')
+    conditions.push(`t.category_id IN (${placeholders})`)
+    values.push(...params.category_ids)
+  } else if (params.category_id) {
+    conditions.push('t.category_id = ?')
+    values.push(params.category_id)
+  }
+  if (params.operator_ids && params.operator_ids.length > 0) {
+    const placeholders = params.operator_ids.map(() => '?').join(',')
+    conditions.push(`t.operator_id IN (${placeholders})`)
+    values.push(...params.operator_ids)
+  } else if (params.operator_id) {
+    conditions.push('t.operator_id = ?')
+    values.push(params.operator_id)
+  }
+  if (params.keyword) {
+    conditions.push('t.description LIKE ?')
+    values.push(`%${params.keyword}%`)
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  return { where, values }
+}
 
 export function findAll(
   db: Database.Database,
@@ -14,47 +69,7 @@ export function findAll(
   const page = params.page ?? 1
   const pageSize = params.pageSize ?? 50
 
-  const conditions: string[] = []
-  const values: unknown[] = []
-
-  if (params.dateFrom) {
-    conditions.push('date >= ?')
-    values.push(params.dateFrom)
-  }
-  if (params.dateTo) {
-    conditions.push('date <= ?')
-    values.push(params.dateTo)
-  }
-  if (params.types && params.types.length > 0) {
-    const placeholders = params.types.map(() => '?').join(',')
-    conditions.push(`type IN (${placeholders})`)
-    values.push(...params.types)
-  } else if (params.type) {
-    conditions.push('type = ?')
-    values.push(params.type)
-  }
-  if (params.category_ids && params.category_ids.length > 0) {
-    const placeholders = params.category_ids.map(() => '?').join(',')
-    conditions.push(`category_id IN (${placeholders})`)
-    values.push(...params.category_ids)
-  } else if (params.category_id) {
-    conditions.push('category_id = ?')
-    values.push(params.category_id)
-  }
-  if (params.operator_ids && params.operator_ids.length > 0) {
-    const placeholders = params.operator_ids.map(() => '?').join(',')
-    conditions.push(`operator_id IN (${placeholders})`)
-    values.push(...params.operator_ids)
-  } else if (params.operator_id) {
-    conditions.push('operator_id = ?')
-    values.push(params.operator_id)
-  }
-  if (params.keyword) {
-    conditions.push('description LIKE ?')
-    values.push(`%${params.keyword}%`)
-  }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  const { where, values } = buildWhereClause(params)
 
   // Dynamic ORDER BY
   const allowedSortFields = { date: 'date', amount: 'amount' }
@@ -65,12 +80,12 @@ export function findAll(
   const orderBy = `ORDER BY ${sortCol} ${sortDir}, id DESC`
 
   const countRow = db
-    .prepare(`SELECT COUNT(*) as total FROM transactions ${where}`)
+    .prepare(`SELECT COUNT(*) as total FROM transactions t ${where}`)
     .get(...values) as { total: number }
 
   const items = db
     .prepare(
-      `SELECT * FROM transactions ${where} ${orderBy} LIMIT ? OFFSET ?`
+      `SELECT t.* FROM transactions t ${where} ${orderBy} LIMIT ? OFFSET ?`
     )
     .all(...values, pageSize, (page - 1) * pageSize) as Transaction[]
 
@@ -80,6 +95,36 @@ export function findAll(
     page,
     pageSize
   }
+}
+
+export function countForExport(
+  db: Database.Database,
+  params: TransactionListParams
+): number {
+  const { where, values } = buildWhereClause(params)
+  const row = db
+    .prepare(`SELECT COUNT(*) as total FROM transactions t ${where}`)
+    .get(...values) as { total: number }
+  return row.total
+}
+
+export function findAllForExport(
+  db: Database.Database,
+  params: TransactionListParams
+): ExportRow[] {
+  const { where, values } = buildWhereClause(params)
+
+  return db
+    .prepare(
+      `SELECT t.date, t.type, t.amount, c.name as category_name,
+              t.description, COALESCE(o.name, '') as operator_name
+       FROM transactions t
+       LEFT JOIN categories c ON t.category_id = c.id
+       LEFT JOIN operators o ON t.operator_id = o.id
+       ${where}
+       ORDER BY t.date ASC, t.id ASC`
+    )
+    .all(...values) as ExportRow[]
 }
 
 export function batchCreate(db: Database.Database, items: CreateTransactionDTO[]): void {

@@ -43,6 +43,8 @@ export default function AIRecognition(): React.JSX.Element {
   const [defaultOperatorId, setDefaultOperatorId] = useState<number | null>(null)
   const [logs, setLogs] = useState<string[]>([])
   const [logsOpen, setLogsOpen] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const loadProviders = useCallback(async () => {
@@ -160,6 +162,24 @@ export default function AIRecognition(): React.JSX.Element {
     setImages((prev) => prev.filter((img) => img.id !== id))
   }
 
+  const startTimer = (): void => {
+    setElapsed(0)
+    elapsedRef.current = setInterval(() => setElapsed((s) => s + 1), 1000)
+  }
+
+  const stopTimer = (): void => {
+    if (elapsedRef.current) {
+      clearInterval(elapsedRef.current)
+      elapsedRef.current = null
+    }
+  }
+
+  const formatElapsed = (s: number): string => {
+    const min = Math.floor(s / 60)
+    const sec = s % 60
+    return min > 0 ? `${min}分${sec}秒` : `${sec}秒`
+  }
+
   const handleRecognize = async (): Promise<void> => {
     if (images.length === 0) {
       message.warning('请先上传图片')
@@ -172,6 +192,7 @@ export default function AIRecognition(): React.JSX.Element {
 
     setLoading(true)
     setLogs([])
+    startTimer()
     try {
       const response = await window.api.ai.recognize({
         images: images.map((img) => img.dataUrl),
@@ -193,8 +214,12 @@ export default function AIRecognition(): React.JSX.Element {
         message.success(`成功识别 ${response.items.length} 条交易记录`)
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : 'AI 识别失败')
+      const errMsg = err instanceof Error ? err.message : 'AI 识别失败'
+      if (!errMsg.includes('用户已取消')) {
+        message.error(errMsg)
+      }
     } finally {
+      stopTimer()
       setLoading(false)
       // Final log fetch after recognition completes
       try {
@@ -203,6 +228,15 @@ export default function AIRecognition(): React.JSX.Element {
       } catch {
         // Ignore log fetch errors
       }
+    }
+  }
+
+  const handleAbortRecognize = async (): Promise<void> => {
+    try {
+      await window.api.ai.abortRecognize()
+      message.info('已取消识别')
+    } catch {
+      // ignore
     }
   }
 
@@ -490,15 +524,33 @@ export default function AIRecognition(): React.JSX.Element {
                 ))}
               </div>
               <Space>
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  loading={loading}
-                  onClick={handleRecognize}
-                  disabled={hasNoProvider || images.length === 0}
-                >
-                  开始识别 ({images.length} 张图片)
-                </Button>
+                {!loading ? (
+                  <Button
+                    type="primary"
+                    icon={<SendOutlined />}
+                    onClick={handleRecognize}
+                    disabled={hasNoProvider || images.length === 0}
+                  >
+                    开始识别 ({images.length} 张图片)
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="primary"
+                      loading
+                      disabled
+                    >
+                      识别中... {formatElapsed(elapsed)}
+                    </Button>
+                    <Button
+                      danger
+                      icon={<CloseOutlined />}
+                      onClick={handleAbortRecognize}
+                    >
+                      取消
+                    </Button>
+                  </>
+                )}
                 {(loading || logs.length > 0) && (
                   <a onClick={() => setLogsOpen(true)}>
                     <FileTextOutlined /> 查看日志

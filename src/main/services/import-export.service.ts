@@ -1,6 +1,8 @@
-import * as XLSX from 'xlsx'
+import * as fs from 'fs'
+import * as XLSX from 'xlsx-js-style'
 import type Database from 'better-sqlite3'
 import type { TransactionType, CreateTransactionDTO } from '../../shared/types'
+import type { ExportRow } from '../database/repositories/transaction.repo'
 import * as categoryRepo from '../database/repositories/category.repo'
 import * as operatorRepo from '../database/repositories/operator.repo'
 import * as transactionRepo from '../database/repositories/transaction.repo'
@@ -181,4 +183,80 @@ export function executeImport(db: Database.Database, preview: PreviewResult): Im
     operatorsCreated,
     categoriesCreated
   }
+}
+
+// ── 导出 ─────────────────────────────────────────────
+
+const TYPE_LABEL: Record<TransactionType, string> = {
+  expense: '消费',
+  income: '收入',
+  investment: '投资'
+}
+
+const EXPORT_HEADERS = ['日期', '类型', '金额', '分组', '描述', '操作人']
+
+function rowToArray(row: ExportRow): (string | number)[] {
+  return [
+    row.date,
+    TYPE_LABEL[row.type],
+    row.amount,
+    row.category_name,
+    row.description,
+    row.operator_name
+  ]
+}
+
+export function exportToExcel(filePath: string, rows: ExportRow[]): void {
+  const aoa: (string | number)[][] = [EXPORT_HEADERS, ...rows.map(rowToArray)]
+  const ws = XLSX.utils.aoa_to_sheet(aoa)
+
+  // 表头背景色（浅蓝灰）
+  const headerFill = { fgColor: { rgb: '4472C4' } }
+  const headerFont = { color: { rgb: 'FFFFFF' }, bold: true }
+  for (let col = 0; col < EXPORT_HEADERS.length; col++) {
+    const cellRef = XLSX.utils.encode_cell({ r: 0, c: col })
+    if (ws[cellRef]) {
+      ws[cellRef].s = { fill: headerFill, font: headerFont }
+    }
+  }
+
+  // 金额列（C 列）设置千分位 + 两位小数格式
+  const amountCol = 2 // 第 3 列 (0-indexed)
+  for (let row = 1; row <= rows.length; row++) {
+    const cellRef = XLSX.utils.encode_cell({ r: row, c: amountCol })
+    if (ws[cellRef]) {
+      ws[cellRef].z = '#,##0.00'
+    }
+  }
+
+  // 设置列宽
+  ws['!cols'] = [
+    { wch: 12 },  // 日期
+    { wch: 6 },   // 类型
+    { wch: 12 },  // 金额
+    { wch: 10 },  // 分组
+    { wch: 30 },  // 描述
+    { wch: 8 }    // 操作人
+  ]
+
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'detail')
+  XLSX.writeFile(wb, filePath, { bookSST: false })
+}
+
+function escapeCsvField(value: string | number): string {
+  const str = String(value)
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
+export function exportToCsv(filePath: string, rows: ExportRow[]): void {
+  const BOM = '\uFEFF'
+  const lines: string[] = [EXPORT_HEADERS.map(escapeCsvField).join(',')]
+  for (const row of rows) {
+    lines.push(rowToArray(row).map(escapeCsvField).join(','))
+  }
+  fs.writeFileSync(filePath, BOM + lines.join('\r\n'), 'utf-8')
 }
