@@ -46,6 +46,7 @@ export const IPC_CHANNELS = {
   AI_RECOGNIZE: 'ai:recognize',
   AI_RECOGNIZE_ABORT: 'ai:recognize:abort',
   AI_RECOGNIZE_LOGS: 'ai:recognize:logs',
+  AI_PROMPT_PREVIEW: 'ai:prompt:preview',
 
   // 认证
   AUTH_HAS_PIN: 'auth:pin:has',

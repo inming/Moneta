@@ -35,7 +35,7 @@ export function getLastLogs(): string[] {
   return [...lastLogs]
 }
 
-function buildPrompt(categories: Category[]): string {
+export function buildPrompt(categories: Category[]): string {
   const grouped: Record<string, Array<{ name: string; description?: string }>> = {
     消费: [],
     收入: [],
