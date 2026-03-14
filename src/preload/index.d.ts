@@ -44,6 +44,10 @@ export interface MonetaAPI {
     executeImport(config: unknown): Promise<unknown>
     executeExport(config: unknown): Promise<string>
   }
+  data: {
+    clearTransactions(): Promise<void>
+    factoryReset(): Promise<void>
+  }
   aiProvider: {
     list(): Promise<AIProviderView[]>
     update(id: string, dto: UpdateAIProviderDTO): Promise<AIProviderView>

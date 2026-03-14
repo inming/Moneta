@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Table, Button, Select, DatePicker, InputNumber, Input, Space,
   Typography, message, Popconfirm, Tag
 } from 'antd'
 import {
-  PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, SearchOutlined
+  PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, SearchOutlined,
+  CameraOutlined
 } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -33,6 +35,7 @@ interface NewRow {
 }
 
 export default function Transactions(): React.JSX.Element {
+  const navigate = useNavigate()
   const [transactions, setTransactions] = useState<PaginatedResult<Transaction>>({
     items: [],
     total: 0,
@@ -54,8 +57,11 @@ export default function Transactions(): React.JSX.Element {
   // Batch selection
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([])
 
-  // Server-side query params (sort + filter)
-  const [queryParams, setQueryParams] = useState<TransactionListParams>({})
+  // Server-side query params (sort + filter) — default: date descending
+  const [queryParams, setQueryParams] = useState<TransactionListParams>({
+    sortField: 'date',
+    sortOrder: 'descend'
+  })
 
   // Keyword search for description
   const [keyword, setKeyword] = useState('')
@@ -79,7 +85,7 @@ export default function Transactions(): React.JSX.Element {
 
   useEffect(() => {
     Promise.all([
-      window.api.transaction.list({ page: 1, pageSize: 50 }),
+      window.api.transaction.list({ page: 1, pageSize: 50, sortField: 'date', sortOrder: 'descend' }),
       window.api.category.list(),
       window.api.operator.list()
     ]).then(([txResult, cats, ops]) => {
@@ -512,6 +518,7 @@ export default function Transactions(): React.JSX.Element {
       dataIndex: 'date',
       width: 130,
       sorter: true,
+      defaultSortOrder: 'descend',
       render: (val: string, record) => renderCell('date', val, record)
     },
     {
@@ -609,7 +616,13 @@ export default function Transactions(): React.JSX.Element {
             onClick={startNewRow}
             disabled={newRow !== null || editingKey !== null}
           >
-            新增
+            手工录入
+          </Button>
+          <Button
+            icon={<CameraOutlined />}
+            onClick={() => navigate('/ai-recognition')}
+          >
+            图片识别导入
           </Button>
           {selectedRowKeys.length > 0 && (
             <Popconfirm

@@ -34,6 +34,10 @@ const api = {
     executeImport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_EXECUTE, config),
     executeExport: (config: unknown) => ipcRenderer.invoke(IPC_CHANNELS.EXPORT_EXECUTE, config)
   },
+  data: {
+    clearTransactions: () => ipcRenderer.invoke(IPC_CHANNELS.DATA_CLEAR_TRANSACTIONS),
+    factoryReset: () => ipcRenderer.invoke(IPC_CHANNELS.DATA_FACTORY_RESET)
+  },
   aiProvider: {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_LIST),
     update: (id: string, dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_UPDATE, id, dto),

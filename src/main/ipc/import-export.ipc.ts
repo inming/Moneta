@@ -2,6 +2,9 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDatabase } from '../database/connection'
 import { parseExcel, executeImport } from '../services/import-export.service'
+import * as transactionRepo from '../database/repositories/transaction.repo'
+import * as operatorRepo from '../database/repositories/operator.repo'
+import * as categoryRepo from '../database/repositories/category.repo'
 
 export function registerImportExportHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_FILE, async (_event, filters: Electron.FileFilter[]) => {
@@ -36,5 +39,25 @@ export function registerImportExportHandlers(): void {
     const db = getDatabase()
     const preview = parseExcel(filePath)
     return executeImport(db, preview)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DATA_CLEAR_TRANSACTIONS, () => {
+    const db = getDatabase()
+    const run = db.transaction(() => {
+      transactionRepo.deleteAll(db)
+      operatorRepo.deleteAll(db)
+    })
+    run()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DATA_FACTORY_RESET, () => {
+    const db = getDatabase()
+    const run = db.transaction(() => {
+      transactionRepo.deleteAll(db)
+      operatorRepo.deleteAll(db)
+      categoryRepo.deleteAllCustom(db)
+      categoryRepo.resetSystemCategories(db)
+    })
+    run()
   })
 }
