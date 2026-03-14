@@ -296,3 +296,56 @@ chore: 升级 electron-vite 版本
 
 - 金额在只读态使用 `toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })` 显示千分号
 - 编辑态使用 `InputNumber` 组件，`precision=2`、`min=0.01`
+
+## 导航与页面架构
+
+### 侧栏结构
+
+侧栏仅保留高频入口，低频功能收纳到设置页：
+
+| 菜单项 | 路由 | 说明 |
+|--------|------|------|
+| 数据浏览 | `/` | 交易列表 + 手工录入 + 图片识别导入入口 |
+| 设置 | `/settings` | 分类管理、操作人管理、AI 模型、安全设置、数据管理 |
+| 锁屏 | — | 调用 `authStore.lock()`，无独立路由 |
+
+### 新增数据入口设计
+
+「新增数据」的两种方式统一放在数据浏览页工具栏：
+- **手工录入**：展开行内新增表单（原「新增」按钮）
+- **图片识别导入**：跳转至 `/ai-recognition` 页面，完成后自动返回数据浏览页
+
+AI 识别页（`/ai-recognition`）保留独立路由但**不在侧栏显示**，仅通过数据浏览页的按钮进入，页面顶部有返回按钮。
+
+### 设置页 Tab 结构
+
+| Tab key | 标签 | 组件 |
+|---------|------|------|
+| `categories` | 分类管理 | `CategoryManager` |
+| `operators` | 操作人管理 | `OperatorManager` |
+| `ai-providers` | AI 模型 | `AIProviderManager` |
+| `security` | 安全设置 | `PinManager` |
+| `data` | 数据管理 | `DataManager` |
+
+Tab 状态通过 URL search params（`?tab=xxx`）持久化，支持直接链接跳转（如 `#/settings?tab=data`）。
+
+## 数据管理
+
+### 数据清空操作
+
+提供两个层级的数据清空（均在设置页「数据管理」Tab 中）：
+
+| 操作 | IPC 通道 | 清空范围 | 保留内容 |
+|------|----------|----------|----------|
+| 清空交易记录 | `db:data:clear-transactions` | 交易 + 操作人 | 所有分类 |
+| 恢复出厂设置 | `db:data:factory-reset` | 交易 + 操作人 + 自定义分类 | 系统预置分类（`is_system=1`，且重置为启用状态） |
+
+- 两种操作均包裹在 `db.transaction()` 中确保原子性
+- 前端使用 `Modal.confirm` 二次确认，按钮为 `danger` 样式
+- `categoryRepo.deleteAllCustom()`：删除 `is_system = 0` 的分类
+- `categoryRepo.resetSystemCategories()`：将 `is_system = 1` 的分类重置为 `is_active = 1`
+
+### 默认排序
+
+- 数据浏览页默认按日期逆序（`sortField: 'date', sortOrder: 'descend'`），确保用户打开即看到最新数据
+- 初始查询参数和 `queryParams` 状态默认值均设置了该排序，Ant Design Table 列定义通过 `defaultSortOrder: 'descend'` 显示排序指示器
