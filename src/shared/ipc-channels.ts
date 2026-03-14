@@ -31,6 +31,10 @@ export const IPC_CHANNELS = {
   IMPORT_EXECUTE: 'io:import:execute',
   EXPORT_EXECUTE: 'io:export:execute',
 
+  // 数据管理
+  DATA_CLEAR_TRANSACTIONS: 'db:data:clear-transactions',
+  DATA_FACTORY_RESET: 'db:data:factory-reset',
+
   // AI 模型配置
   AI_PROVIDER_LIST: 'ai:provider:list',
   AI_PROVIDER_UPDATE: 'ai:provider:update',

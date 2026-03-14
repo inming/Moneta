@@ -127,6 +127,14 @@ export function remove(db: Database.Database, id: number): { softDeleted: boolea
   return { softDeleted: false }
 }
 
+export function deleteAllCustom(db: Database.Database): void {
+  db.prepare('DELETE FROM categories WHERE is_system = 0').run()
+}
+
+export function resetSystemCategories(db: Database.Database): void {
+  db.prepare("UPDATE categories SET is_active = 1, updated_at = datetime('now', 'localtime') WHERE is_system = 1").run()
+}
+
 export function reorder(db: Database.Database, type: TransactionType, ids: number[]): void {
   const stmt = db.prepare('UPDATE categories SET sort_order = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND type = ?')
   const run = db.transaction(() => {

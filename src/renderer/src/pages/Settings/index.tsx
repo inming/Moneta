@@ -4,10 +4,11 @@ import CategoryManager from './CategoryManager'
 import OperatorManager from './OperatorManager'
 import AIProviderManager from './AIProviderManager'
 import PinManager from './PinManager'
+import DataManager from './DataManager'
 
 const { Text } = Typography
 
-const VALID_TABS = ['categories', 'operators', 'ai-providers', 'security']
+const VALID_TABS = ['categories', 'operators', 'ai-providers', 'security', 'data']
 const DEFAULT_TAB = 'categories'
 
 export default function Settings(): React.JSX.Element {
@@ -39,6 +40,11 @@ export default function Settings(): React.JSX.Element {
       key: 'security',
       label: '安全设置',
       children: <PinManager />
+    },
+    {
+      key: 'data',
+      label: '数据管理',
+      children: <DataManager />
     }
   ]
 

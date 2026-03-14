@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Upload, Button, Select, DatePicker, InputNumber, Input, Table, Space,
   Alert, Typography, message, Card, Drawer
 } from 'antd'
 import {
-  CameraOutlined, DeleteOutlined, SendOutlined, CloseOutlined, FileTextOutlined
+  CameraOutlined, DeleteOutlined, SendOutlined, CloseOutlined, FileTextOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -29,6 +31,7 @@ interface ImageItem {
 }
 
 export default function AIRecognition(): React.JSX.Element {
+  const navigate = useNavigate()
   const [providers, setProviders] = useState<AIProviderView[]>([])
   const [selectedProviderId, setSelectedProviderId] = useState<string>('')
   const [images, setImages] = useState<ImageItem[]>([])
@@ -248,8 +251,7 @@ export default function AIRecognition(): React.JSX.Element {
     try {
       const result = await window.api.transaction.batchCreate(items)
       message.success(`成功录入 ${(result as { count: number }).count} 条交易记录`)
-      setResults(null)
-      setImages([])
+      navigate('/')
     } catch (err) {
       message.error(err instanceof Error ? err.message : '批量录入失败')
     }
@@ -367,7 +369,14 @@ export default function AIRecognition(): React.JSX.Element {
 
   return (
     <div ref={containerRef}>
-      <Title level={4} style={{ marginBottom: 16 }}>AI 图片识别</Title>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/')}
+        />
+        <Title level={4} style={{ margin: 0 }}>图片识别导入</Title>
+      </div>
 
       {hasNoProvider && (
         <Alert
