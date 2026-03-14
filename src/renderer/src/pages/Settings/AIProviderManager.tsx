@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Card, Button, Input, Space, Tag, message, Typography, Spin
+  Card, Button, Input, Space, Tag, message, Typography, Spin, Modal
 } from 'antd'
 import {
-  ApiOutlined, StarFilled, SaveOutlined
+  ApiOutlined, StarFilled, SaveOutlined, EyeOutlined, CopyOutlined
 } from '@ant-design/icons'
 import type { AIProviderView } from '@shared/types'
 
@@ -14,6 +14,11 @@ export default function AIProviderManager(): React.JSX.Element {
   const [loading, setLoading] = useState(false)
   const [testingId, setTestingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
+
+  // Prompt 预览状态
+  const [promptVisible, setPromptVisible] = useState(false)
+  const [promptText, setPromptText] = useState('')
+  const [promptLoading, setPromptLoading] = useState(false)
 
   // 每个模型的编辑状态
   const [editState, setEditState] = useState<Record<string, { apiKey: string; endpoint: string; model: string }>>({})
@@ -85,6 +90,29 @@ export default function AIProviderManager(): React.JSX.Element {
     }
   }
 
+  const handlePromptPreview = async (): Promise<void> => {
+    setPromptVisible(true)
+    setPromptLoading(true)
+    try {
+      const text = await window.api.ai.getPromptPreview()
+      setPromptText(text)
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '获取 Prompt 失败')
+      setPromptVisible(false)
+    } finally {
+      setPromptLoading(false)
+    }
+  }
+
+  const handleCopyPrompt = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(promptText)
+      message.success('已复制到剪贴板')
+    } catch {
+      message.error('复制失败')
+    }
+  }
+
   const updateEditField = (id: string, field: 'apiKey' | 'endpoint' | 'model', value: string): void => {
     setEditState((prev) => ({
       ...prev,
@@ -98,14 +126,22 @@ export default function AIProviderManager(): React.JSX.Element {
 
   return (
     <div>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-        配置 AI 模型以启用图片识别功能。填入 API Key 即可使用，Endpoint 可修改为第三方平台地址。
-      </Text>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Text type="secondary">
+          配置 AI 模型以启用图片识别功能。填入 API Key 即可使用，Endpoint 可修改为第三方平台地址。
+        </Text>
+        <Button icon={<EyeOutlined />} onClick={handlePromptPreview}>
+          查看识别 Prompt
+        </Button>
+      </div>
 
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         {providers.map((provider) => {
           const state = editState[provider.id] || { apiKey: '', endpoint: provider.endpoint, model: provider.model }
           const isConfigured = !!provider.apiKeyMasked
+          const modelPlaceholder = provider.id.includes('doubao')
+            ? '请输入接入点 ID（如 ep-xxx）'
+            : provider.id
 
           return (
             <Card
@@ -140,7 +176,7 @@ export default function AIProviderManager(): React.JSX.Element {
                   <Input
                     value={state.model}
                     onChange={(e) => updateEditField(provider.id, 'model', e.target.value)}
-                    placeholder="glm-4.5v"
+                    placeholder={modelPlaceholder}
                   />
                 </div>
                 <div>
@@ -176,6 +212,41 @@ export default function AIProviderManager(): React.JSX.Element {
           )
         })}
       </Space>
+
+      <Modal
+        title="AI 识别 Prompt 预览"
+        open={promptVisible}
+        onCancel={() => setPromptVisible(false)}
+        width={700}
+        footer={[
+          <Button key="copy" type="primary" icon={<CopyOutlined />} onClick={handleCopyPrompt} disabled={promptLoading}>
+            复制到剪贴板
+          </Button>,
+          <Button key="close" onClick={() => setPromptVisible(false)}>
+            关闭
+          </Button>
+        ]}
+      >
+        {promptLoading ? (
+          <Spin style={{ display: 'block', textAlign: 'center', padding: 40 }} />
+        ) : (
+          <pre style={{
+            fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
+            fontSize: 13,
+            lineHeight: 1.6,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            maxHeight: '60vh',
+            overflow: 'auto',
+            background: '#f5f5f5',
+            padding: 16,
+            borderRadius: 6,
+            margin: 0
+          }}>
+            {promptText}
+          </pre>
+        )}
+      </Modal>
     </div>
   )
 }

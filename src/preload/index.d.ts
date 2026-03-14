@@ -60,6 +60,7 @@ export interface MonetaAPI {
     recognize(request: RecognizeRequest): Promise<RecognizeResponse>
     abortRecognize(): Promise<void>
     getLogs(): Promise<string[]>
+    getPromptPreview(): Promise<string>
   }
   auth: {
     hasPIN(): Promise<boolean>

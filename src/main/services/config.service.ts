@@ -35,6 +35,13 @@ const BUILTIN_MODELS: Omit<StoredProvider, 'apiKeyEncrypted'>[] = [
     format: 'openai',
     endpoint: 'https://open.bigmodel.cn/api/paas/v4',
     model: 'glm-4.5v'
+  },
+  {
+    id: 'doubao-seed-2-0',
+    name: 'Doubao Seed 2.0',
+    format: 'openai',
+    endpoint: 'https://ark.cn-beijing.volces.com/api/v3',
+    model: ''
   }
 ]
 
