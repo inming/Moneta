@@ -204,8 +204,8 @@ export default function Transactions(): React.JSX.Element {
       message.error('请填写所有必填字段（日期、类型、金额、分类）')
       return
     }
-    if (editingRow.amount <= 0) {
-      message.error('金额必须大于 0')
+    if (editingRow.amount === 0) {
+      message.error('金额不能为 0')
       return
     }
 
@@ -272,8 +272,8 @@ export default function Transactions(): React.JSX.Element {
       message.error('请填写所有必填字段（日期、类型、金额、分类）')
       return
     }
-    if (newRow.amount <= 0) {
-      message.error('金额必须大于 0')
+    if (newRow.amount === 0) {
+      message.error('金额不能为 0')
       return
     }
 
@@ -368,15 +368,18 @@ export default function Transactions(): React.JSX.Element {
             <InputNumber
               size="small"
               value={editingRow.amount}
-              min={0.01}
               precision={2}
               style={{ width: '100%' }}
-              status={!editingRow.amount || editingRow.amount <= 0 ? 'error' : undefined}
+              status={editingRow.amount == null || editingRow.amount === 0 ? 'error' : undefined}
               onChange={(val) => updateEditField('amount', val ?? 0)}
             />
           )
         }
-        return (value as number).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        {
+          const num = value as number
+          const formatted = num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          return num < 0 ? <span style={{ color: '#f5222d' }}>{formatted}</span> : formatted
+        }
 
       case 'category_id':
         if (isEditing) {
@@ -465,11 +468,10 @@ export default function Transactions(): React.JSX.Element {
           <InputNumber
             size="small"
             value={newRow.amount || undefined}
-            min={0.01}
             precision={2}
             placeholder="金额"
             style={{ width: '100%' }}
-            status={!newRow.amount || newRow.amount <= 0 ? 'error' : undefined}
+            status={newRow.amount == null || newRow.amount === 0 ? 'error' : undefined}
             onChange={(val) => updateNewField('amount', val ?? 0)}
           />
         )
