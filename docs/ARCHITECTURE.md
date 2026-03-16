@@ -224,12 +224,13 @@ CREATE TABLE transactions (
     category_id  INTEGER NOT NULL REFERENCES categories(id),
     description  TEXT    DEFAULT '',              -- 备注描述
     operator_id  INTEGER DEFAULT NULL REFERENCES operators(id),
-    created_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')), -- 添加时间（系统写入时间，只读）
     updated_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
 -- 查询优化索引
 CREATE INDEX idx_transactions_date       ON transactions(date);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX idx_transactions_type       ON transactions(type);
 CREATE INDEX idx_transactions_category   ON transactions(category_id);
 CREATE INDEX idx_transactions_operator   ON transactions(operator_id);
@@ -251,11 +252,14 @@ CREATE TABLE IF NOT EXISTS migrations (
 | Excel 列 | DB 字段 | 说明 |
 |-----------|---------|------|
 | 日期 | `transactions.date` | 直接映射 |
+| 添加时间 | `transactions.created_at` | 不来自 Excel；由系统在写入时自动生成，用于数据浏览排序 |
 | 类型 | `transactions.type` | "消费" → `expense`，"收入" → `income` |
 | 金额 | `transactions.amount` | 直接映射 |
 | 分组 | `categories.name`（通过 `category_id` 关联）| 外键关联 |
 | 描述 | `transactions.description` | 直接映射 |
 | 操作人 | `operators.name`（通过 `operator_id` 关联）| 外键关联 |
+
+- 导入场景下由于源文件不包含“添加时间”列，`transactions.created_at` 使用实际导入写入时的系统时间
 
 ---
 

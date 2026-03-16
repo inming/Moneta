@@ -34,6 +34,12 @@ interface NewRow {
   operator_id: number | null
 }
 
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '-'
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : value
+}
+
 export default function Transactions(): React.JSX.Element {
   const navigate = useNavigate()
   const [transactions, setTransactions] = useState<PaginatedResult<Transaction>>({
@@ -139,7 +145,7 @@ export default function Transactions(): React.JSX.Element {
     const singleSorter = Array.isArray(sorter) ? sorter[0] : sorter
     if (singleSorter?.order && singleSorter?.field) {
       const field = singleSorter.field as string
-      if (field === 'date' || field === 'amount') {
+      if (field === 'date' || field === 'amount' || field === 'created_at') {
         params.sortField = field
         params.sortOrder = singleSorter.order
       }
@@ -343,6 +349,9 @@ export default function Transactions(): React.JSX.Element {
           )
         }
         return value as string
+
+      case 'created_at':
+        return formatDateTime(value as string | null | undefined)
 
       case 'type':
         if (isEditing) {
@@ -557,6 +566,13 @@ export default function Transactions(): React.JSX.Element {
       width: 110,
       filters: operators.map((o) => ({ text: o.name, value: o.id })),
       render: (val: number | null, record) => renderCell('operator_id', val, record)
+    },
+    {
+      title: '添加时间',
+      dataIndex: 'created_at',
+      width: 180,
+      sorter: true,
+      render: (val: string, record) => renderCell('created_at', val, record)
     },
     {
       title: '操作',

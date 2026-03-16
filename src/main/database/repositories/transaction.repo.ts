@@ -72,12 +72,12 @@ export function findAll(
   const { where, values } = buildWhereClause(params)
 
   // Dynamic ORDER BY
-  const allowedSortFields = { date: 'date', amount: 'amount' }
+  const allowedSortFields = { date: 't.date', amount: 't.amount', created_at: 't.created_at' }
   const sortCol = params.sortField && allowedSortFields[params.sortField]
     ? allowedSortFields[params.sortField]
-    : 'date'
+    : 't.date'
   const sortDir = params.sortOrder === 'ascend' ? 'ASC' : 'DESC'
-  const orderBy = `ORDER BY ${sortCol} ${sortDir}, id DESC`
+  const orderBy = `ORDER BY ${sortCol} ${sortDir}, t.id ${sortDir}`
 
   const countRow = db
     .prepare(`SELECT COUNT(*) as total FROM transactions t ${where}`)

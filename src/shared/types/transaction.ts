@@ -42,7 +42,7 @@ export interface TransactionListParams {
   operator_id?: number
   operator_ids?: number[]
   keyword?: string
-  sortField?: 'date' | 'amount'
+  sortField?: 'date' | 'amount' | 'created_at'
   sortOrder?: 'ascend' | 'descend'
 }
 
