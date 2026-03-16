@@ -38,3 +38,23 @@ export interface YearRangeData {
   minYear: number
   maxYear: number
 }
+
+export interface YearlyCategoryParams {
+  type: TransactionType
+  operator_id?: number
+}
+
+export interface YearlyCategoryRow {
+  year: number
+  amounts: number[]
+  yearly: number
+}
+
+export interface YearlyCategoryData {
+  categories: { id: number; name: string }[]
+  rows: YearlyCategoryRow[]
+  totals: {
+    amounts: number[]
+    yearly: number
+  }
+}

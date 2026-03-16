@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { getDatabase } from '../database/connection'
 import * as statsRepo from '../database/repositories/stats.repo'
-import type { CrossTableParams, SummaryParams } from '../../shared/types'
+import type { CrossTableParams, SummaryParams, YearlyCategoryParams } from '../../shared/types'
 
 export function registerStatsHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.STATS_CROSS_TABLE, (_event, params: CrossTableParams) => {
@@ -13,6 +13,11 @@ export function registerStatsHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.STATS_SUMMARY, (_event, params: SummaryParams) => {
     const db = getDatabase()
     return statsRepo.getSummary(db, params)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.STATS_YEARLY_CATEGORY, (_event, params: YearlyCategoryParams) => {
+    const db = getDatabase()
+    return statsRepo.getYearlyCategory(db, params)
   })
 
   ipcMain.handle(IPC_CHANNELS.STATS_YEAR_RANGE, () => {

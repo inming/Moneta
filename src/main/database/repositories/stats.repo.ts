@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3'
-import type { CrossTableParams, CrossTableData, CrossTableRow, SummaryParams, SummaryData, YearRangeData } from '../../../shared/types'
+import type { CrossTableParams, CrossTableData, CrossTableRow, SummaryParams, SummaryData, YearRangeData, YearlyCategoryParams, YearlyCategoryData } from '../../../shared/types'
 
 interface CrossTableRawRow {
   category_id: number
@@ -108,6 +108,80 @@ export function getSummary(db: Database.Database, params: SummaryParams): Summar
   const yearTotal = sumAmount(`${year}-01-01`, `${year}-12-31`)
 
   return { currentMonth, lastMonth, yearTotal }
+}
+
+interface YearlyCategoryRawRow {
+  year_num: number
+  category_id: number
+  category_name: string
+  total: number
+}
+
+export function getYearlyCategory(db: Database.Database, params: YearlyCategoryParams): YearlyCategoryData {
+  const { type, operator_id } = params
+
+  let sql = `
+    SELECT CAST(strftime('%Y', t.date) AS INTEGER) AS year_num,
+           t.category_id, c.name AS category_name,
+           SUM(t.amount) AS total
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    WHERE t.type = ?
+  `
+  const sqlParams: unknown[] = [type]
+
+  if (operator_id !== undefined) {
+    sql += ' AND t.operator_id = ?'
+    sqlParams.push(operator_id)
+  }
+
+  sql += ' GROUP BY year_num, t.category_id ORDER BY year_num ASC, c.sort_order ASC'
+
+  const rawRows = db.prepare(sql).all(...sqlParams) as YearlyCategoryRawRow[]
+
+  // Collect unique categories in order of first appearance (respects sort_order)
+  const categoryMap = new Map<number, { id: number; name: string }>()
+  for (const raw of rawRows) {
+    if (!categoryMap.has(raw.category_id)) {
+      categoryMap.set(raw.category_id, { id: raw.category_id, name: raw.category_name })
+    }
+  }
+  const categories = Array.from(categoryMap.values())
+  const catIndexMap = new Map<number, number>()
+  categories.forEach((c, i) => catIndexMap.set(c.id, i))
+
+  // Pivot by year
+  const yearMap = new Map<number, number[]>()
+  for (const raw of rawRows) {
+    let amounts = yearMap.get(raw.year_num)
+    if (!amounts) {
+      amounts = new Array<number>(categories.length).fill(0)
+      yearMap.set(raw.year_num, amounts)
+    }
+    amounts[catIndexMap.get(raw.category_id)!] = raw.total
+  }
+
+  const rows = Array.from(yearMap.entries()).map(([year, amounts]) => ({
+    year,
+    amounts,
+    yearly: amounts.reduce((sum, v) => sum + v, 0)
+  }))
+
+  // Totals
+  const totalAmounts = new Array<number>(categories.length).fill(0)
+  let totalYearly = 0
+  for (const row of rows) {
+    for (let i = 0; i < categories.length; i++) {
+      totalAmounts[i] += row.amounts[i]
+    }
+    totalYearly += row.yearly
+  }
+
+  return {
+    categories,
+    rows,
+    totals: { amounts: totalAmounts, yearly: totalYearly }
+  }
 }
 
 export function getYearRange(db: Database.Database): YearRangeData {

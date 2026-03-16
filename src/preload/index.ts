@@ -27,7 +27,8 @@ const api = {
   stats: {
     crossTable: (params: unknown) => ipcRenderer.invoke(IPC_CHANNELS.STATS_CROSS_TABLE, params),
     summary: (params: unknown) => ipcRenderer.invoke(IPC_CHANNELS.STATS_SUMMARY, params),
-    yearRange: () => ipcRenderer.invoke(IPC_CHANNELS.STATS_YEAR_RANGE)
+    yearRange: () => ipcRenderer.invoke(IPC_CHANNELS.STATS_YEAR_RANGE),
+    yearlyCategory: (params: unknown) => ipcRenderer.invoke(IPC_CHANNELS.STATS_YEARLY_CATEGORY, params)
   },
   importExport: {
     preview: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_PREVIEW, filePath),

@@ -2,62 +2,42 @@ import { useState } from 'react'
 import { Table, Empty } from 'antd'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import type { SorterResult } from 'antd/es/table/interface'
-import type { CrossTableData } from '../../../../shared/types'
+import type { YearlyCategoryData } from '../../../../shared/types'
 
-interface CrossTableProps {
-  data: CrossTableData | null
+interface YearlyTableProps {
+  data: YearlyCategoryData | null
   loading: boolean
 }
 
 interface TableRow {
   key: string
-  category_name: string
-  m1: number; m2: number; m3: number; m4: number; m5: number; m6: number
-  m7: number; m8: number; m9: number; m10: number; m11: number; m12: number
+  year: number
   yearly: number
+  [field: string]: string | number
 }
-
-type MonthKey = 'm1' | 'm2' | 'm3' | 'm4' | 'm5' | 'm6' | 'm7' | 'm8' | 'm9' | 'm10' | 'm11' | 'm12'
-type SortableKey = MonthKey | 'yearly'
-
-const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
 function formatAmount(value: number): string {
   if (value === 0) return '—'
   return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function toTableRow(categoryName: string, months: number[], yearly: number, key: string): TableRow {
-  return {
-    key,
-    category_name: categoryName,
-    m1: months[0], m2: months[1], m3: months[2], m4: months[3],
-    m5: months[4], m6: months[5], m7: months[6], m8: months[7],
-    m9: months[8], m10: months[9], m11: months[10], m12: months[11],
-    yearly
-  }
-}
-
-function makeSorter(field: SortableKey): ColumnType<TableRow>['sorter'] {
-  return (a: TableRow, b: TableRow): number => a[field] - b[field]
-}
-
-export default function CrossTable({ data, loading }: CrossTableProps): React.JSX.Element {
-  const [sortedColumn, setSortedColumn] = useState<SortableKey | null>(null)
+export default function YearlyTable({ data, loading }: YearlyTableProps): React.JSX.Element {
+  const [sortedColumn, setSortedColumn] = useState<string | null>(null)
 
   if (!loading && (!data || data.rows.length === 0)) {
     return <Empty description="暂无数据" style={{ padding: 40 }} />
   }
 
-  // 获取某列的合计值，用于算占比
-  const getColumnTotal = (field: SortableKey): number => {
+  const categories = data?.categories ?? []
+
+  const getColumnTotal = (field: string): number => {
     if (!data) return 0
     if (field === 'yearly') return data.totals.yearly
-    const monthIndex = parseInt(field.slice(1)) - 1
-    return data.totals.months[monthIndex]
+    const index = parseInt(field.slice(1))
+    return data.totals.amounts[index]
   }
 
-  const renderCell = (field: SortableKey) => (v: number): React.ReactNode => {
+  const renderCell = (field: string) => (v: number): React.ReactNode => {
     const amountStr = formatAmount(v)
     if (sortedColumn !== field || v === 0) return amountStr
 
@@ -71,7 +51,7 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
     )
   }
 
-  const renderSummaryCell = (field: SortableKey, value: number): React.ReactNode => {
+  const renderSummaryCell = (field: string, value: number): React.ReactNode => {
     const amountStr = formatAmount(value)
     if (sortedColumn !== field || value === 0) return amountStr
     return (
@@ -81,18 +61,22 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
     )
   }
 
+  const makeSorter = (field: string): ColumnType<TableRow>['sorter'] => {
+    return (a: TableRow, b: TableRow): number => (a[field] as number) - (b[field] as number)
+  }
+
   const columns: ColumnsType<TableRow> = [
     {
-      title: '分类',
-      dataIndex: 'category_name',
-      key: 'category_name',
+      title: '年度',
+      dataIndex: 'year',
+      key: 'year',
       fixed: 'left',
-      width: 120
+      width: 80
     },
-    ...MONTH_LABELS.map((label, i) => {
-      const field = `m${i + 1}` as MonthKey
+    ...categories.map((cat, i) => {
+      const field = `c${i}`
       return {
-        title: label,
+        title: cat.name,
         dataIndex: field,
         key: field,
         minWidth: sortedColumn === field ? 140 : 100,
@@ -114,9 +98,17 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
   ]
 
   const dataSource: TableRow[] = data
-    ? data.rows.map((row) =>
-        toTableRow(row.category_name, row.months, row.yearly, String(row.category_id))
-      )
+    ? data.rows.map((row) => {
+        const record: TableRow = {
+          key: String(row.year),
+          year: row.year,
+          yearly: row.yearly
+        }
+        row.amounts.forEach((v, i) => {
+          record[`c${i}`] = v
+        })
+        return record
+      })
     : []
 
   const handleChange = (
@@ -125,7 +117,7 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
     sorter: SorterResult<TableRow> | SorterResult<TableRow>[]
   ): void => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter
-    setSortedColumn(s.order ? (s.field as SortableKey) : null)
+    setSortedColumn(s.order ? (s.field as string) : null)
   }
 
   return (
@@ -145,12 +137,12 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
           <Table.Summary fixed>
             <Table.Summary.Row style={{ fontWeight: 600, background: '#fafafa' }}>
               <Table.Summary.Cell index={0} align="left">合计</Table.Summary.Cell>
-              {data.totals.months.map((v, i) => (
+              {data.totals.amounts.map((v, i) => (
                 <Table.Summary.Cell key={i} index={i + 1} align="right">
-                  {renderSummaryCell(`m${i + 1}` as MonthKey, v)}
+                  {renderSummaryCell(`c${i}`, v)}
                 </Table.Summary.Cell>
               ))}
-              <Table.Summary.Cell index={13} align="right">
+              <Table.Summary.Cell index={categories.length + 1} align="right">
                 {renderSummaryCell('yearly', data.totals.yearly)}
               </Table.Summary.Cell>
             </Table.Summary.Row>

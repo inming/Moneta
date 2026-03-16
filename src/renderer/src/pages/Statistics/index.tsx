@@ -1,34 +1,31 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Card, Col, Row, Spin } from 'antd'
+import { Card, Radio, Spin } from 'antd'
 import type { TransactionType } from '../../../../shared/types/transaction'
-import type { CrossTableData, Operator } from '../../../../shared/types'
+import type { CrossTableData, YearlyCategoryData } from '../../../../shared/types'
 import FilterBar from './FilterBar'
 import CrossTable from './CrossTable'
-import PieChart from './PieChart'
+import YearlyTable from './YearlyTable'
 import BarChart from './BarChart'
+import YearlyBarChart from './YearlyBarChart'
 
 export default function Statistics(): React.JSX.Element {
   const currentDate = new Date()
   const [year, setYear] = useState(currentDate.getFullYear())
   const [type, setType] = useState<TransactionType>('expense')
-  const [operatorId, setOperatorId] = useState<number | undefined>(undefined)
+  const [viewTab, setViewTab] = useState<'monthly' | 'yearly'>('monthly')
 
   const [crossTableData, setCrossTableData] = useState<CrossTableData | null>(null)
-  const [operators, setOperators] = useState<Operator[]>([])
+  const [yearlyCategoryData, setYearlyCategoryData] = useState<YearlyCategoryData | null>(null)
   const [minYear, setMinYear] = useState(currentDate.getFullYear())
   const [maxYear, setMaxYear] = useState(currentDate.getFullYear())
   const [loading, setLoading] = useState(false)
   const [initLoading, setInitLoading] = useState(true)
 
-  // Initial load: year range + operators
+  // Initial load: year range
   useEffect(() => {
-    Promise.all([
-      window.api.stats.yearRange(),
-      window.api.operator.list()
-    ]).then(([yearRange, ops]) => {
+    window.api.stats.yearRange().then((yearRange) => {
       setMinYear(yearRange.minYear)
       setMaxYear(yearRange.maxYear)
-      setOperators(ops)
       setInitLoading(false)
     })
   }, [])
@@ -37,12 +34,17 @@ export default function Statistics(): React.JSX.Element {
   const fetchData = useCallback(async (): Promise<void> => {
     setLoading(true)
     try {
-      const crossTable = await window.api.stats.crossTable({ year, type, operator_id: operatorId })
-      setCrossTableData(crossTable)
+      if (viewTab === 'monthly') {
+        const crossTable = await window.api.stats.crossTable({ year, type })
+        setCrossTableData(crossTable)
+      } else {
+        const yearlyCategory = await window.api.stats.yearlyCategory({ type })
+        setYearlyCategoryData(yearlyCategory)
+      }
     } finally {
       setLoading(false)
     }
-  }, [year, type, operatorId])
+  }, [year, type, viewTab])
 
   useEffect(() => {
     if (!initLoading) {
@@ -60,34 +62,42 @@ export default function Statistics(): React.JSX.Element {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Radio.Group
+        value={viewTab}
+        onChange={(e) => setViewTab(e.target.value as 'monthly' | 'yearly')}
+        optionType="button"
+        buttonStyle="solid"
+        options={[
+          { value: 'monthly', label: '月度明细' },
+          { value: 'yearly', label: '年度汇总' }
+        ]}
+      />
       <FilterBar
         year={year}
         type={type}
-        operatorId={operatorId}
         minYear={minYear}
         maxYear={maxYear}
-        operators={operators}
+        showYearFilter={viewTab === 'monthly'}
         onChange={(values) => {
           if (values.year !== undefined) setYear(values.year)
           if (values.type !== undefined) setType(values.type)
-          if ('operatorId' in values) setOperatorId(values.operatorId)
         }}
       />
-      <Card size="small" title="分类月度明细">
-        <CrossTable data={crossTableData} loading={loading} />
+      <Card size="small">
+        {viewTab === 'monthly'
+          ? <CrossTable data={crossTableData} loading={loading} />
+          : <YearlyTable data={yearlyCategoryData} loading={loading} />
+        }
       </Card>
-      <Row gutter={16}>
-        <Col span={10}>
-          <Card size="small" title="分类占比">
-            <PieChart data={crossTableData} />
-          </Card>
-        </Col>
-        <Col span={14}>
-          <Card size="small" title="月度趋势">
-            <BarChart data={crossTableData} />
-          </Card>
-        </Col>
-      </Row>
+      {viewTab === 'monthly' ? (
+        <Card size="small" title="月度趋势">
+          <BarChart data={crossTableData} />
+        </Card>
+      ) : (
+        <Card size="small" title="年度趋势">
+          <YearlyBarChart data={yearlyCategoryData} />
+        </Card>
+      )}
     </div>
   )
 }
