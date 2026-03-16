@@ -266,6 +266,50 @@ chore: 升级 electron-vite 版本
 - `PinInput` 组件使用 `forwardRef` + `useImperativeHandle` 暴露 `clear()`、`shake()`、`focus()` 方法，供父组件控制状态
 - 该组件被 `LockScreen`、`PinSetup`、`PinManager` 三处复用
 
+## AI 识别确认界面架构
+
+### 数据流与状态管理
+
+AI 识别确认界面（`AIRecognition/index.tsx`）采用纯前端状态管理，无需与主进程通信即可完成的增删改操作：
+
+| 操作 | 状态更新方式 | 说明 |
+|------|-------------|------|
+| 插入行 | `setResults((prev) => splice(index, 0, newRow))` | 在当前行上方插入，继承类型和操作人 |
+| 追加行 | `setResults((prev) => [...prev, newRow])` | 在表格末尾添加 |
+| 删除行 | `filter((row) => row.key !== key)` | 按 key 过滤移除 |
+| 更新字段 | `map((row) => row.key === key ? {...row, field} : row)` | 全字段可编辑 |
+
+### 行标识策略
+
+- **AI 识别结果**：使用服务端返回的 key（如 `item-${index}` 或 UUID）
+- **手动插入行**：使用 `manual-${timestamp}-${random}` 前缀，便于区分来源和调试
+
+### 默认值继承模式
+
+新插入行采用「智能继承」策略减少用户输入：
+
+```typescript
+const newRow = {
+  key: `manual-${Date.now()}-${random}`,
+  type: currentRow.type,           // 继承：用户通常连续录入同类型交易
+  operator_id: currentRow.operator_id,  // 继承：同一批录入通常同一操作人
+  amount: 0,                       // 清空：金额必须重新输入
+  description: '',                 // 清空：描述各不相同
+  category_id: null                // 清空：触发必填校验和高亮
+}
+```
+
+### 编辑状态设计
+
+- **全量编辑模式**：所有行始终处于可编辑状态，无需「进入编辑」开关
+- **实时校验**：分类为空时 `status="error"`，行背景色变为红色（`row-missing-category`）
+- **批量提交校验**：点击「确认录入」时遍历所有行检查 `category_id`，阻止提交并提示未填写数量
+
+### 操作人联动机制
+
+- 全局操作人选择器变化时，通过 `useEffect` 更新所有行的 `operator_id`
+- 无论 AI 识别结果还是手动插入行，均参与联动更新
+
 ## 统计报表架构
 
 ### 页面结构

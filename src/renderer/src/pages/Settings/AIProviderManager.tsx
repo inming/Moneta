@@ -3,7 +3,7 @@ import {
   Card, Button, Input, Space, Tag, message, Typography, Spin, Modal
 } from 'antd'
 import {
-  ApiOutlined, StarFilled, SaveOutlined, EyeOutlined, CopyOutlined
+  ApiOutlined, StarFilled, StarOutlined, SaveOutlined, EyeOutlined, CopyOutlined
 } from '@ant-design/icons'
 import type { AIProviderView } from '@shared/types'
 
@@ -14,6 +14,7 @@ export default function AIProviderManager(): React.JSX.Element {
   const [loading, setLoading] = useState(false)
   const [testingId, setTestingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null)
 
   // Prompt 预览状态
   const [promptVisible, setPromptVisible] = useState(false)
@@ -87,6 +88,19 @@ export default function AIProviderManager(): React.JSX.Element {
       message.error(err instanceof Error ? err.message : '测试失败')
     } finally {
       setTestingId(null)
+    }
+  }
+
+  const handleSetDefault = async (id: string): Promise<void> => {
+    setSettingDefaultId(id)
+    try {
+      await window.api.aiProvider.setDefault(id)
+      message.success('已设为默认模型')
+      await loadProviders()
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '设置默认模型失败')
+    } finally {
+      setSettingDefaultId(null)
     }
   }
 
@@ -206,6 +220,15 @@ export default function AIProviderManager(): React.JSX.Element {
                   >
                     测试连接
                   </Button>
+                  {isConfigured && !provider.isDefault && (
+                    <Button
+                      icon={<StarOutlined />}
+                      loading={settingDefaultId === provider.id}
+                      onClick={() => handleSetDefault(provider.id)}
+                    >
+                      设为默认
+                    </Button>
+                  )}
                 </Space>
               </Space>
             </Card>

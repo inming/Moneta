@@ -2,11 +2,11 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Upload, Button, Select, DatePicker, InputNumber, Input, Table, Space,
-  Alert, Typography, message, Card, Drawer
+  Alert, Typography, message, Card, Drawer, Tooltip
 } from 'antd'
 import {
   CameraOutlined, DeleteOutlined, SendOutlined, CloseOutlined, FileTextOutlined,
-  ArrowLeftOutlined
+  ArrowLeftOutlined, PlusOutlined
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -259,6 +259,58 @@ export default function AIRecognition(): React.JSX.Element {
     setResults((prev) => prev ? prev.filter((row) => row.key !== key) : prev)
   }
 
+  const insertRow = (key: string): void => {
+    setResults((prev) => {
+      if (!prev) return prev
+
+      const index = prev.findIndex((row) => row.key === key)
+      if (index === -1) return prev
+
+      const currentRow = prev[index]
+      const newRow: RecognitionResultRow = {
+        key: `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        type: currentRow.type,
+        amount: 0,
+        description: '',
+        category_id: null,
+        operator_id: currentRow.operator_id
+      }
+
+      const newResults = [...prev]
+      newResults.splice(index, 0, newRow)
+      return newResults
+    })
+  }
+
+  const appendRow = (): void => {
+    setResults((prev) => {
+      const newKey = `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+      if (!prev || prev.length === 0) {
+        return [{
+          key: newKey,
+          type: 'expense',
+          amount: 0,
+          description: '',
+          category_id: null,
+          operator_id: defaultOperatorId
+        }]
+      }
+
+      const lastRow = prev[prev.length - 1]
+      const newRow: RecognitionResultRow = {
+        key: newKey,
+        type: lastRow.type,
+        amount: 0,
+        description: '',
+        category_id: null,
+        operator_id: lastRow.operator_id
+      }
+
+      return [...prev, newRow]
+    })
+  }
+
   const handleConfirm = async (): Promise<void> => {
     if (!results || results.length === 0) {
       message.warning('没有可提交的记录')
@@ -385,17 +437,28 @@ export default function AIRecognition(): React.JSX.Element {
       )
     },
     {
-      title: '',
+      title: '操作',
       key: 'actions',
-      width: 50,
+      width: 100,
       render: (_, record) => (
-        <Button
-          size="small"
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => deleteRow(record.key)}
-        />
+        <Space size="small">
+          <Tooltip title="在上方插入">
+            <Button
+              size="small"
+              type="text"
+              onClick={() => insertRow(record.key)}
+            >
+              插入
+            </Button>
+          </Tooltip>
+          <Button
+            size="small"
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => deleteRow(record.key)}
+          />
+        </Space>
       )
     }
   ]
@@ -608,6 +671,12 @@ export default function AIRecognition(): React.JSX.Element {
               return `${typeClass}${missingClass}`
             }}
           />
+
+          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
+            <Button icon={<PlusOutlined />} onClick={appendRow}>
+              添加一行
+            </Button>
+          </div>
 
           <style>{`
             .row-type-expense > td {
