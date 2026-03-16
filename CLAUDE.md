@@ -266,6 +266,43 @@ chore: 升级 electron-vite 版本
 - `PinInput` 组件使用 `forwardRef` + `useImperativeHandle` 暴露 `clear()`、`shake()`、`focus()` 方法，供父组件控制状态
 - 该组件被 `LockScreen`、`PinSetup`、`PinManager` 三处复用
 
+## 统计报表架构
+
+### 页面结构
+
+统计报表页（`src/renderer/src/pages/Statistics/`）采用组件拆分模式：
+
+| 组件 | 职责 |
+|------|------|
+| `index.tsx` | 页面容器，管理筛选状态和数据请求 |
+| `FilterBar.tsx` | 筛选器（年份 / 类型 / 操作人） |
+| `SummaryCards.tsx` | 汇总卡片（本月/环比/年度合计） |
+| `CrossTable.tsx` | 交叉统计表（分类 × 12 月 + 合计） |
+| `PieChart.tsx` | 环形饼图（分类占比） |
+| `BarChart.tsx` | 堆叠柱状图（月度趋势） |
+
+### 数据流
+
+- 页面级状态（`year`、`type`、`operatorId`）驱动数据请求，筛选变化时通过 `useCallback` + `useEffect` 自动重新查询
+- 交叉统计表数据（`CrossTableData`）同时供饼图和柱状图复用，避免重复查询
+- 汇总卡片通过独立 IPC 通道 `db:stats:summary` 查询（传入当前月份参数）
+- 初始化时并行加载年份范围（`db:stats:year-range`）和操作人列表
+
+### Repository 层查询模式
+
+- `stats.repo.ts` 导出独立函数（`getCrossTable`、`getSummary`、`getYearRange`），不使用类实例
+- 交叉统计表查询：SQL 按 `(category_id, month)` 分组聚合后，在 JS 层做 pivot 转换为行列结构
+- 汇总卡片查询：封装 `sumAmount()` 内部函数复用日期范围求和逻辑，处理跨年月份（1 月的上月 = 去年 12 月）
+- 年份范围：`MIN/MAX(strftime('%Y', date))` 确定数据库中的年份边界，无数据时回退到当前年份
+
+### IPC 通道
+
+| 通道 | 用途 |
+|------|------|
+| `db:stats:cross-table` | 交叉统计表数据（按年/类型/操作人聚合） |
+| `db:stats:summary` | 汇总卡片数据（本月/上月/年度合计） |
+| `db:stats:year-range` | 数据库中交易数据的年份范围 |
+
 ## 颜色体系
 
 交易类型在整个应用中使用统一的颜色体系（定义在 `src/shared/constants/transaction-type.ts`）：
@@ -318,6 +355,7 @@ chore: 升级 electron-vite 版本
 | 菜单项 | 路由 | 说明 |
 |--------|------|------|
 | 数据浏览 | `/` | 交易列表 + 手工录入 + 图片识别导入入口 |
+| 统计报表 | `/statistics` | 交叉统计表 + 饼图 + 柱状图 |
 | 设置 | `/settings` | 分类管理、操作人管理、AI 模型、安全设置、数据管理 |
 | 锁屏 | — | 调用 `authStore.lock()`，无独立路由 |
 
