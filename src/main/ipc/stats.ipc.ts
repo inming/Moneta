@@ -1,1 +1,22 @@
-// Stats IPC handlers
+import { ipcMain } from 'electron'
+import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { getDatabase } from '../database/connection'
+import * as statsRepo from '../database/repositories/stats.repo'
+import type { CrossTableParams, SummaryParams } from '../../shared/types'
+
+export function registerStatsHandlers(): void {
+  ipcMain.handle(IPC_CHANNELS.STATS_CROSS_TABLE, (_event, params: CrossTableParams) => {
+    const db = getDatabase()
+    return statsRepo.getCrossTable(db, params)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.STATS_SUMMARY, (_event, params: SummaryParams) => {
+    const db = getDatabase()
+    return statsRepo.getSummary(db, params)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.STATS_YEAR_RANGE, () => {
+    const db = getDatabase()
+    return statsRepo.getYearRange(db)
+  })
+}

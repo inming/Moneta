@@ -9,6 +9,7 @@ import { registerOperatorHandlers } from './ipc/operator.ipc'
 import { registerAIProviderHandlers } from './ipc/ai-provider.ipc'
 import { registerAIHandlers } from './ipc/ai.ipc'
 import { registerAuthHandlers } from './ipc/auth.ipc'
+import { registerStatsHandlers } from './ipc/stats.ipc'
 
 app.whenReady().then(() => {
   // Initialize database and run migrations
@@ -23,6 +24,7 @@ app.whenReady().then(() => {
   registerAIProviderHandlers()
   registerAIHandlers()
   registerAuthHandlers()
+  registerStatsHandlers()
 
   createWindow()
 

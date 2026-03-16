@@ -6,7 +6,7 @@ import type {
   Operator,
   CrossTableParams, CrossTableData,
   SummaryParams, SummaryData,
-  TrendParams, TrendData,
+  YearRangeData,
   AIProviderView, UpdateAIProviderDTO, AITestResult,
   RecognizeRequest, RecognizeResponse,
   VerifyPINResult, ChangePINResult
@@ -38,7 +38,7 @@ export interface MonetaAPI {
   stats: {
     crossTable(params: CrossTableParams): Promise<CrossTableData>
     summary(params: SummaryParams): Promise<SummaryData>
-    trend(params: TrendParams): Promise<TrendData>
+    yearRange(): Promise<YearRangeData>
   }
   importExport: {
     preview(filePath: string): Promise<unknown>

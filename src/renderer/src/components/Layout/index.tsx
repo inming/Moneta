@@ -2,6 +2,7 @@ import { Layout as AntLayout, Menu } from 'antd'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   TableOutlined,
+  BarChartOutlined,
   SettingOutlined,
   LockOutlined
 } from '@ant-design/icons'
@@ -11,6 +12,7 @@ const { Sider, Content } = AntLayout
 
 const menuItems = [
   { key: '/', icon: <TableOutlined />, label: '数据浏览' },
+  { key: '/statistics', icon: <BarChartOutlined />, label: '统计报表' },
   { key: '/settings', icon: <SettingOutlined />, label: '设置' }
 ]
 

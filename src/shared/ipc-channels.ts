@@ -24,7 +24,7 @@ export const IPC_CHANNELS = {
   // 统计
   STATS_CROSS_TABLE: 'db:stats:cross-table',
   STATS_SUMMARY: 'db:stats:summary',
-  STATS_TREND: 'db:stats:trend',
+  STATS_YEAR_RANGE: 'db:stats:year-range',
 
   // 导入导出
   IMPORT_PREVIEW: 'io:import:preview',

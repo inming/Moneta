@@ -6,6 +6,7 @@ import Layout from './components/Layout'
 import Transactions from './pages/Transactions'
 import Settings from './pages/Settings'
 import AIRecognition from './pages/AIRecognition'
+import Statistics from './pages/Statistics'
 import LockScreen from './pages/LockScreen'
 import PinSetup from './pages/LockScreen/PinSetup'
 import { useAuthStore } from './stores/auth.store'
@@ -19,6 +20,7 @@ function MainApp(): React.JSX.Element {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Transactions />} />
+          <Route path="/statistics" element={<Statistics />} />
           <Route path="/ai-recognition" element={<AIRecognition />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
