@@ -35,28 +35,36 @@ export default function Layout(): React.JSX.Element {
         width={180}
         theme="light"
         style={{
-          borderRight: '1px solid #f0f0f0',
-          display: 'flex',
-          flexDirection: 'column'
+          borderRight: '1px solid #f0f0f0'
         }}
       >
-        <div style={{ padding: '16px', fontSize: '18px', fontWeight: 600, textAlign: 'center' }}>
-          Moneta
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%'
+          }}
+        >
+          <div
+            style={{ padding: '16px', fontSize: '18px', fontWeight: 600, textAlign: 'center' }}
+          >
+            Moneta
+          </div>
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            items={menuItems}
+            onClick={handleMenuClick}
+            style={{ flex: 1 }}
+          />
+          <Menu
+            mode="inline"
+            selectable={false}
+            items={[{ key: LOCK_KEY, icon: <LockOutlined />, label: '锁屏' }]}
+            onClick={handleMenuClick}
+            style={{ borderTop: '1px solid #f0f0f0' }}
+          />
         </div>
-        <Menu
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={handleMenuClick}
-          style={{ flex: 1 }}
-        />
-        <Menu
-          mode="inline"
-          selectable={false}
-          items={[{ key: LOCK_KEY, icon: <LockOutlined />, label: '锁屏' }]}
-          onClick={handleMenuClick}
-          style={{ borderTop: '1px solid #f0f0f0' }}
-        />
       </Sider>
       <Content style={{ padding: 24, overflow: 'auto', background: '#f5f5f5' }}>
         <Outlet />
