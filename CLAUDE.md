@@ -367,7 +367,7 @@ chore: 升级 electron-vite 版本
 ### 金额显示
 
 - 金额在只读态使用 `toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })` 显示千分号
-- 编辑态使用 `InputNumber` 组件，`precision=2`、`min=0.01`
+- 编辑态使用 `InputNumber` 组件，`precision=2`，允许输入正数和负数，但不允许为 0
 
 ## 导航与页面架构
 

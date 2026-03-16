@@ -220,7 +220,7 @@ CREATE TABLE transactions (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     date         TEXT    NOT NULL,                -- 交易日期 YYYY-MM-DD
     type         TEXT    NOT NULL CHECK(type IN ('expense', 'income')),
-    amount       REAL    NOT NULL CHECK(amount > 0),  -- 金额（正数）
+    amount       REAL    NOT NULL CHECK(amount != 0), -- 金额（可正可负，不可为 0）
     category_id  INTEGER NOT NULL REFERENCES categories(id),
     description  TEXT    DEFAULT '',              -- 备注描述
     operator_id  INTEGER DEFAULT NULL REFERENCES operators(id),
@@ -374,7 +374,7 @@ export interface MonetaAPI {
 - 明确要求返回 JSON 数组格式
 - 每条包含：date（如有）、amount、description、type（expense/income）
 - 要求 AI 从截图中提取所有可识别的交易条目
-- 金额统一为正数
+- 金额保留原始正负号；退款、冲正等场景应返回负数
 
 ### 6.3 分类匹配策略
 

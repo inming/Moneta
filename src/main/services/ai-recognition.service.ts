@@ -67,7 +67,7 @@ export function buildPrompt(categories: Category[]): string {
 不需要提取日期，日期由用户单独指定。
 
 每条交易输出以下字段：
-- amount: 正数金额（数值类型）
+- amount: 金额（数值类型，可正可负；退款、冲正等场景使用负数）
 - description: 交易描述，保留原始信息（如商品名、商家名等），不要过度精简
 - type: "expense" | "income" | "investment"
 - suggestedCategory: 从下方分类中选最匹配的，不确定则为 null
