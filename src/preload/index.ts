@@ -65,6 +65,31 @@ const api = {
   dialog: {
     openFile: (filters: unknown[]) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE, filters),
     saveFile: (filters: unknown[], defaultName: string) => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SAVE_FILE, filters, defaultName)
+  },
+  mcp: {
+    startServer: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_START_SERVER),
+    configureClaude: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_CONFIGURE_CLAUDE),
+    getStatus: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_GET_STATUS),
+    getHttpConfig: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_GET_HTTP_CONFIG),
+    updatePort: (port: number) => ipcRenderer.invoke(IPC_CHANNELS.MCP_UPDATE_PORT, port),
+    getPaths: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_GET_PATHS),
+    getImportData: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_IMPORT_GET_DATA),
+    clearImportData: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_IMPORT_CLEAR_DATA),
+    confirmImport: (transactions: unknown[]) => ipcRenderer.invoke(IPC_CHANNELS.MCP_IMPORT_CONFIRM, transactions),
+    onHttpStatusChanged: (callback: (status: { running: boolean; port: number; error?: string }) => void) => {
+      const handler = (_event: unknown, status: { running: boolean; port: number; error?: string }) => callback(status)
+      ipcRenderer.on(IPC_CHANNELS.MCP_HTTP_STATUS_CHANGED, handler)
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.MCP_HTTP_STATUS_CHANGED, handler)
+      }
+    },
+    onImportOpen: (callback: () => void) => {
+      const handler = () => callback()
+      ipcRenderer.on(IPC_CHANNELS.MCP_IMPORT_OPEN, handler)
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.MCP_IMPORT_OPEN, handler)
+      }
+    }
   }
 }
 

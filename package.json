@@ -23,8 +23,9 @@
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
     "@electron-toolkit/utils": "^3.0.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "antd": "^5.22.0",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^11.10.0",
     "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.2",
@@ -43,6 +44,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
     "electron-vite": "^2.3.0",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.2",
@@ -58,7 +60,8 @@
       "output": "dist"
     },
     "files": [
-      "out/**/*"
+      "out/**/*",
+      "resources/**/*"
     ],
     "win": {
       "target": "nsis"

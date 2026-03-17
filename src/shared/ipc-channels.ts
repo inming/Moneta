@@ -59,5 +59,20 @@ export const IPC_CHANNELS = {
 
   // 文件对话框
   DIALOG_OPEN_FILE: 'dialog:open-file',
-  DIALOG_SAVE_FILE: 'dialog:save-file'
+  DIALOG_SAVE_FILE: 'dialog:save-file',
+
+  // MCP 配置
+  MCP_START_SERVER: 'mcp:start-server',
+  MCP_CONFIGURE_CLAUDE: 'mcp:configure-claude',
+  MCP_GET_STATUS: 'mcp:get-status',
+  MCP_GET_HTTP_CONFIG: 'mcp:get-http-config',
+  MCP_UPDATE_PORT: 'mcp:update-port',
+  MCP_GET_PATHS: 'mcp:get-paths',
+  MCP_HTTP_STATUS_CHANGED: 'mcp:http-status-changed',
+
+  // MCP 导入
+  MCP_IMPORT_OPEN: 'mcp:import:open',
+  MCP_IMPORT_GET_DATA: 'mcp:import:get-data',
+  MCP_IMPORT_CLEAR_DATA: 'mcp:import:clear-data',
+  MCP_IMPORT_CONFIRM: 'mcp:import:confirm'
 } as const

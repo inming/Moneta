@@ -1,20 +1,17 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Upload, Button, Select, DatePicker, InputNumber, Input, Table, Space,
-  Alert, Typography, message, Card, Drawer, Tooltip
+  Upload, Button, Select, Alert, Typography, message, Card,
+  Drawer, Space, Badge, Image
 } from 'antd'
 import {
-  CameraOutlined, DeleteOutlined, SendOutlined, CloseOutlined, FileTextOutlined,
-  ArrowLeftOutlined, PlusOutlined
+  CameraOutlined, DeleteOutlined, SendOutlined, CloseOutlined,
+  FileTextOutlined, ArrowLeftOutlined, LoadingOutlined
 } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
-import dayjs from 'dayjs'
-import type {
-  AIProviderView, RecognitionResultRow, Category, Operator,
-  TransactionType, CreateTransactionDTO
-} from '@shared/types'
+import type { Dayjs } from 'dayjs'
+import type { AIProviderView, CreateTransactionDTO } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
+import ImportConfirm, { type ImportRow } from '../../components/ImportConfirm'
 
 const { Text, Title } = Typography
 const { Dragger } = Upload
@@ -35,12 +32,8 @@ export default function AIRecognition(): React.JSX.Element {
   const [providers, setProviders] = useState<AIProviderView[]>([])
   const [selectedProviderId, setSelectedProviderId] = useState<string>('')
   const [images, setImages] = useState<ImageItem[]>([])
-  const [results, setResults] = useState<RecognitionResultRow[] | null>(null)
+  const [results, setResults] = useState<ImportRow[] | null>(null)
   const [loading, setLoading] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [operators, setOperators] = useState<Operator[]>([])
-  const [accountingDate, setAccountingDate] = useState(dayjs())
-  const [defaultOperatorId, setDefaultOperatorId] = useState<number | null>(null)
   const [logs, setLogs] = useState<string[]>([])
   const [logsOpen, setLogsOpen] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -59,25 +52,9 @@ export default function AIRecognition(): React.JSX.Element {
     }
   }, [])
 
-  const loadCategories = useCallback(async () => {
-    const [expense, income, investment] = await Promise.all([
-      window.api.category.list('expense'),
-      window.api.category.list('income'),
-      window.api.category.list('investment')
-    ])
-    setCategories([...expense, ...income, ...investment])
-  }, [])
-
-  const loadOperators = useCallback(async () => {
-    const data = await window.api.operator.list()
-    setOperators(data)
-  }, [])
-
   useEffect(() => {
     loadProviders()
-    loadCategories()
-    loadOperators()
-  }, [loadProviders, loadCategories, loadOperators])
+  }, [loadProviders])
 
   // Poll logs while Drawer is open or loading is active
   useEffect(() => {
@@ -94,15 +71,6 @@ export default function AIRecognition(): React.JSX.Element {
     const timer = setInterval(poll, 1000)
     return () => clearInterval(timer)
   }, [logsOpen, loading])
-
-  // Auto-fill operator for all result rows when operator selection changes
-  useEffect(() => {
-    if (results && results.length > 0) {
-      setResults((prev) =>
-        prev ? prev.map((row) => ({ ...row, operator_id: defaultOperatorId })) : prev
-      )
-    }
-  }, [defaultOperatorId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clipboard paste handler
   useEffect(() => {
@@ -199,13 +167,17 @@ export default function AIRecognition(): React.JSX.Element {
         providerId: selectedProviderId
       })
 
-      // Set default operator for all rows
-      const rowsWithDefaults = response.items.map((row) => ({
-        ...row,
-        operator_id: defaultOperatorId
+      // Convert RecognitionResultRow to ImportRow
+      const importRows: ImportRow[] = response.items.map((row, index) => ({
+        key: row.key || `ai-${index}-${Date.now()}`,
+        type: row.type,
+        amount: row.amount,
+        category_id: row.category_id,
+        description: row.description,
+        operator_id: row.operator_id ?? null
       }))
 
-      setResults(rowsWithDefaults)
+      setResults(importRows)
 
       if (response.warnings.length > 0) {
         response.warnings.forEach((w) => message.warning(w))
@@ -221,7 +193,6 @@ export default function AIRecognition(): React.JSX.Element {
     } finally {
       stopTimer()
       setLoading(false)
-      // Final log fetch after recognition completes
       try {
         const fetchedLogs = await window.api.ai.getLogs()
         setLogs(fetchedLogs)
@@ -240,92 +211,9 @@ export default function AIRecognition(): React.JSX.Element {
     }
   }
 
-  const updateRow = (key: string, field: keyof RecognitionResultRow, value: unknown): void => {
-    setResults((prev) => {
-      if (!prev) return prev
-      return prev.map((row) => {
-        if (row.key !== key) return row
-
-        // When type changes, reset category_id since categories are type-specific
-        if (field === 'type') {
-          return { ...row, [field]: value, category_id: null }
-        }
-        return { ...row, [field]: value }
-      })
-    })
-  }
-
-  const deleteRow = (key: string): void => {
-    setResults((prev) => prev ? prev.filter((row) => row.key !== key) : prev)
-  }
-
-  const insertRow = (key: string): void => {
-    setResults((prev) => {
-      if (!prev) return prev
-
-      const index = prev.findIndex((row) => row.key === key)
-      if (index === -1) return prev
-
-      const currentRow = prev[index]
-      const newRow: RecognitionResultRow = {
-        key: `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        type: currentRow.type,
-        amount: 0,
-        description: '',
-        category_id: null,
-        operator_id: currentRow.operator_id
-      }
-
-      const newResults = [...prev]
-      newResults.splice(index, 0, newRow)
-      return newResults
-    })
-  }
-
-  const appendRow = (): void => {
-    setResults((prev) => {
-      const newKey = `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`
-
-      if (!prev || prev.length === 0) {
-        return [{
-          key: newKey,
-          type: 'expense',
-          amount: 0,
-          description: '',
-          category_id: null,
-          operator_id: defaultOperatorId
-        }]
-      }
-
-      const lastRow = prev[prev.length - 1]
-      const newRow: RecognitionResultRow = {
-        key: newKey,
-        type: lastRow.type,
-        amount: 0,
-        description: '',
-        category_id: null,
-        operator_id: lastRow.operator_id
-      }
-
-      return [...prev, newRow]
-    })
-  }
-
-  const handleConfirm = async (): Promise<void> => {
-    if (!results || results.length === 0) {
-      message.warning('没有可提交的记录')
-      return
-    }
-
-    const emptyCategories = results.filter((r) => r.category_id === null)
-    if (emptyCategories.length > 0) {
-      message.error(`还有 ${emptyCategories.length} 条交易未选择分类，请补充后再提交`)
-      return
-    }
-
+  const handleConfirm = async (rows: ImportRow[], accountingDate: Dayjs) => {
     const dateStr = accountingDate.format('YYYY-MM-DD')
-
-    const items: CreateTransactionDTO[] = results.map((row) => ({
+    const items: CreateTransactionDTO[] = rows.map((row) => ({
       date: dateStr,
       type: row.type,
       amount: row.amount,
@@ -334,137 +222,37 @@ export default function AIRecognition(): React.JSX.Element {
       operator_id: row.operator_id
     }))
 
-    try {
-      const result = await window.api.transaction.batchCreate(items)
-      message.success(`成功录入 ${(result as { count: number }).count} 条交易记录`)
-      navigate('/')
-    } catch (err) {
-      message.error(err instanceof Error ? err.message : '批量录入失败')
+    const result = await window.api.transaction.batchCreate(items)
+    if ((result as { count: number }).count !== rows.length) {
+      throw new Error('导入数量不匹配')
     }
   }
 
-  const handleCancel = (): void => {
+  const handleCancel = () => {
     setResults(null)
+    setImages([])
   }
 
   const configuredProviders = providers.filter((p) => p.apiKeyMasked)
   const hasNoProvider = configuredProviders.length === 0
 
-  const unmatchedCount = results ? results.filter((r) => r.category_id === null).length : 0
-
-  const getCategoriesForType = (type: TransactionType): Category[] => {
-    return categories.filter((c) => c.type === type)
+  // Show ImportConfirm when results are available
+  if (results) {
+    return (
+      <div style={{ padding: 24 }}>
+        <ImportConfirm
+          title="图片识别导入确认"
+          sourceInfo={`${images.length} 张图片识别结果`}
+          initialRows={results}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+      </div>
+    )
   }
 
-  const columns: ColumnsType<RecognitionResultRow> = [
-    {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 110,
-      render: (type: TransactionType, record) => (
-        <Select
-          size="small"
-          value={type}
-          options={typeOptions}
-          style={{ width: '100%' }}
-          onChange={(val) => updateRow(record.key, 'type', val)}
-        />
-      )
-    },
-    {
-      title: '金额',
-      dataIndex: 'amount',
-      key: 'amount',
-      width: 120,
-      render: (amount: number, record) => (
-        <InputNumber
-          size="small"
-          value={amount}
-          precision={2}
-          style={{ width: '100%' }}
-          onChange={(val) => updateRow(record.key, 'amount', val || 0)}
-        />
-      )
-    },
-    {
-      title: '分类',
-      dataIndex: 'category_id',
-      key: 'category_id',
-      width: 150,
-      render: (categoryId: number | null, record) => (
-        <Select
-          size="small"
-          value={categoryId}
-          placeholder="请选择分类"
-          style={{ width: '100%' }}
-          status={categoryId === null ? 'error' : undefined}
-          options={getCategoriesForType(record.type).map((c) => ({
-            label: c.name,
-            value: c.id
-          }))}
-          onChange={(val) => updateRow(record.key, 'category_id', val)}
-        />
-      )
-    },
-    {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-      render: (desc: string, record) => (
-        <Input
-          size="small"
-          value={desc}
-          onChange={(e) => updateRow(record.key, 'description', e.target.value)}
-        />
-      )
-    },
-    {
-      title: '操作人',
-      dataIndex: 'operator_id',
-      key: 'operator_id',
-      width: 120,
-      render: (operatorId: number | null, record) => (
-        <Select
-          size="small"
-          value={operatorId}
-          allowClear
-          placeholder="可选"
-          style={{ width: '100%' }}
-          options={operators.map((o) => ({ label: o.name, value: o.id }))}
-          onChange={(val) => updateRow(record.key, 'operator_id', val ?? null)}
-        />
-      )
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      width: 100,
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="在上方插入">
-            <Button
-              size="small"
-              type="text"
-              onClick={() => insertRow(record.key)}
-            >
-              插入
-            </Button>
-          </Tooltip>
-          <Button
-            size="small"
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => deleteRow(record.key)}
-          />
-        </Space>
-      )
-    }
-  ]
-
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} style={{ padding: 24 }}>
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Button
           type="text"
@@ -491,13 +279,7 @@ export default function AIRecognition(): React.JSX.Element {
       {/* Control bar */}
       <Card size="small" style={{ marginBottom: 16 }}>
         <Space wrap>
-          <Text>记账日期：</Text>
-          <DatePicker
-            value={accountingDate}
-            onChange={(date) => date && setAccountingDate(date)}
-            allowClear={false}
-          />
-          {configuredProviders.length > 1 && (
+          {configuredProviders.length > 0 ? (
             <>
               <Text>AI 模型：</Text>
               <Select
@@ -511,219 +293,112 @@ export default function AIRecognition(): React.JSX.Element {
                 onChange={setSelectedProviderId}
               />
             </>
-          )}
-          <Text>操作人：</Text>
-          <Select
-            value={defaultOperatorId}
-            allowClear
-            placeholder="可选"
-            style={{ width: 120 }}
-            options={operators.map((o) => ({ label: o.name, value: o.id }))}
-            onChange={(val) => setDefaultOperatorId(val ?? null)}
-          />
+          ) : null}
         </Space>
       </Card>
 
       {/* Image upload area */}
-      {!results && (
-        <Card size="small" style={{ marginBottom: 16 }}>
-          <Dragger
-            accept=".jpg,.jpeg,.png,.webp,.bmp"
-            multiple
-            showUploadList={false}
-            beforeUpload={handleUpload}
-            style={{ marginBottom: images.length > 0 ? 12 : 0 }}
-          >
-            <p>
-              <CameraOutlined style={{ fontSize: 32, color: '#999' }} />
-            </p>
-            <p>点击或拖拽图片到此处上传，也可以使用 Ctrl+V 粘贴截图</p>
-            <p style={{ color: '#999', fontSize: 12 }}>
-              支持 JPEG、PNG、WebP、BMP，单张不超过 10MB，总量不超过 20MB
-            </p>
-          </Dragger>
+      <Card size="small" style={{ marginBottom: 16 }}>
+        <Dragger
+          accept=".jpg,.jpeg,.png,.webp,.bmp"
+          multiple
+          showUploadList={false}
+          beforeUpload={handleUpload}
+          style={{ marginBottom: images.length > 0 ? 12 : 0 }}
+        >
+          <p>
+            <CameraOutlined style={{ fontSize: 32, color: '#999' }} />
+          </p>
+          <p>点击或拖拽图片到此处上传，也可以使用 Ctrl+V 粘贴截图</p>
+          <p style={{ color: '#999', fontSize: 12 }}>
+            支持 JPEG、PNG、WebP、BMP，单张不超过 10MB，总量不超过 20MB
+          </p>
+        </Dragger>
 
-          {images.length > 0 && (
-            <div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                {images.map((img) => (
-                  <div
-                    key={img.id}
-                    style={{
-                      position: 'relative',
-                      width: 100,
-                      height: 100,
-                      border: '1px solid #d9d9d9',
-                      borderRadius: 4,
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <img
-                      src={img.dataUrl}
-                      alt={img.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <Button
-                      size="small"
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      style={{
-                        position: 'absolute',
-                        top: 2,
-                        right: 2,
-                        background: 'rgba(255,255,255,0.8)',
-                        borderRadius: '50%',
-                        width: 20,
-                        height: 20,
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      onClick={() => removeImage(img.id)}
-                    />
-                  </div>
-                ))}
-              </div>
-              <Space>
-                {!loading ? (
+        {images.length > 0 && (
+          <div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              {images.map((img) => (
+                <div
+                  key={img.id}
+                  style={{
+                    position: 'relative',
+                    width: 100,
+                    height: 100,
+                    border: '1px solid #d9d9d9',
+                    borderRadius: 4,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <Image
+                    src={img.dataUrl}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    preview={{ mask: null }}
+                  />
                   <Button
-                    type="primary"
-                    icon={<SendOutlined />}
-                    onClick={handleRecognize}
-                    disabled={hasNoProvider || images.length === 0}
+                    type="text"
+                    size="small"
+                    danger
+                    style={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 2,
+                      padding: '2px 6px',
+                      minWidth: 'auto',
+                      background: 'rgba(255,255,255,0.8)'
+                    }}
+                    onClick={() => removeImage(img.id)}
                   >
-                    开始识别 ({images.length} 张图片)
+                    <DeleteOutlined />
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      type="primary"
-                      loading
-                      disabled
-                    >
-                      识别中... {formatElapsed(elapsed)}
-                    </Button>
-                    <Button
-                      danger
-                      icon={<CloseOutlined />}
-                      onClick={handleAbortRecognize}
-                    >
-                      取消
-                    </Button>
-                  </>
-                )}
-                {(loading || logs.length > 0) && (
-                  <a onClick={() => setLogsOpen(true)}>
-                    <FileTextOutlined /> 查看日志
-                  </a>
-                )}
-              </Space>
+                </div>
+              ))}
             </div>
-          )}
-        </Card>
-      )}
-
-      {/* Results table */}
-      {results && (
-        <Card size="small">
-          <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Space>
-              <Text strong>
-                共识别 {results.length} 条
-              </Text>
-              {unmatchedCount > 0 && (
-                <Text type="danger">
-                  {unmatchedCount} 条待补充分类
-                </Text>
-              )}
-            </Space>
-            <Space>
-              {logs.length > 0 && (
-                <a onClick={() => setLogsOpen(true)}>
-                  <FileTextOutlined /> 查看日志
-                </a>
-              )}
-              <Button icon={<CloseOutlined />} onClick={handleCancel}>
-                取消
-              </Button>
               <Button
                 type="primary"
-                icon={<SendOutlined />}
-                onClick={handleConfirm}
-                disabled={results.length === 0}
+                icon={loading ? <LoadingOutlined /> : <SendOutlined />}
+                loading={loading}
+                onClick={handleRecognize}
+                disabled={images.length === 0 || !selectedProviderId}
               >
-                确认录入
+                {loading ? `识别中 ${formatElapsed(elapsed)}` : '开始识别'}
+              </Button>
+              {loading && (
+                <Button onClick={handleAbortRecognize}>
+                  取消
+                </Button>
+              )}
+              {logs.length > 0 && (
+                <Button onClick={() => setLogsOpen(true)}>
+                  <FileTextOutlined /> 查看日志
+                </Button>
+              )}
+              <Button onClick={() => setImages([])}>
+                <CloseOutlined /> 清空图片
               </Button>
             </Space>
           </div>
+        )}
+      </Card>
 
-          <Table
-            columns={columns}
-            dataSource={results}
-            rowKey="key"
-            pagination={false}
-            size="small"
-            rowClassName={(record) => {
-              const typeClass = `row-type-${record.type}`
-              const missingClass = record.category_id === null ? ' row-missing-category' : ''
-              return `${typeClass}${missingClass}`
-            }}
-          />
-
-          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
-            <Button icon={<PlusOutlined />} onClick={appendRow}>
-              添加一行
-            </Button>
-          </div>
-
-          <style>{`
-            .row-type-expense > td {
-              background-color: #fff7e6 !important;
-            }
-            .row-type-expense:hover > td {
-              background-color: #fff1d6 !important;
-            }
-            .row-type-income > td {
-              background-color: #f6ffed !important;
-            }
-            .row-type-income:hover > td {
-              background-color: #eeffdd !important;
-            }
-            .row-type-investment > td {
-              background-color: #e6f4ff !important;
-            }
-            .row-type-investment:hover > td {
-              background-color: #d6ebff !important;
-            }
-            .row-missing-category > td {
-              background-color: #fff2f0 !important;
-            }
-            .row-missing-category:hover > td {
-              background-color: #ffebe8 !important;
-            }
-          `}</style>
-        </Card>
-      )}
-
+      {/* Log Drawer */}
       <Drawer
         title="AI 识别日志"
-        open={logsOpen}
+        placement="right"
+        width={600}
         onClose={() => setLogsOpen(false)}
-        width={520}
+        open={logsOpen}
       >
         <pre style={{
-          fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-          fontSize: 12,
-          lineHeight: 1.8,
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-all',
-          margin: 0,
+          background: '#f5f5f5',
           padding: 12,
-          background: '#fafafa',
-          borderRadius: 6,
-          border: '1px solid #f0f0f0'
+          borderRadius: 4,
+          minHeight: '80vh',
+          fontSize: 12,
+          lineHeight: 1.5,
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word'
         }}>
           {logs.join('\n') || '暂无日志'}
         </pre>

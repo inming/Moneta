@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom'
 import CategoryManager from './CategoryManager'
 import OperatorManager from './OperatorManager'
 import AIProviderManager from './AIProviderManager'
+import MCPConfigManager from './MCPConfigManager'
 import PinManager from './PinManager'
 import DataManager from './DataManager'
 
 const { Text } = Typography
 
-const VALID_TABS = ['categories', 'operators', 'ai-providers', 'security', 'data']
+const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'security', 'data']
 const DEFAULT_TAB = 'categories'
 
 export default function Settings(): React.JSX.Element {
@@ -35,6 +36,11 @@ export default function Settings(): React.JSX.Element {
       key: 'ai-providers',
       label: 'AI 模型',
       children: <AIProviderManager />
+    },
+    {
+      key: 'mcp',
+      label: 'MCP 配置',
+      children: <MCPConfigManager />
     },
     {
       key: 'security',

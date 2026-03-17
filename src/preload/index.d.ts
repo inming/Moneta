@@ -75,6 +75,19 @@ export interface MonetaAPI {
     openFile(filters: unknown[]): Promise<string | null>
     saveFile(filters: unknown[], defaultName: string): Promise<string | null>
   }
+  mcp: {
+    startServer(): Promise<{ success: boolean; message: string; needsRestart: boolean }>
+    configureClaude(): Promise<{ success: boolean; message: string; needsRestart: boolean }>
+    getStatus(): Promise<{ configured: boolean; serverRunning: boolean; port: number; serverError?: string }>
+    getHttpConfig(): Promise<{ port: number }>
+    updatePort(port: number): Promise<{ success: boolean; message: string }>
+    getPaths(): Promise<{ claudeConfigPath: string; mcpServerPath: string }>
+    getImportData(): Promise<{ transactions: unknown[]; source: string } | null>
+    clearImportData(): Promise<{ success: boolean }>
+    confirmImport(transactions: unknown[]): Promise<{ success: boolean; count?: number; error?: string }>
+    onHttpStatusChanged(callback: (status: { running: boolean; port: number; error?: string }) => void): () => void
+    onImportOpen(callback: () => void): () => void
+  }
 }
 
 declare global {
