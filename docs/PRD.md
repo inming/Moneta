@@ -820,7 +820,16 @@ PIN 码管理入口位于「设置」页面：
 - [x] 清空交易记录（删除交易 + 操作人，保留分类）
 - [x] 恢复出厂设置（清空全部数据，恢复系统预置分类）
 
-### 5.5 未来考虑
+### 5.5 v0.5（MCP 账单导入助手）
+
+- [x] MCP Server（stdio 模式，3 个 tools：get_categories、get_operators、send_transactions）
+- [x] HTTP Server（内部通信，端口 9615 可配置，自动启动）
+- [x] Claude Desktop 一键配置（自动写入 claude_desktop_config.json）
+- [x] 环境变量传递端口（MONETA_MCP_PORT）
+- [x] MCP 导入确认界面（复用 AI 识别确认组件，路由 /mcp-import）
+- [x] MCP Skill 文档（resources/skills/mcp-moneta-import.md）
+
+### 5.6 未来考虑
 
 - 多币种支持
 - 定期交易（固定收支自动录入）
