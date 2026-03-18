@@ -407,6 +407,10 @@ const newRow = {
 - `update()`：动态构建 SET 子句（仅更新非 `undefined` 字段），始终追加 `updated_at = datetime('now', 'localtime')`
 - `remove()`：交易物理删除（不同于分类的软删除）
 - `batchDelete()`：`WHERE id IN (...)` 参数化，包裹在 `db.transaction()` 中
+- `batchCreate()`：批量插入时使用 **条件分支策略**处理可选字段（如 `created_at`）：
+  - 有自定义时间值 → 使用带该字段的 INSERT 语句
+  - 无自定义时间值 → 使用数据库默认值（省略该字段）
+  - 避免在 `stmt.run()` 中使用 `db.prepare().get()` 作为默认值（会返回对象而非标量）
 
 ### 金额显示
 
@@ -467,10 +471,21 @@ Tab 状态通过 URL search params（`?tab=xxx`）持久化，支持直接链接
 - 导出入口位于设置页「数据管理」Tab，支持 Excel（.xlsx）和 CSV（.csv）两种格式
 - Excel 使用 `xlsx-js-style`（SheetJS 的样式增强 fork，**不是** `xlsx`），支持表头背景色（`#4472C4`）、白色粗体字体、金额千分位格式（`#,##0.00`）和列宽设置
 - CSV 使用 UTF-8 with BOM 编码（`\uFEFF` 前缀），确保 Excel 打开中文不乱码，字段转义遵循 RFC 4180
-- 工作表名 `detail`，列结构与导入格式一致（日期、类型、金额、分组、描述、操作人），导出文件可直接作为导入源（round-trip 兼容）
+- 工作表名 `detail`，列结构：日期、类型、金额、分组、描述、操作人、**添加时间**（7列）
 - 导出按日期升序排列（与用户 Excel 习惯一致，区别于数据浏览页的默认降序）
-- `findAllForExport()` 独立于 `findAll()`：JOIN categories + operators 直接返回展示用字段，无分页，日期升序
+- `findAllForExport()` 独立于 `findAll()`：JOIN categories + operators 直接返回展示用字段（含 `created_at`），无分页，日期升序
 - `countForExport()` 用于筛选条件变化时的记录数预览，前端加 300ms debounce 防抖
+
+### 数据导入
+
+- 导入入口位于设置页「数据管理」Tab，支持 Excel（.xlsx）格式
+- 导入模式为全量覆盖（清空现有交易和操作人后重新导入）
+- **向后兼容**：支持旧格式（6列）和新格式（7列，含添加时间）
+- 添加时间解析策略：
+  - 文件含「添加时间」列 → 使用该值作为 `created_at`，保持原始时间
+  - 文件不含该列 → 使用当前时间作为 `created_at`
+  - 支持格式：`YYYY-MM-DD HH:mm:ss`、Excel 序列号、纯日期（补全 `00:00:00`）
+- 导入成功后自动返回数据浏览页面（1.5秒延迟）
 
 ### SQL 筛选逻辑复用
 
