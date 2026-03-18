@@ -57,7 +57,7 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
     return data.totals.months[monthIndex]
   }
 
-  const renderCell = (field: SortableKey) => (v: number): React.ReactNode => {
+  const renderCell = (field: SortableKey) => function RenderCell(v: number): React.ReactNode {
     const amountStr = formatAmount(v)
     if (sortedColumn !== field || v === 0) return amountStr
 

@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as XLSX from 'xlsx-js-style'
 import type Database from 'better-sqlite3'
-import type { TransactionType, CreateTransactionDTO } from '../../shared/types'
+import type { TransactionType } from '../../shared/types'
 import type { ExportRow } from '../database/repositories/transaction.repo'
 import * as categoryRepo from '../database/repositories/category.repo'
 import * as operatorRepo from '../database/repositories/operator.repo'
@@ -14,6 +14,7 @@ interface ExcelRow {
   分组: string
   描述?: string
   操作人?: string
+  添加时间?: string | number
 }
 
 interface ParsedRow {
@@ -23,6 +24,7 @@ interface ParsedRow {
   categoryName: string
   description: string
   operatorName: string
+  createdAt?: string
 }
 
 export interface PreviewResult {
@@ -40,6 +42,7 @@ export interface ImportResult {
 }
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
 
 function normalizeDate(raw: string | number): string {
   if (typeof raw === 'number') {
@@ -51,6 +54,36 @@ function normalizeDate(raw: string | number): string {
     return `${y}-${m}-${d}`
   }
   return String(raw).trim()
+}
+
+function parseCreatedAt(raw: string | number | undefined): string | null {
+  if (raw === undefined || raw === null || raw === '') return null
+  
+  if (typeof raw === 'number') {
+    // Excel serial date/time number — convert via XLSX utility
+    const parsed = XLSX.SSF.parse_date_code(raw)
+    const y = String(parsed.y).padStart(4, '0')
+    const m = String(parsed.m).padStart(2, '0')
+    const d = String(parsed.d).padStart(2, '0')
+    const H = String(parsed.H).padStart(2, '0')
+    const M = String(parsed.M).padStart(2, '0')
+    const S = String(parsed.S).padStart(2, '0')
+    return `${y}-${m}-${d} ${H}:${M}:${S}`
+  }
+  
+  const trimmed = String(raw).trim()
+  
+  // 标准日期时间格式
+  if (DATETIME_REGEX.test(trimmed)) {
+    return trimmed
+  }
+  
+  // 纯日期格式，补全时间
+  if (DATE_REGEX.test(trimmed)) {
+    return `${trimmed} 00:00:00`
+  }
+  
+  return null
 }
 
 function mapType(raw: string): TransactionType | null {
@@ -108,8 +141,9 @@ export function parseExcel(filePath: string): PreviewResult {
 
     const description = String(raw['描述'] ?? '').trim()
     const operatorName = String(raw['操作人'] ?? '').trim()
+    const createdAt = parseCreatedAt(raw['添加时间']) ?? undefined
 
-    rows.push({ date, type, amount, categoryName, description, operatorName })
+    rows.push({ date, type, amount, categoryName, description, operatorName, createdAt })
 
     if (operatorName) operatorSet.add(operatorName)
     categorySet.set(`${categoryName}:${type}`, type)
@@ -163,13 +197,14 @@ export function executeImport(db: Database.Database, preview: PreviewResult): Im
     }
 
     // Step 5: Build DTOs
-    const dtos: CreateTransactionDTO[] = preview.rows.map((row) => ({
+    const dtos: transactionRepo.CreateTransactionWithTimeDTO[] = preview.rows.map((row) => ({
       date: row.date,
       type: row.type,
       amount: row.amount,
       category_id: categoryMap.get(`${row.categoryName}:${row.type}`)!,
       description: row.description,
-      operator_id: row.operatorName ? (operatorMap.get(row.operatorName) ?? null) : null
+      operator_id: row.operatorName ? (operatorMap.get(row.operatorName) ?? null) : null,
+      created_at: row.createdAt
     }))
 
     // Step 6: Batch insert
@@ -193,7 +228,7 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   investment: '投资'
 }
 
-const EXPORT_HEADERS = ['日期', '类型', '金额', '分组', '描述', '操作人']
+const EXPORT_HEADERS = ['日期', '类型', '金额', '分组', '描述', '操作人', '添加时间']
 
 function rowToArray(row: ExportRow): (string | number)[] {
   return [
@@ -202,7 +237,8 @@ function rowToArray(row: ExportRow): (string | number)[] {
     row.amount,
     row.category_name,
     row.description,
-    row.operator_name
+    row.operator_name,
+    row.created_at
   ]
 }
 
@@ -236,7 +272,8 @@ export function exportToExcel(filePath: string, rows: ExportRow[]): void {
     { wch: 12 },  // 金额
     { wch: 10 },  // 分组
     { wch: 30 },  // 描述
-    { wch: 8 }    // 操作人
+    { wch: 8 },   // 操作人
+    { wch: 18 }   // 添加时间
   ]
 
   const wb = XLSX.utils.book_new()

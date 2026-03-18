@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Button, Card, Alert, Descriptions, Modal, Spin, Space, Tag, Typography,
   message, Radio, DatePicker, Checkbox, Select, Input, Collapse
@@ -30,6 +31,8 @@ interface ImportResultData {
 type ExportFormat = 'xlsx' | 'csv'
 
 export default function DataManager(): React.JSX.Element {
+  const navigate = useNavigate()
+
   // ── 导入状态 ──
   const [filePath, setFilePath] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewData | null>(null)
@@ -162,7 +165,11 @@ export default function DataManager(): React.JSX.Element {
         try {
           const result = (await window.api.importExport.executeImport(filePath)) as ImportResultData
           setImportResult(result)
-          message.success(`成功导入 ${result.imported} 条记录`)
+          message.success(`成功导入 ${result.imported} 条记录，即将返回数据浏览页面`)
+          // 导入成功后返回数据浏览页面
+          setTimeout(() => {
+            navigate('/')
+          }, 1500)
         } catch (err) {
           setError(err instanceof Error ? err.message : String(err))
         } finally {

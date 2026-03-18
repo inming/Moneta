@@ -37,7 +37,7 @@ export default function YearlyTable({ data, loading }: YearlyTableProps): React.
     return data.totals.amounts[index]
   }
 
-  const renderCell = (field: string) => (v: number): React.ReactNode => {
+  const renderCell = (field: string) => function RenderCell(v: number): React.ReactNode {
     const amountStr = formatAmount(v)
     if (sortedColumn !== field || v === 0) return amountStr
 

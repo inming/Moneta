@@ -15,6 +15,7 @@ export interface ExportRow {
   category_name: string
   description: string
   operator_name: string
+  created_at: string
 }
 
 function buildWhereClause(params: TransactionListParams): { where: string; values: unknown[] } {
@@ -117,7 +118,8 @@ export function findAllForExport(
   return db
     .prepare(
       `SELECT t.date, t.type, t.amount, c.name as category_name,
-              t.description, COALESCE(o.name, '') as operator_name
+              t.description, COALESCE(o.name, '') as operator_name,
+              t.created_at
        FROM transactions t
        LEFT JOIN categories c ON t.category_id = c.id
        LEFT JOIN operators o ON t.operator_id = o.id
@@ -127,22 +129,43 @@ export function findAllForExport(
     .all(...values) as ExportRow[]
 }
 
-export function batchCreate(db: Database.Database, items: CreateTransactionDTO[]): void {
-  const stmt = db.prepare(
+export interface CreateTransactionWithTimeDTO extends CreateTransactionDTO {
+  created_at?: string
+}
+
+export function batchCreate(db: Database.Database, items: CreateTransactionWithTimeDTO[]): void {
+  // 预定义两个 statement：一个带自定义时间，一个使用数据库默认时间
+  const stmtWithTime = db.prepare(
+    `INSERT INTO transactions (date, type, amount, category_id, description, operator_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  )
+  const stmtDefaultTime = db.prepare(
     `INSERT INTO transactions (date, type, amount, category_id, description, operator_id)
      VALUES (?, ?, ?, ?, ?, ?)`
   )
 
   const insertAll = db.transaction(() => {
     for (const item of items) {
-      stmt.run(
-        item.date,
-        item.type,
-        item.amount,
-        item.category_id,
-        item.description ?? '',
-        item.operator_id ?? null
-      )
+      if (item.created_at) {
+        stmtWithTime.run(
+          item.date,
+          item.type,
+          item.amount,
+          item.category_id,
+          item.description ?? '',
+          item.operator_id ?? null,
+          item.created_at
+        )
+      } else {
+        stmtDefaultTime.run(
+          item.date,
+          item.type,
+          item.amount,
+          item.category_id,
+          item.description ?? '',
+          item.operator_id ?? null
+        )
+      }
     }
   })
 

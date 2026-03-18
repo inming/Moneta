@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Upload, Button, Select, Alert, Typography, message, Card,
-  Drawer, Space, Badge, Image
+  Drawer, Space, Image
 } from 'antd'
 import {
   CameraOutlined, DeleteOutlined, SendOutlined, CloseOutlined,
@@ -10,16 +10,13 @@ import {
 } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import type { AIProviderView, CreateTransactionDTO } from '@shared/types'
-import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
+
 import ImportConfirm, { type ImportRow } from '../../components/ImportConfirm'
 
 const { Text, Title } = Typography
 const { Dragger } = Upload
 
-const typeOptions = Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
-  label: config.label,
-  value
-}))
+
 
 interface ImageItem {
   id: string
