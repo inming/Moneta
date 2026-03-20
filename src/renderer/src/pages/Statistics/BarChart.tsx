@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
@@ -66,36 +66,59 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
     }
   }, [data])
 
-  // Handle right-click on chart
-  const handleContextMenu = useCallback((params: {
-    event: { offsetX: number; offsetY: number; clientX: number; clientY: number }
-    componentType: string
-    seriesName?: string
-    name?: string
-    dataIndex?: number
-  }): void => {
-    if (!data) return
+  // Bind right-click event using zrender after chart is ready
+  useEffect(() => {
+    const chart = chartRef.current?.getEchartsInstance()
+    if (!chart) return
 
-    // Only handle clicks on series data (bars)
-    if (params.componentType !== 'series') return
+    const zr = chart.getZr()
 
-    const categoryName = params.seriesName
-    const monthIndex = params.dataIndex
+    const handleZrContextMenu = (e: {
+      event: MouseEvent
+      offsetX: number
+      offsetY: number
+    }): void => {
+      e.event.preventDefault()
+      if (!data) return
 
-    if (!categoryName || monthIndex === undefined) return
+      // Convert pixel coordinates to grid coordinates
+      const pointInGrid = chart.convertFromPixel({ seriesIndex: 0 }, [e.offsetX, e.offsetY])
+      if (!pointInGrid) return
 
-    // Find category ID from data
-    const row = data.rows.find((r) => r.category_name === categoryName)
-    if (!row) return
+      const [dataIndex, seriesIndex] = pointInGrid
+      if (dataIndex == null || seriesIndex == null) return
 
-    setContextMenu({
-      visible: true,
-      x: params.event.clientX,
-      y: params.event.clientY,
-      monthIndex,
-      categoryName,
-      categoryId: row.category_id
-    })
+      // Get series info
+      const series = chart.getOption().series as Array<{
+        name: string
+        data: number[]
+      }>
+      if (!series || seriesIndex < 0 || seriesIndex >= series.length) return
+
+      const categoryName = series[seriesIndex].name
+      const monthIndex = Math.floor(dataIndex)
+
+      if (!categoryName || monthIndex < 0 || monthIndex >= 12) return
+
+      // Find category ID from data
+      const row = data.rows.find((r) => r.category_name === categoryName)
+      if (!row) return
+
+      setContextMenu({
+        visible: true,
+        x: e.event.clientX,
+        y: e.event.clientY,
+        monthIndex,
+        categoryName,
+        categoryId: row.category_id
+      })
+    }
+
+    zr.on('contextmenu', handleZrContextMenu)
+
+    return () => {
+      zr.off('contextmenu', handleZrContextMenu)
+    }
   }, [data])
 
   // Navigate to transactions page with filters
@@ -184,8 +207,7 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
         option={option}
         style={{ height: 380 }}
         onEvents={{
-          legendselectchanged: handleLegendClick,
-          contextmenu: handleContextMenu
+          legendselectchanged: handleLegendClick
         }}
       />
       <ContextMenu
