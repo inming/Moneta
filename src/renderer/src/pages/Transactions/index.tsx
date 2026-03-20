@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Table, Button, Select, DatePicker, InputNumber, Input, Space,
@@ -9,7 +9,7 @@ import {
   CameraOutlined, FileTextOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
 
@@ -25,11 +25,21 @@ import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
 import { useDraftStore } from '../../stores/draft.store'
 
 const { Text } = Typography
+const { RangePicker } = DatePicker
 
 const typeOptions = Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
   label: config.label,
   value
 }))
+
+// 日期范围预设快捷选项
+const rangePresets = [
+  { label: '全部', value: null as [Dayjs, Dayjs] | null },
+  { label: '本月', value: [dayjs().startOf('month'), dayjs().endOf('month')] as [Dayjs, Dayjs] },
+  { label: '上月', value: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')] as [Dayjs, Dayjs] },
+  { label: '本季度', value: [dayjs().startOf('quarter'), dayjs().endOf('quarter')] as [Dayjs, Dayjs] },
+  { label: '本年', value: [dayjs().startOf('year'), dayjs().endOf('year')] as [Dayjs, Dayjs] }
+]
 
 interface NewRow {
   date: string
@@ -80,6 +90,10 @@ export default function Transactions(): React.JSX.Element {
   // Keyword search for description
   const [keyword, setKeyword] = useState('')
 
+  // Date range filter
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
+  const dateRangeDebounceRef = useRef<NodeJS.Timeout | null>(null)
+
   const categoryMap = new Map(categories.map((c) => [c.id, c]))
   const operatorMap = new Map(operators.map((o) => [o.id, o.name]))
 
@@ -108,6 +122,13 @@ export default function Transactions(): React.JSX.Element {
       setCategories(cats)
       setOperators(ops)
     })
+
+    // Cleanup debounce timer on unmount
+    return () => {
+      if (dateRangeDebounceRef.current) {
+        clearTimeout(dateRangeDebounceRef.current)
+      }
+    }
   }, [])
 
   const reload = (): void => {
@@ -165,6 +186,12 @@ export default function Transactions(): React.JSX.Element {
       params.keyword = keyword.trim()
     }
 
+    // Preserve date range
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      params.dateFrom = dateRange[0].format('YYYY-MM-DD')
+      params.dateTo = dateRange[1].format('YYYY-MM-DD')
+    }
+
     setQueryParams(params)
     loadTransactions(pagination.current ?? 1, pagination.pageSize ?? 50, params)
   }
@@ -175,9 +202,42 @@ export default function Transactions(): React.JSX.Element {
       return
     }
     setKeyword(value)
-    const params = { ...queryParams, keyword: value.trim() || undefined }
+    const params: TransactionListParams = { ...queryParams, keyword: value.trim() || undefined }
+    // Preserve date range in params
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      params.dateFrom = dateRange[0].format('YYYY-MM-DD')
+      params.dateTo = dateRange[1].format('YYYY-MM-DD')
+    }
     setQueryParams(params)
     loadTransactions(1, transactions.pageSize, params)
+  }
+
+  // Handle date range change with debounce
+  const handleDateRangeChange = (dates: [Dayjs | null, Dayjs | null] | null): void => {
+    if (editingKey !== null || newRow !== null) {
+      message.warning('请先保存或取消当前编辑')
+      return
+    }
+    setDateRange(dates)
+
+    // Clear previous debounce timer
+    if (dateRangeDebounceRef.current) {
+      clearTimeout(dateRangeDebounceRef.current)
+    }
+
+    // Debounce the query to avoid frequent requests
+    dateRangeDebounceRef.current = setTimeout(() => {
+      const params: TransactionListParams = { ...queryParams }
+      if (dates && dates[0] && dates[1]) {
+        params.dateFrom = dates[0].format('YYYY-MM-DD')
+        params.dateTo = dates[1].format('YYYY-MM-DD')
+      } else {
+        delete params.dateFrom
+        delete params.dateTo
+      }
+      setQueryParams(params)
+      loadTransactions(1, transactions.pageSize, params)
+    }, 300)
   }
 
   // --- Edit existing row ---
@@ -783,6 +843,16 @@ export default function Transactions(): React.JSX.Element {
           )}
         </Space>
         <Space>
+          <RangePicker
+            size="small"
+            value={dateRange}
+            onChange={(dates) => handleDateRangeChange(dates as [Dayjs | null, Dayjs | null] | null)}
+            presets={rangePresets}
+            format="YYYY-MM-DD"
+            placeholder={['开始日期', '结束日期']}
+            disabled={editingKey !== null || newRow !== null}
+            style={{ width: 240 }}
+          />
           <Input.Search
             placeholder="搜索描述"
             allowClear
