@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from 'react'
+import { useRef, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
@@ -30,6 +30,7 @@ function formatAmount(value: number): string {
 export default function BarChart({ data, year, type }: BarChartProps): React.JSX.Element {
   const navigate = useNavigate()
   const chartRef = useRef<ReactECharts>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   // 记录当前是否处于「独显」模式，以及独显的分类名
   const soloRef = useRef<string | null>(null)
 
@@ -66,59 +67,52 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
     }
   }, [data])
 
-  // Bind right-click event using zrender after chart is ready
-  useEffect(() => {
+  // Handle right-click on chart container
+  const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>): void => {
+    e.preventDefault()
+    if (!data) return
+
     const chart = chartRef.current?.getEchartsInstance()
     if (!chart) return
 
-    const zr = chart.getZr()
+    // Get click position relative to chart container
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    const handleZrContextMenu = (e: {
-      event: MouseEvent
-      offsetX: number
-      offsetY: number
-    }): void => {
-      e.event.preventDefault()
-      if (!data) return
+    const offsetX = e.clientX - rect.left
+    const offsetY = e.clientY - rect.top
 
-      // Convert pixel coordinates to grid coordinates
-      const pointInGrid = chart.convertFromPixel({ seriesIndex: 0 }, [e.offsetX, e.offsetY])
-      if (!pointInGrid) return
+    // Convert pixel coordinates to grid coordinates
+    const pointInGrid = chart.convertFromPixel({ seriesIndex: 0 }, [offsetX, offsetY])
+    if (!pointInGrid) return
 
-      const [dataIndex, seriesIndex] = pointInGrid
-      if (dataIndex == null || seriesIndex == null) return
+    const [dataIndex, seriesIndex] = pointInGrid
+    if (dataIndex == null || seriesIndex == null) return
 
-      // Get series info
-      const series = chart.getOption().series as Array<{
-        name: string
-        data: number[]
-      }>
-      if (!series || seriesIndex < 0 || seriesIndex >= series.length) return
+    // Get series info
+    const series = chart.getOption().series as Array<{
+      name: string
+      data: number[]
+    }>
+    if (!series || seriesIndex < 0 || seriesIndex >= series.length) return
 
-      const categoryName = series[seriesIndex].name
-      const monthIndex = Math.floor(dataIndex)
+    const categoryName = series[seriesIndex].name
+    const monthIndex = Math.floor(dataIndex)
 
-      if (!categoryName || monthIndex < 0 || monthIndex >= 12) return
+    if (!categoryName || monthIndex < 0 || monthIndex >= 12) return
 
-      // Find category ID from data
-      const row = data.rows.find((r) => r.category_name === categoryName)
-      if (!row) return
+    // Find category ID from data
+    const row = data.rows.find((r) => r.category_name === categoryName)
+    if (!row) return
 
-      setContextMenu({
-        visible: true,
-        x: e.event.clientX,
-        y: e.event.clientY,
-        monthIndex,
-        categoryName,
-        categoryId: row.category_id
-      })
-    }
-
-    zr.on('contextmenu', handleZrContextMenu)
-
-    return () => {
-      zr.off('contextmenu', handleZrContextMenu)
-    }
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      monthIndex,
+      categoryName,
+      categoryId: row.category_id
+    })
   }, [data])
 
   // Navigate to transactions page with filters
@@ -202,14 +196,20 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
 
   return (
     <>
-      <ReactECharts
-        ref={chartRef}
-        option={option}
-        style={{ height: 380 }}
-        onEvents={{
-          legendselectchanged: handleLegendClick
-        }}
-      />
+      <div
+        ref={containerRef}
+        onContextMenu={handleContextMenu}
+        style={{ height: 380, position: 'relative' }}
+      >
+        <ReactECharts
+          ref={chartRef}
+          option={option}
+          style={{ height: '100%', width: '100%' }}
+          onEvents={{
+            legendselectchanged: handleLegendClick
+          }}
+        />
+      </div>
       <ContextMenu
         visible={contextMenu.visible}
         x={contextMenu.x}
