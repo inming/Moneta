@@ -279,6 +279,61 @@ created_at DATETIME DEFAULT datetime('now', 'localtime')
 - `PinInput` 组件使用 `forwardRef` + `useImperativeHandle` 暴露 `clear()`、`shake()`、`focus()` 方法，供父组件控制状态
 - 该组件被 `LockScreen`、`PinSetup`、`PinManager` 三处复用
 
+### ContextMenu 右键菜单组件
+
+通用右键菜单组件（`src/renderer/src/components/ContextMenu/index.tsx`）：
+
+**使用场景**
+- 图表数据块右键操作（查看明细）
+- 任何需要自定义右键菜单的交互
+
+**API 设计**
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `visible` | boolean | 是否显示 |
+| `x` | number | 菜单位置 X（clientX） |
+| `y` | number | 菜单位置 Y（clientY） |
+| `items` | MenuItem[] | 菜单项数组 |
+| `onClose` | () => void | 关闭回调 |
+
+**MenuItem 结构**
+```typescript
+interface MenuItem {
+  key: string      // 唯一标识
+  label: string    // 显示文本
+  onClick: () => void  // 点击回调
+}
+```
+
+**实现要点**
+- 使用 `position: fixed` 定位，避免父容器裁剪
+- 自动调整位置防止超出视口边界
+- 点击外部或按 ESC 键自动关闭
+- 支持悬停高亮效果
+
+**使用示例**
+```typescript
+const [contextMenu, setContextMenu] = useState({
+  visible: false, x: 0, y: 0, /* ... */ })
+
+// 在容器上绑定右键事件
+<div onContextMenu={(e) => {
+  e.preventDefault()
+  setContextMenu({ visible: true, x: e.clientX, y: e.clientY, ... })
+}}>
+  {/* 内容 */}
+</div>
+
+// 渲染菜单
+<ContextMenu
+  visible={contextMenu.visible}
+  x={contextMenu.x}
+  y={contextMenu.y}
+  items={[{ key: 'view', label: '查看', onClick: handleView }]}
+  onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
+/>
+```
+
 ## AI 识别确认界面架构
 
 ### 数据流与状态管理
@@ -383,6 +438,38 @@ const newRow = {
   - 通过 `soloRef` 跟踪当前独显状态，`onEvents.legendselectchanged` 拦截原生行为
 - Tooltip 按金额降序排列，过滤 0 值，多系列时显示合计行
 
+### 图表数据下钻（右键查看明细）
+
+趋势柱状图支持右键点击数据块，跳转至数据浏览页查看明细：
+
+**实现要点**
+- 图表容器使用 `div` 包裹，在容器上绑定 `onContextMenu` 原生事件
+- 使用 `chart.convertFromPixel({ gridIndex: 0 }, [x, y])` 将像素坐标转换为数据坐标
+- 堆叠柱状图需要特殊处理：根据 y 值和 series 的累积值计算点击的是哪个分类
+- 自定义 `ContextMenu` 组件使用 `position: fixed` 定位，支持点击外部关闭
+
+**状态传递**
+- 筛选条件通过 URL query parameters 传递：`dateFrom`、`dateTo`、`type`、`category_id`
+- 数据浏览页使用 `useSearchParams` 解析参数，自动应用筛选
+- 表格列通过 `filteredValue` 属性显示当前筛选状态
+
+**代码模式**
+```typescript
+// 堆叠柱状图检测点击的分类
+let cumulativeValue = 0
+for (let i = 0; i < series.length; i++) {
+  const seriesData = series[i].data[dataIndex] || 0
+  if (yValue >= cumulativeValue && yValue <= cumulativeValue + seriesData) {
+    // 点击的是 series[i]
+    break
+  }
+  cumulativeValue += seriesData
+}
+
+// 导航到数据浏览页
+navigate(`/?dateFrom=${dateFrom}&dateTo=${dateTo}&category_id=${categoryId}&type=${type}`)
+```
+
 ## 颜色体系
 
 交易类型在整个应用中使用统一的颜色体系（定义在 `src/shared/constants/transaction-type.ts`）：
@@ -413,6 +500,30 @@ const newRow = {
 - 类型变更时需检查分类是否仍属于新类型（`getCategoriesForType()`），不匹配则自动清空
 - `update` API 使用动态 SET 子句，仅发送变更字段（`UpdateTransactionDTO`）
 - 日期记忆：`lastInputDate` 在新增行保存后更新，会话内有效
+
+### URL 参数驱动的筛选
+
+数据浏览页支持从 URL query parameters 解析筛选条件，用于图表下钻等场景：
+
+**支持的参数**
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `dateFrom` | string | 日期范围开始（YYYY-MM-DD） |
+| `dateTo` | string | 日期范围结束（YYYY-MM-DD） |
+| `type` | enum | 交易类型（expense/income/investment） |
+| `category_id` | number | 分类 ID |
+| `keyword` | string | 关键词搜索（描述字段） |
+
+**实现要点**
+- 使用 `useSearchParams` 解析 URL 参数
+- 在 `useEffect` 中初始化时解析并应用筛选条件
+- 日期范围需要同时设置 `dateFrom` 和 `dateTo` 才生效
+- 表格列通过 `filteredValue` 属性同步筛选状态显示
+
+**示例 URL**
+```
+/?dateFrom=2024-10-01&dateTo=2024-10-31&category_id=5&type=expense
+```
 
 ### Repository 层 CRUD 模式
 
