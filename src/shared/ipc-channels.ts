@@ -74,5 +74,11 @@ export const IPC_CHANNELS = {
   MCP_IMPORT_OPEN: 'mcp:import:open',
   MCP_IMPORT_GET_DATA: 'mcp:import:get-data',
   MCP_IMPORT_CLEAR_DATA: 'mcp:import:clear-data',
-  MCP_IMPORT_CONFIRM: 'mcp:import:confirm'
+  MCP_IMPORT_CONFIRM: 'mcp:import:confirm',
+
+  // 导入草稿
+  DRAFT_GET: 'db:draft:get',
+  DRAFT_SAVE: 'db:draft:save',
+  DRAFT_DELETE: 'db:draft:delete',
+  DRAFT_GET_SUMMARY: 'db:draft:get-summary'
 } as const

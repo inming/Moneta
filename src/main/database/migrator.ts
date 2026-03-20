@@ -43,6 +43,7 @@ export function runMigrations(db: Database.Database): void {
     if (!upSql.trim()) continue
 
     db.transaction(() => {
+      console.log(`[Migration] Executing ${file}:\n${upSql}`)
       db.exec(upSql)
       db.prepare('INSERT INTO _migrations (name) VALUES (?)').run(file)
     })()
@@ -58,5 +59,6 @@ function extractUpSection(sql: string): string {
   const start = upIndex + '-- up'.length
   const end = downIndex === -1 ? sql.length : downIndex
 
-  return sql.slice(start, end)
+  // 移除开头的换行符和空白字符
+  return sql.slice(start, end).trim()
 }

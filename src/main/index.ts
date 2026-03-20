@@ -12,6 +12,7 @@ import { registerAuthHandlers } from './ipc/auth.ipc'
 import { registerStatsHandlers } from './ipc/stats.ipc'
 import { registerMCPConfigHandlers, registerMCPHttpStatusListener } from './ipc/mcp-config.ipc'
 import { registerMCPImportHandlers } from './ipc/mcp-import.ipc'
+import { registerDraftHandlers } from './ipc/draft.ipc'
 import { setMCPMainWindow, mcpHttpServer } from './services/mcp-http-server'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
 
@@ -31,6 +32,7 @@ app.whenReady().then(() => {
   registerStatsHandlers()
   registerMCPConfigHandlers()
   registerMCPImportHandlers()
+  registerDraftHandlers()
 
   const mainWindow = createWindow()
 

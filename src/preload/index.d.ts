@@ -9,7 +9,8 @@ import type {
   YearRangeData, YearlyCategoryParams, YearlyCategoryData,
   AIProviderView, UpdateAIProviderDTO, AITestResult,
   RecognizeRequest, RecognizeResponse,
-  VerifyPINResult, ChangePINResult
+  VerifyPINResult, ChangePINResult,
+  ImportDraft, DraftSummary, SaveDraftDTO
 } from '../shared/types'
 
 export interface MonetaAPI {
@@ -87,6 +88,12 @@ export interface MonetaAPI {
     confirmImport(transactions: unknown[]): Promise<{ success: boolean; count?: number; error?: string }>
     onHttpStatusChanged(callback: (status: { running: boolean; port: number; error?: string }) => void): () => void
     onImportOpen(callback: () => void): () => void
+  }
+  draft: {
+    get(): Promise<ImportDraft | undefined>
+    save(dto: SaveDraftDTO): Promise<ImportDraft>
+    delete(): Promise<void>
+    getSummary(): Promise<DraftSummary>
   }
 }
 

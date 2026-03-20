@@ -167,9 +167,22 @@ chore: 升级 electron-vite 版本
 
 - 迁移文件放在 `src/main/database/migrations/`
 - 文件名格式：`001_create_transactions.sql`（三位数序号 + 描述）
-- 每个迁移文件包含 `-- up` 和 `-- down` 两部分
+- 每个迁移文件包含 `-- up` 和 `-- down` 两部分（**注意**：使用 `-- up` 和 `-- down` 作为标记，后面不加冒号）
 - 应用启动时自动执行未运行的迁移
 - 迁移必须是幂等的，先检查再执行
+
+### SQL 语法注意事项
+
+**DEFAULT 值必须使用括号包裹函数调用**：
+```sql
+-- ✅ 正确
+created_at TEXT DEFAULT (datetime('now', 'localtime'))
+
+-- ❌ 错误（会导致 "near '(' : syntax error"）
+created_at DATETIME DEFAULT datetime('now', 'localtime')
+```
+
+**CHECK 约束**：SQLite 支持 CHECK 约束，但注意版本兼容性，必要时可省略。
 
 ## 数据库迁移模式
 
@@ -498,6 +511,39 @@ Tab 状态通过 URL search params（`?tab=xxx`）持久化，支持直接链接
 
 - 数据浏览页默认按日期逆序（`sortField: 'date', sortOrder: 'descend'`），确保用户打开即看到最新数据
 - 初始查询参数和 `queryParams` 状态默认值均设置了该排序，Ant Design Table 列定义通过 `defaultSortOrder: 'descend'` 显示排序指示器
+
+## 导入草稿自动保存架构
+
+### 设计决策
+
+- **全局唯一草稿**：AI 识别和 MCP 导入共用同一张表 `import_draft`，单行设计（`id = 'current'`），始终只保留一份草稿
+- **覆盖策略**：新导入自动覆盖旧草稿，无需用户确认，降低使用门槛
+- **差异化恢复入口**：
+  - 数据浏览页显示草稿提示卡片，提供「继续导入」和「放弃」按钮
+  - MCP 新数据直接覆盖旧草稿，仅显示弱提示，不打断 AI 助手工作流
+
+### 草稿存储策略
+
+| 场景 | 保存行为 | 实现方式 |
+|------|---------|---------|
+| 首次进入导入页 | 立即保存 | `useEffect` 初始化时创建草稿 |
+| 编辑单元格 | 防抖 5 秒保存 | `setTimeout` 延迟执行 |
+| 切换操作人/日期 | 即时保存 | 直接调用 `saveDraftImmediate()` |
+| 删除/插入/追加行 | 即时保存 | 直接调用 `saveDraftImmediate()` |
+| 点击返回 | 即时保存 | `handleCancel` 中同步保存 |
+| 确认入库 | 删除草稿 | `clearDraft()` 清理数据 |
+
+### 性能优化
+
+- **虚拟滚动**：`Table` 组件启用 `virtual` 属性，配合固定高度 `scroll.y`，流畅支持 100+ 条数据编辑
+- **Columns 缓存**：使用 `useMemo` 缓存表格列配置，避免每次渲染重新创建
+- **防抖写入**：单元格编辑采用防抖策略，避免频繁 SQLite 写入导致卡顿
+
+### 状态管理
+
+- **Zustand Store**：`draft.store.ts` 提供缓存的草稿摘要，用于数据浏览页提示显示
+- **直接数据库查询**：判断覆盖、加载草稿等关键操作直接查询数据库，不依赖本地缓存，确保状态准确
+- **useRef 标志**：`hasCheckedDraftRef` 和 `importedRef` 用于控制单次检查和阻止导入后轮询
 
 ## MCP (Model Context Protocol) 架构
 

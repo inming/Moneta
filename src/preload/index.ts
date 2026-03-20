@@ -90,6 +90,12 @@ const api = {
         ipcRenderer.removeListener(IPC_CHANNELS.MCP_IMPORT_OPEN, handler)
       }
     }
+  },
+  draft: {
+    get: () => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_GET),
+    save: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_SAVE, dto),
+    delete: () => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_DELETE),
+    getSummary: () => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_GET_SUMMARY)
   }
 }
 

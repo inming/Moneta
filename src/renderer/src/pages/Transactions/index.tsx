@@ -2,21 +2,27 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Table, Button, Select, DatePicker, InputNumber, Input, Space,
-  Typography, message, Popconfirm, Tag
+  Typography, message, Popconfirm, Tag, Alert, Modal
 } from 'antd'
 import {
   PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, SearchOutlined,
-  CameraOutlined
+  CameraOutlined, FileTextOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
+
+dayjs.extend(relativeTime)
+dayjs.locale('zh-cn')
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import type {
   Transaction, TransactionType, Category, Operator,
   PaginatedResult, CreateTransactionDTO, UpdateTransactionDTO,
-  TransactionListParams
+  TransactionListParams, ImportDraft
 } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
+import { useDraftStore } from '../../stores/draft.store'
 
 const { Text } = Typography
 
@@ -42,6 +48,7 @@ function formatDateTime(value: string | null | undefined): string {
 
 export default function Transactions(): React.JSX.Element {
   const navigate = useNavigate()
+  const draftStore = useDraftStore()
   const [transactions, setTransactions] = useState<PaginatedResult<Transaction>>({
     items: [],
     total: 0,
@@ -51,6 +58,7 @@ export default function Transactions(): React.JSX.Element {
   const [categories, setCategories] = useState<Category[]>([])
   const [operators, setOperators] = useState<Operator[]>([])
   const [loading, setLoading] = useState(false)
+  const [draftModalOpen, setDraftModalOpen] = useState(false)
 
   // Editing state
   const [editingKey, setEditingKey] = useState<number | null>(null)
@@ -93,7 +101,8 @@ export default function Transactions(): React.JSX.Element {
     Promise.all([
       window.api.transaction.list({ page: 1, pageSize: 50, sortField: 'date', sortOrder: 'descend' }),
       window.api.category.list(),
-      window.api.operator.list()
+      window.api.operator.list(),
+      draftStore.initialize()
     ]).then(([txResult, cats, ops]) => {
       setTransactions(txResult)
       setCategories(cats)
@@ -624,6 +633,124 @@ export default function Transactions(): React.JSX.Element {
       <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16 }}>
         数据浏览
       </Text>
+
+      {/* Draft Alert */}
+      {draftStore.summary.exists && (
+        <Alert
+          message={
+            <Space>
+              <FileTextOutlined />
+              <span>
+                有未完成的导入草稿（{draftStore.summary.count}条
+                {draftStore.summary.missingCategoryCount > 0 && (
+                  <span style={{ color: '#ff4d4f' }}>，{draftStore.summary.missingCategoryCount}条待补充分类</span>
+                )}）
+              </span>
+              <Tag color={draftStore.summary.source === 'ai' ? 'blue' : 'purple'}>
+                {draftStore.summary.source === 'ai' ? 'AI识别' : 'MCP导入'}
+              </Tag>
+              {draftStore.summary.updatedAt && (
+                <span style={{ color: '#888', fontSize: 12 }}>
+                  最后编辑：{dayjs(draftStore.summary.updatedAt).fromNow()}
+                </span>
+              )}
+            </Space>
+          }
+          type="warning"
+          showIcon={false}
+          style={{
+            marginBottom: 12,
+            borderLeft: '4px solid #faad14',
+            backgroundColor: '#fffbe6'
+          }}
+          action={
+            <Space>
+              <Button
+                size="small"
+                type="primary"
+                onClick={() => setDraftModalOpen(true)}
+              >
+                继续导入
+              </Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  Modal.confirm({
+                    title: '放弃草稿',
+                    icon: <ExclamationCircleOutlined />,
+                    content: '确定放弃未完成的导入草稿？此操作不可恢复。',
+                    okText: '确定放弃',
+                    okType: 'danger',
+                    cancelText: '取消',
+                    onOk: async () => {
+                      await draftStore.deleteDraft()
+                      message.success('已放弃草稿')
+                    }
+                  })
+                }}
+              >
+                放弃
+              </Button>
+            </Space>
+          }
+        />
+      )}
+
+      {/* Draft Continue Modal */}
+      <Modal
+        title="继续未完成的导入"
+        open={draftModalOpen}
+        onCancel={() => setDraftModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setDraftModalOpen(false)}>
+            取消
+          </Button>,
+          <Button
+            key="continue"
+            type="primary"
+            onClick={async () => {
+              setDraftModalOpen(false)
+              const draft = await draftStore.getDraft()
+              if (draft) {
+                if (draft.source === 'ai') {
+                  navigate('/ai-recognition')
+                } else {
+                  navigate('/mcp-import')
+                }
+              }
+            }}
+          >
+            继续导入
+          </Button>
+        ]}
+      >
+        {draftStore.summary.exists ? (
+          <div>
+            <p>
+              <strong>来源：</strong>
+              {draftStore.summary.source === 'ai' ? 'AI 图片识别' : 'MCP 导入'}
+            </p>
+            <p>
+              <strong>交易条数：</strong>
+              {draftStore.summary.count} 条
+            </p>
+            {draftStore.summary.missingCategoryCount > 0 && (
+              <p style={{ color: '#ff4d4f' }}>
+                <strong>待补充分类：</strong>
+                {draftStore.summary.missingCategoryCount} 条
+              </p>
+            )}
+            {draftStore.summary.updatedAt && (
+              <p>
+                <strong>最后编辑：</strong>
+                {dayjs(draftStore.summary.updatedAt).format('YYYY-MM-DD HH:mm:ss')}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p>草稿已不存在</p>
+        )}
+      </Modal>
 
       {/* Toolbar */}
       <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
