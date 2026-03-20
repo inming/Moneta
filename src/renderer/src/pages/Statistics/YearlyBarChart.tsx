@@ -70,48 +70,27 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
     if (!data) return
 
     const chart = chartRef.current?.getEchartsInstance()
-    if (!chart) {
-      console.log('Chart instance not available')
-      return
-    }
+    if (!chart) return
 
     // Get click position relative to chart container
     const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) {
-      console.log('Container rect not available')
-      return
-    }
+    if (!rect) return
 
     const offsetX = e.clientX - rect.left
     const offsetY = e.clientY - rect.top
 
-    console.log('Right click at:', offsetX, offsetY)
-
     // Convert pixel coordinates to grid coordinates using grid
     const pointInGrid = chart.convertFromPixel({ gridIndex: 0 }, [offsetX, offsetY])
-    console.log('Point in grid:', pointInGrid)
-
-    if (!pointInGrid) {
-      console.log('convertFromPixel returned null')
-      return
-    }
+    if (!pointInGrid) return
 
     const [xIndex, yValue] = pointInGrid
-    console.log('xIndex:', xIndex, 'yValue:', yValue)
 
     // Check if xIndex is valid
-    if (xIndex == null || xIndex < 0 || xIndex >= data.rows.length) {
-      console.log('Invalid xIndex')
-      return
-    }
+    if (xIndex == null || xIndex < 0 || xIndex >= data.rows.length) return
 
     const rowIndex = Math.floor(xIndex)
     const year = data.rows[rowIndex]?.year
-
-    if (!year) {
-      console.log('Year not found')
-      return
-    }
+    if (!year) return
 
     // Get all series to find which one was clicked
     const series = chart.getOption().series as Array<{
@@ -120,12 +99,7 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
       type: string
     }>
 
-    if (!series || series.length === 0) {
-      console.log('No series found')
-      return
-    }
-
-    console.log('Series count:', series.length)
+    if (!series || series.length === 0) return
 
     // For stacked bar chart, calculate which series was clicked
     let cumulativeValue = 0
@@ -136,8 +110,6 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
       const seriesStart = cumulativeValue
       const seriesEnd = cumulativeValue + seriesData
 
-      console.log(`Series ${i} (${series[i].name}): start=${seriesStart}, end=${seriesEnd}, clickedY=${yValue}`)
-
       if (yValue >= seriesStart && yValue <= seriesEnd) {
         clickedSeriesIndex = i
         break
@@ -146,23 +118,15 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
       cumulativeValue = seriesEnd
     }
 
-    if (clickedSeriesIndex === -1) {
-      console.log('Could not determine which series was clicked')
-      return
-    }
+    if (clickedSeriesIndex === -1) return
 
     const categoryName = series[clickedSeriesIndex].name
-    console.log('Clicked category:', categoryName)
 
     // Find category ID from data
     const catIndex = data.categories.findIndex((c) => c.name === categoryName)
-    if (catIndex === -1) {
-      console.log('Category not found')
-      return
-    }
+    if (catIndex === -1) return
 
     const categoryId = data.categories[catIndex].id
-    console.log('Showing context menu for:', categoryName, 'year:', year)
 
     setContextMenu({
       visible: true,
