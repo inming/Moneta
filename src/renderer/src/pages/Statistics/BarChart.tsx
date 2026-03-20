@@ -162,7 +162,7 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
       return
     }
 
-    console.log('Showing context menu for:', categoryName, 'month:', monthIndex)
+    console.log('Setting context menu state to visible=true')
 
     setContextMenu({
       visible: true,
@@ -172,6 +172,8 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
       categoryName,
       categoryId: row.category_id
     })
+
+    console.log('Context menu state set')
   }, [data])
 
   // Navigate to transactions page with filters

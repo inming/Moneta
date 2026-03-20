@@ -15,6 +15,7 @@ interface ContextMenuProps {
 }
 
 export default function ContextMenu({ visible, x, y, items, onClose }: ContextMenuProps): React.JSX.Element | null {
+  console.log('ContextMenu render:', { visible, x, y, itemCount: items.length })
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu when clicking outside
