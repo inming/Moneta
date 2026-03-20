@@ -630,7 +630,7 @@ export default function Transactions(): React.JSX.Element {
 
   return (
     <div>
-      <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16 }}>
+      <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16, userSelect: 'none' }}>
         数据浏览
       </Text>
 

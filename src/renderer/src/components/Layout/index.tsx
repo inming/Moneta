@@ -48,23 +48,36 @@ export default function Layout(): React.JSX.Element {
           }}
         >
           <div
-            style={{ padding: '16px', fontSize: '18px', fontWeight: 600, textAlign: 'center' }}
+            style={{
+              padding: '16px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              borderBottom: '1px solid #f0f0f0',
+              userSelect: 'none'
+            }}
           >
-            Moneta
+            <img
+              src="/logo.png"
+              alt="Moneta"
+              style={{ height: 36, width: 'auto', objectFit: 'contain' }}
+            />
+            <span style={{ fontSize: '18px', fontWeight: 600 }}>Moneta</span>
           </div>
           <Menu
             mode="inline"
             selectedKeys={[location.pathname]}
             items={menuItems}
             onClick={handleMenuClick}
-            style={{ flex: 1 }}
+            style={{ flex: 1, userSelect: 'none' }}
           />
           <Menu
             mode="inline"
             selectable={false}
             items={[{ key: LOCK_KEY, icon: <LockOutlined />, label: '锁屏' }]}
             onClick={handleMenuClick}
-            style={{ borderTop: '1px solid #f0f0f0' }}
+            style={{ borderTop: '1px solid #f0f0f0', userSelect: 'none' }}
           />
         </div>
       </Sider>

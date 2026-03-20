@@ -56,7 +56,7 @@ export default function Settings(): React.JSX.Element {
 
   return (
     <div>
-      <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16 }}>
+      <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16, userSelect: 'none' }}>
         设置
       </Text>
       <Tabs items={tabItems} activeKey={activeTab} onChange={handleTabChange} />

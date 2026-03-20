@@ -1,6 +1,5 @@
 import { useRef, useCallback, useState } from 'react'
 import { Typography, message } from 'antd'
-import { LockOutlined } from '@ant-design/icons'
 import PinInput, { type PinInputRef } from './PinInput'
 import { useAuthStore } from '../../stores/auth.store'
 
@@ -80,7 +79,11 @@ export default function PinSetup(): React.JSX.Element {
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)'
         }}
       >
-        <LockOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
+        <img
+          src="/logo.png"
+          alt="Moneta"
+          style={{ height: 64, width: 'auto', objectFit: 'contain', marginBottom: 16 }}
+        />
         <Title level={3} style={{ marginBottom: 8 }}>
           Moneta
         </Title>
