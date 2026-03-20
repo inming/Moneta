@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Table, Button, Select, DatePicker, InputNumber, Input, Space,
   Typography, message, Popconfirm, Tag, Alert, Modal
@@ -58,6 +58,7 @@ function formatDateTime(value: string | null | undefined): string {
 
 export default function Transactions(): React.JSX.Element {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const draftStore = useDraftStore()
   const [transactions, setTransactions] = useState<PaginatedResult<Transaction>>({
     items: [],
@@ -111,9 +112,52 @@ export default function Transactions(): React.JSX.Element {
     }
   }, [])
 
+  // Parse URL search params on mount
   useEffect(() => {
+    const params: TransactionListParams = {
+      sortField: 'date',
+      sortOrder: 'descend'
+    }
+
+    // Parse date range
+    const dateFrom = searchParams.get('dateFrom')
+    const dateTo = searchParams.get('dateTo')
+    if (dateFrom && dateTo) {
+      const startDate = dayjs(dateFrom)
+      const endDate = dayjs(dateTo)
+      if (startDate.isValid() && endDate.isValid()) {
+        params.dateFrom = dateFrom
+        params.dateTo = dateTo
+        setDateRange([startDate, endDate])
+      }
+    }
+
+    // Parse type filter
+    const typeParam = searchParams.get('type')
+    if (typeParam && ['expense', 'income', 'investment'].includes(typeParam)) {
+      params.type = typeParam as TransactionType
+    }
+
+    // Parse category filter
+    const categoryId = searchParams.get('category_id')
+    if (categoryId) {
+      const catId = parseInt(categoryId, 10)
+      if (!isNaN(catId)) {
+        params.category_id = catId
+      }
+    }
+
+    // Parse keyword
+    const keywordParam = searchParams.get('keyword')
+    if (keywordParam) {
+      params.keyword = keywordParam
+      setKeyword(keywordParam)
+    }
+
+    setQueryParams(params)
+
     Promise.all([
-      window.api.transaction.list({ page: 1, pageSize: 50, sortField: 'date', sortOrder: 'descend' }),
+      window.api.transaction.list({ page: 1, pageSize: 50, ...params }),
       window.api.category.list(),
       window.api.operator.list(),
       draftStore.initialize()
@@ -592,6 +636,17 @@ export default function Transactions(): React.JSX.Element {
     }
   }
 
+  // Get filtered values from URL params for table filter display
+  const getTypeFilteredValue = (): string[] | undefined => {
+    const typeParam = searchParams.get('type')
+    return typeParam ? [typeParam] : undefined
+  }
+
+  const getCategoryFilteredValue = (): number[] | undefined => {
+    const categoryId = searchParams.get('category_id')
+    return categoryId ? [parseInt(categoryId, 10)] : undefined
+  }
+
   const columns: ColumnsType<Transaction> = [
     {
       title: '日期',
@@ -606,6 +661,7 @@ export default function Transactions(): React.JSX.Element {
       dataIndex: 'type',
       width: 100,
       filters: typeOptions.map((o) => ({ text: o.label, value: o.value })),
+      filteredValue: getTypeFilteredValue(),
       render: (val: TransactionType, record) => renderCell('type', val, record)
     },
     {
@@ -621,6 +677,7 @@ export default function Transactions(): React.JSX.Element {
       dataIndex: 'category_id',
       width: 130,
       filters: categories.map((c) => ({ text: c.name, value: c.id })),
+      filteredValue: getCategoryFilteredValue(),
       render: (val: number, record) => renderCell('category_id', val, record)
     },
     {

@@ -91,11 +91,11 @@ export default function Statistics(): React.JSX.Element {
       </Card>
       {viewTab === 'monthly' ? (
         <Card size="small" title="月度趋势">
-          <BarChart data={crossTableData} />
+          <BarChart data={crossTableData} year={year} type={type} />
         </Card>
       ) : (
         <Card size="small" title="年度趋势">
-          <YearlyBarChart data={yearlyCategoryData} />
+          <YearlyBarChart data={yearlyCategoryData} type={type} />
         </Card>
       )}
     </div>
