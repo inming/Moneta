@@ -65,44 +65,104 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
   // Handle right-click on chart container
   const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>): void => {
     e.preventDefault()
+    e.stopPropagation()
+
     if (!data) return
 
     const chart = chartRef.current?.getEchartsInstance()
-    if (!chart) return
+    if (!chart) {
+      console.log('Chart instance not available')
+      return
+    }
 
     // Get click position relative to chart container
     const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) return
+    if (!rect) {
+      console.log('Container rect not available')
+      return
+    }
 
     const offsetX = e.clientX - rect.left
     const offsetY = e.clientY - rect.top
 
-    // Convert pixel coordinates to grid coordinates
-    const pointInGrid = chart.convertFromPixel({ seriesIndex: 0 }, [offsetX, offsetY])
-    if (!pointInGrid) return
+    console.log('Right click at:', offsetX, offsetY)
 
-    const [dataIndex, seriesIndex] = pointInGrid
-    if (dataIndex == null || seriesIndex == null) return
+    // Convert pixel coordinates to grid coordinates using grid
+    const pointInGrid = chart.convertFromPixel({ gridIndex: 0 }, [offsetX, offsetY])
+    console.log('Point in grid:', pointInGrid)
 
-    // Get series info
+    if (!pointInGrid) {
+      console.log('convertFromPixel returned null')
+      return
+    }
+
+    const [xIndex, yValue] = pointInGrid
+    console.log('xIndex:', xIndex, 'yValue:', yValue)
+
+    // Check if xIndex is valid
+    if (xIndex == null || xIndex < 0 || xIndex >= data.rows.length) {
+      console.log('Invalid xIndex')
+      return
+    }
+
+    const rowIndex = Math.floor(xIndex)
+    const year = data.rows[rowIndex]?.year
+
+    if (!year) {
+      console.log('Year not found')
+      return
+    }
+
+    // Get all series to find which one was clicked
     const series = chart.getOption().series as Array<{
       name: string
       data: number[]
+      type: string
     }>
-    if (!series || seriesIndex < 0 || seriesIndex >= series.length) return
 
-    const categoryName = series[seriesIndex].name
-    const rowIndex = Math.floor(dataIndex)
+    if (!series || series.length === 0) {
+      console.log('No series found')
+      return
+    }
 
-    if (!categoryName || rowIndex < 0 || rowIndex >= data.rows.length) return
+    console.log('Series count:', series.length)
+
+    // For stacked bar chart, calculate which series was clicked
+    let cumulativeValue = 0
+    let clickedSeriesIndex = -1
+
+    for (let i = 0; i < series.length; i++) {
+      const seriesData = series[i].data[rowIndex] || 0
+      const seriesStart = cumulativeValue
+      const seriesEnd = cumulativeValue + seriesData
+
+      console.log(`Series ${i} (${series[i].name}): start=${seriesStart}, end=${seriesEnd}, clickedY=${yValue}`)
+
+      if (yValue >= seriesStart && yValue <= seriesEnd) {
+        clickedSeriesIndex = i
+        break
+      }
+
+      cumulativeValue = seriesEnd
+    }
+
+    if (clickedSeriesIndex === -1) {
+      console.log('Could not determine which series was clicked')
+      return
+    }
+
+    const categoryName = series[clickedSeriesIndex].name
+    console.log('Clicked category:', categoryName)
 
     // Find category ID from data
     const catIndex = data.categories.findIndex((c) => c.name === categoryName)
-    if (catIndex === -1) return
+    if (catIndex === -1) {
+      console.log('Category not found')
+      return
+    }
 
     const categoryId = data.categories[catIndex].id
-    const year = data.rows[rowIndex]?.year
-    if (!year) return
+    console.log('Showing context menu for:', categoryName, 'year:', year)
 
     setContextMenu({
       visible: true,
