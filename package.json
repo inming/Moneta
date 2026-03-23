@@ -12,8 +12,10 @@
     "preview": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
     "package": "electron-vite build && electron-builder --config",
-    "package:win": "electron-vite build && electron-builder --win --config",
+    "package:win": "npm run rebuild:win && electron-vite build && electron-builder --win --config",
+    "package:win:docker": "mkdir -p .docker-home && docker run --rm --user $(id -u):$(id -g) -e HOME=/project/.docker-home -e ELECTRON_CACHE=/project/.cache -e npm_config_cache=/project/.npm -v $(pwd):/project -w /project electronuserland/builder:wine bash -c 'npm run build && npx electron-builder --win --x64 --config.npmRebuild=true'",
     "package:mac": "electron-vite build && electron-builder --mac --config",
+    "rebuild:win": "electron-rebuild --platform=win32 --arch=x64",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
@@ -63,6 +65,8 @@
       "out/**/*",
       "resources/**/*"
     ],
+    "npmRebuild": true,
+    "buildDependenciesFromSource": true,
     "win": {
       "target": "nsis"
     },

@@ -9,3 +9,8 @@ Thumbs.db
 .env
 .env.local
 *.local.json
+
+# Docker 构建缓存
+.cache/
+.npm/
+.docker-home/
