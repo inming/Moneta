@@ -68,7 +68,8 @@
     "npmRebuild": true,
     "buildDependenciesFromSource": true,
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "resources/logo.ico"
     },
     "mac": {
       "target": "dmg"

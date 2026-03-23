@@ -59,7 +59,7 @@ export default function Layout(): React.JSX.Element {
             }}
           >
             <img
-              src="/logo.png"
+              src="./logo.png"
               alt="Moneta"
               style={{ height: 36, width: 'auto', objectFit: 'contain' }}
             />

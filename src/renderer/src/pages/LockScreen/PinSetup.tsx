@@ -80,7 +80,7 @@ export default function PinSetup(): React.JSX.Element {
         }}
       >
         <img
-          src="/logo.png"
+          src="./logo.png"
           alt="Moneta"
           style={{ height: 64, width: 'auto', objectFit: 'contain', marginBottom: 16 }}
         />

@@ -35,11 +35,6 @@ export function createWindow(): BrowserWindow {
 
   console.log('[Window] BrowserWindow created')
 
-  // Windows 下立即打开 DevTools 帮助调试
-  if (process.platform === 'win32' && !is.dev) {
-    mainWindow.webContents.openDevTools()
-  }
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
