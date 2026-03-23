@@ -93,6 +93,63 @@ npm run test:watch        # 监听模式
 npm run db:migrate        # 执行数据库迁移
 ```
 
+## 测试与发布
+
+### 跨平台开发（WSL2 → Windows）
+
+本项目支持在 WSL2 中开发，在 Windows 上运行测试。
+
+**代码同步脚本**：`scripts/sync-to-windows.sh`
+
+```bash
+# 同步到 Windows 目录
+./scripts/sync-to-windows.sh /mnt/c/Users/<username>/workspace/Moneta
+
+# 或设置环境变量后使用
+export WIN_PATH=/mnt/c/Users/<username>/workspace/Moneta
+./scripts/sync-to-windows.sh
+```
+
+**Windows 端准备（只需一次）**：
+
+```powershell
+# 安装 Windows 版依赖
+cd C:\Users\<username>\workspace\Moneta
+npm install
+```
+
+**运行测试**：
+
+```powershell
+npm run dev        # 开发模式
+npm run build      # 生产构建
+```
+
+### Windows 打包
+
+```powershell
+# 打包为 Windows 安装程序（NSIS）
+npm run package:win
+
+# 输出目录
+dist/Moneta Setup x.x.x.exe       # 安装程序
+dist/win-unpacked/                # 免安装版
+```
+
+### macOS 打包
+
+```bash
+# 在 macOS 上运行
+npm run package:mac
+
+# 输出
+dist/Moneta-x.x.x.dmg
+```
+
+### GitHub Actions 自动构建
+
+项目配置了 GitHub Actions 自动构建（`.github/workflows/build.yml`），推送标签后自动编译 Windows 和 macOS 版本。
+
 ## 编码规范
 
 ### TypeScript
