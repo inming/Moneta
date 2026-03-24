@@ -83,9 +83,16 @@ rsync -avc --no-times --no-perms \
     --exclude=dist \
     --exclude=*.log \
     --exclude=.vscode \
-    --exclude=scripts \
+    --exclude=.cache \
+    --exclude=.electron-vite \
+    --exclude=.turbo \
+    --exclude=.DS_Store \
     --exclude=.docker-home \
     --exclude=.npm \
+    --exclude=coverage \
+    --exclude=temp \
+    --exclude=tmp \
+    --exclude=*.tmp \
     "$REPO_ROOT/" \
     "$WIN_PATH/"
 
