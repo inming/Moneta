@@ -31,5 +31,13 @@
     "missingCategoriesAlert": "{{count}} transactions are missing categories, please complete before submitting",
     "importSuccess": "Successfully imported {{count}} transactions",
     "importFailed": "Import failed"
+  },
+  "mcp": {
+    "title": "MCP Import Confirmation",
+    "loading": "Loading import data...",
+    "loadFailed": "Failed to load import data",
+    "noData": "No data to import",
+    "draftSource": "MCP Import Draft",
+    "draftOverwriteAlert": "New import started, previous draft ({{count}} items) has been replaced"
   }
 }

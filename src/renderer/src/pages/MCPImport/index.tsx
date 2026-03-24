@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Spin, message, Alert } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { Dayjs } from 'dayjs'
 import ImportConfirm, { type ImportRow } from '../../components/ImportConfirm'
 import type { MCPSendTransactionsParams } from '../../../mcp/types'
@@ -8,6 +9,7 @@ import type { CreateTransactionDTO, ImportDraft } from '@shared/types'
 import { useDraftStore } from '../../stores/draft.store'
 
 export default function MCPImport(): React.JSX.Element {
+  const { t } = useTranslation('import')
   const navigate = useNavigate()
   const draftStore = useDraftStore()
   const [loading, setLoading] = useState(true)
@@ -29,9 +31,9 @@ export default function MCPImport(): React.JSX.Element {
       }
 
       console.log('[MCPImport] Loading from draft:', draft)
-      
+
       // 从草稿构建导入数据
-      const source = draft.data.mcpSpecific?.source || 'MCP 导入草稿'
+      const source = draft.data.mcpSpecific?.source || t('mcp.draftSource')
       setImportData({
         transactions: draft.data.transactions.map(t => ({
           date: t.date,
@@ -101,7 +103,7 @@ export default function MCPImport(): React.JSX.Element {
       setInitialRows(rows)
       return true
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '加载导入数据失败')
+      message.error(err instanceof Error ? err.message : t('mcp.loadFailed'))
       navigate('/')
       return false
     } finally {
@@ -136,7 +138,7 @@ export default function MCPImport(): React.JSX.Element {
               if (result || attempts >= maxAttempts) {
                 clearInterval(interval)
                 if (!result && attempts >= maxAttempts) {
-                  message.error('没有待导入的数据')
+                  message.error(t('mcp.noData'))
                   navigate('/')
                 }
               }
@@ -171,7 +173,7 @@ export default function MCPImport(): React.JSX.Element {
       // 从 MCP 导入
       const result = await window.api.mcp.confirmImport(items)
       if (!result.success) {
-        throw new Error(result.error || '导入失败')
+        throw new Error(result.error || t('messages.importFailed'))
       }
       // 清除导入数据
       await window.api.mcp.clearImportData()
@@ -190,7 +192,7 @@ export default function MCPImport(): React.JSX.Element {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <Spin size="large" />
-        <p style={{ marginTop: 16 }}>加载导入数据...</p>
+        <p style={{ marginTop: 16 }}>{t('mcp.loading')}</p>
       </div>
     )
   }
@@ -199,7 +201,7 @@ export default function MCPImport(): React.JSX.Element {
     <div style={{ padding: 24 }}>
       {showDraftOverwriteAlert && (
         <Alert
-          message={`已开始新的导入，之前的草稿（${draftStore.summary.count}条）已被替换`}
+          message={t('mcp.draftOverwriteAlert', { count: draftStore.summary.count })}
           type="info"
           showIcon
           closable
@@ -208,7 +210,7 @@ export default function MCPImport(): React.JSX.Element {
         />
       )}
       <ImportConfirm
-        title="MCP 账单导入确认"
+        title={t('mcp.title')}
         sourceInfo={importData?.source}
         initialRows={initialRows}
         onConfirm={handleConfirm}

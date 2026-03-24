@@ -5,11 +5,13 @@ import {
 import {
   ApiOutlined, StarFilled, StarOutlined, SaveOutlined, EyeOutlined, CopyOutlined
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import type { AIProviderView } from '@shared/types'
 
 const { Text } = Typography
 
 export default function AIProviderManager(): React.JSX.Element {
+  const { t } = useTranslation('settings')
   const [providers, setProviders] = useState<AIProviderView[]>([])
   const [loading, setLoading] = useState(false)
   const [testingId, setTestingId] = useState<string | null>(null)
@@ -62,14 +64,14 @@ export default function AIProviderManager(): React.JSX.Element {
         dto.model = state.model
       }
       if (!dto.apiKey && !dto.endpoint && !dto.model) {
-        message.info('无修改内容')
+        message.info(t('aiProvider.messages.noChanges'))
         return
       }
       await window.api.aiProvider.update(id, dto)
-      message.success('配置已保存')
+      message.success(t('aiProvider.messages.saveSuccess'))
       await loadProviders()
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '保存失败')
+      message.error(err instanceof Error ? err.message : t('aiProvider.messages.saveFailed'))
     } finally {
       setSavingId(null)
     }
@@ -80,12 +82,12 @@ export default function AIProviderManager(): React.JSX.Element {
     try {
       const result = await window.api.aiProvider.test(id)
       if (result.success) {
-        message.success(`连接成功！模型: ${result.modelName}`)
+        message.success(t('aiProvider.messages.testSuccess', { model: result.modelName }))
       } else {
-        message.error(`连接失败: ${result.error}`)
+        message.error(t('aiProvider.messages.testFailed', { error: result.error }))
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '测试失败')
+      message.error(err instanceof Error ? err.message : t('aiProvider.messages.testError'))
     } finally {
       setTestingId(null)
     }
@@ -95,10 +97,10 @@ export default function AIProviderManager(): React.JSX.Element {
     setSettingDefaultId(id)
     try {
       await window.api.aiProvider.setDefault(id)
-      message.success('已设为默认模型')
+      message.success(t('aiProvider.messages.setDefaultSuccess'))
       await loadProviders()
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '设置默认模型失败')
+      message.error(err instanceof Error ? err.message : t('aiProvider.messages.setDefaultFailed'))
     } finally {
       setSettingDefaultId(null)
     }
@@ -111,7 +113,7 @@ export default function AIProviderManager(): React.JSX.Element {
       const text = await window.api.ai.getPromptPreview()
       setPromptText(text)
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '获取 Prompt 失败')
+      message.error(err instanceof Error ? err.message : t('aiProvider.messages.promptFailed'))
       setPromptVisible(false)
     } finally {
       setPromptLoading(false)
@@ -121,9 +123,9 @@ export default function AIProviderManager(): React.JSX.Element {
   const handleCopyPrompt = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(promptText)
-      message.success('已复制到剪贴板')
+      message.success(t('aiProvider.messages.clipboardSuccess'))
     } catch {
-      message.error('复制失败')
+      message.error(t('aiProvider.messages.clipboardFailed'))
     }
   }
 
@@ -142,10 +144,10 @@ export default function AIProviderManager(): React.JSX.Element {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Text type="secondary">
-          配置 AI 模型以启用图片识别功能。填入 API Key 即可使用，Endpoint 可修改为第三方平台地址。
+          {t('aiProvider.description')}
         </Text>
         <Button icon={<EyeOutlined />} onClick={handlePromptPreview}>
-          查看识别 Prompt
+          {t('aiProvider.viewPrompt')}
         </Button>
       </div>
 
@@ -154,7 +156,7 @@ export default function AIProviderManager(): React.JSX.Element {
           const state = editState[provider.id] || { apiKey: '', endpoint: provider.endpoint, model: provider.model }
           const isConfigured = !!provider.apiKeyMasked
           const modelPlaceholder = provider.id.includes('doubao')
-            ? '请输入接入点 ID（如 ep-xxx）'
+            ? t('aiProvider.fields.modelPlaceholderDoubao')
             : provider.id
 
           return (
@@ -164,10 +166,10 @@ export default function AIProviderManager(): React.JSX.Element {
               title={
                 <Space>
                   <Text strong>{provider.name}</Text>
-                  {provider.isDefault && <Tag color="green" icon={<StarFilled />}>默认</Tag>}
+                  {provider.isDefault && <Tag color="green" icon={<StarFilled />}>{t('aiProvider.defaultTag')}</Tag>}
                   {isConfigured
-                    ? <Tag color="success">已配置</Tag>
-                    : <Tag color="warning">未配置</Tag>
+                    ? <Tag color="success">{t('aiProvider.statusConfigured')}</Tag>
+                    : <Tag color="warning">{t('aiProvider.statusNotConfigured')}</Tag>
                   }
                 </Space>
               }
@@ -175,7 +177,7 @@ export default function AIProviderManager(): React.JSX.Element {
               <Space direction="vertical" style={{ width: '100%' }} size="small">
                 <div>
                   <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
-                    API Endpoint
+                    {t('aiProvider.fields.endpoint')}
                   </Text>
                   <Input
                     value={state.endpoint}
@@ -185,7 +187,7 @@ export default function AIProviderManager(): React.JSX.Element {
                 </div>
                 <div>
                   <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
-                    模型标识
+                    {t('aiProvider.fields.model')}
                   </Text>
                   <Input
                     value={state.model}
@@ -195,12 +197,12 @@ export default function AIProviderManager(): React.JSX.Element {
                 </div>
                 <div>
                   <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
-                    API Key {isConfigured && <Text type="secondary">（当前: {provider.apiKeyMasked}，留空则保持不变）</Text>}
+                    {t('aiProvider.fields.apiKey')} {isConfigured && <Text type="secondary">（{t('aiProvider.fields.apiKeyCurrent')}{provider.apiKeyMasked}{t('aiProvider.fields.apiKeyHint')}）</Text>}
                   </Text>
                   <Input.Password
                     value={state.apiKey}
                     onChange={(e) => updateEditField(provider.id, 'apiKey', e.target.value)}
-                    placeholder={isConfigured ? '留空保持不变' : '请输入 API Key'}
+                    placeholder={isConfigured ? t('aiProvider.fields.apiKeyPlaceholderKeep') : t('aiProvider.fields.apiKeyPlaceholderNew')}
                   />
                 </div>
                 <Space style={{ marginTop: 8 }}>
@@ -210,7 +212,7 @@ export default function AIProviderManager(): React.JSX.Element {
                     loading={savingId === provider.id}
                     onClick={() => handleSave(provider.id)}
                   >
-                    保存
+                    {t('aiProvider.buttons.save')}
                   </Button>
                   <Button
                     icon={<ApiOutlined />}
@@ -218,7 +220,7 @@ export default function AIProviderManager(): React.JSX.Element {
                     onClick={() => handleTest(provider.id)}
                     disabled={!isConfigured}
                   >
-                    测试连接
+                    {t('aiProvider.buttons.test')}
                   </Button>
                   {isConfigured && !provider.isDefault && (
                     <Button
@@ -226,7 +228,7 @@ export default function AIProviderManager(): React.JSX.Element {
                       loading={settingDefaultId === provider.id}
                       onClick={() => handleSetDefault(provider.id)}
                     >
-                      设为默认
+                      {t('aiProvider.buttons.setDefault')}
                     </Button>
                   )}
                 </Space>
@@ -237,16 +239,16 @@ export default function AIProviderManager(): React.JSX.Element {
       </Space>
 
       <Modal
-        title="AI 识别 Prompt 预览"
+        title={t('aiProvider.promptModal.title')}
         open={promptVisible}
         onCancel={() => setPromptVisible(false)}
         width={700}
         footer={[
           <Button key="copy" type="primary" icon={<CopyOutlined />} onClick={handleCopyPrompt} disabled={promptLoading}>
-            复制到剪贴板
+            {t('aiProvider.promptModal.copyButton')}
           </Button>,
           <Button key="close" onClick={() => setPromptVisible(false)}>
-            关闭
+            {t('aiProvider.promptModal.closeButton')}
           </Button>
         ]}
       >

@@ -31,5 +31,13 @@
     "missingCategoriesAlert": "还有 {{count}} 条交易未选择分类，请补充后提交",
     "importSuccess": "成功录入 {{count}} 条交易记录",
     "importFailed": "导入失败"
+  },
+  "mcp": {
+    "title": "MCP 账单导入确认",
+    "loading": "加载导入数据...",
+    "loadFailed": "加载导入数据失败",
+    "noData": "没有待导入的数据",
+    "draftSource": "MCP 导入草稿",
+    "draftOverwriteAlert": "已开始新的导入，之前的草稿（{{count}}条）已被替换"
   }
 }

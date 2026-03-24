@@ -194,5 +194,82 @@
       "enableSuccess": "Category enabled",
       "disableSuccess": "Category disabled"
     }
+  },
+  "mcpConfig": {
+    "httpServer": {
+      "title": "HTTP Service",
+      "statusRunning": "Running",
+      "statusStopped": "Stopped",
+      "port": "Port:",
+      "editPort": "Edit",
+      "savePort": "Save",
+      "cancel": "Cancel",
+      "errorTitle": "HTTP Service Error",
+      "buttonStart": "Start Service",
+      "buttonRunning": "Service Running"
+    },
+    "claudeConfig": {
+      "title": "Claude Desktop Config",
+      "statusConfigured": "Configured",
+      "statusNotConfigured": "Not Configured",
+      "refresh": "Refresh",
+      "buttonConfigure": "Configure Claude",
+      "buttonReconfigure": "Reconfigure",
+      "needsRestartInfo": "Restart Claude Desktop after configuration"
+    },
+    "instructions": {
+      "title": "AI Usage Guide",
+      "copy": "Copy",
+      "viewFull": "View Full Guide"
+    },
+    "messages": {
+      "statusFailed": "Failed to get MCP status",
+      "startFailed": "Failed to start service",
+      "configureFailed": "Failed to configure",
+      "portInvalid": "Port must be between 1025 and 65535",
+      "portUpdateFailed": "Failed to update port",
+      "instructionsCopied": "Usage guide copied to clipboard",
+      "copyFailed": "Failed to copy"
+    }
+  },
+  "aiProvider": {
+    "description": "Configure AI models to enable image recognition. Enter API Key to use, Endpoint can be changed to third-party platforms.",
+    "viewPrompt": "View Recognition Prompt",
+    "defaultTag": "Default",
+    "statusConfigured": "Configured",
+    "statusNotConfigured": "Not Configured",
+    "fields": {
+      "endpoint": "API Endpoint",
+      "model": "Model ID",
+      "apiKey": "API Key",
+      "apiKeyCurrent": "Current:",
+      "apiKeyHint": ", leave empty to keep unchanged",
+      "apiKeyPlaceholderKeep": "Leave empty to keep unchanged",
+      "apiKeyPlaceholderNew": "Enter API Key",
+      "modelPlaceholderDoubao": "Enter endpoint ID (e.g., ep-xxx)"
+    },
+    "buttons": {
+      "save": "Save",
+      "test": "Test Connection",
+      "setDefault": "Set as Default"
+    },
+    "promptModal": {
+      "title": "AI Recognition Prompt Preview",
+      "copyButton": "Copy to Clipboard",
+      "closeButton": "Close"
+    },
+    "messages": {
+      "noChanges": "No changes",
+      "saveSuccess": "Configuration saved",
+      "saveFailed": "Failed to save",
+      "testSuccess": "Connection successful! Model: {{model}}",
+      "testFailed": "Connection failed: {{error}}",
+      "testError": "Test failed",
+      "setDefaultSuccess": "Set as default model",
+      "setDefaultFailed": "Failed to set default model",
+      "promptFailed": "Failed to get prompt",
+      "clipboardSuccess": "Copied to clipboard",
+      "clipboardFailed": "Failed to copy"
+    }
   }
 }

@@ -9,6 +9,7 @@ import zhCN_transactions from './zh-CN/transactions.json'
 import zhCN_statistics from './zh-CN/statistics.json'
 import zhCN_ai from './zh-CN/ai.json'
 import zhCN_import from './zh-CN/import.json'
+import zhCN_auth from './zh-CN/auth.json'
 
 import enUS_common from './en-US/common.json'
 import enUS_navigation from './en-US/navigation.json'
@@ -17,6 +18,7 @@ import enUS_transactions from './en-US/transactions.json'
 import enUS_statistics from './en-US/statistics.json'
 import enUS_ai from './en-US/ai.json'
 import enUS_import from './en-US/import.json'
+import enUS_auth from './en-US/auth.json'
 
 i18n
   .use(initReactI18next)
@@ -29,7 +31,8 @@ i18n
         transactions: zhCN_transactions,
         statistics: zhCN_statistics,
         ai: zhCN_ai,
-        import: zhCN_import
+        import: zhCN_import,
+        auth: zhCN_auth
       },
       'en-US': {
         common: enUS_common,
@@ -38,7 +41,8 @@ i18n
         transactions: enUS_transactions,
         statistics: enUS_statistics,
         ai: enUS_ai,
-        import: enUS_import
+        import: enUS_import,
+        auth: enUS_auth
       }
     },
     lng: 'zh-CN', // 默认语言（会被 Zustand store 覆盖）

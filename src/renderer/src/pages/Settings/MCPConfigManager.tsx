@@ -8,6 +8,7 @@ import {
   SettingOutlined, ReloadOutlined, EditOutlined, CheckOutlined,
   FileTextOutlined
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 
 const { Text } = Typography
 const { Panel } = Collapse
@@ -63,6 +64,7 @@ Moneta 会自动打开确认界面供用户审核。
 - 日期格式严格为 YYYY-MM-DD`
 
 export default function MCPConfigManager(): React.JSX.Element {
+  const { t } = useTranslation('settings')
   const [mcpStatus, setMcpStatus] = useState<MCPStatus | null>(null)
   const [startingServer, setStartingServer] = useState(false)
   const [configuringClaude, setConfiguringClaude] = useState(false)
@@ -83,11 +85,11 @@ export default function MCPConfigManager(): React.JSX.Element {
       setConfigPaths(paths)
       setPortValue(httpConfig.port)
     } catch {
-      message.error('获取 MCP 状态失败')
+      message.error(t('mcpConfig.messages.statusFailed'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadMCPStatus()
@@ -112,7 +114,7 @@ export default function MCPConfigManager(): React.JSX.Element {
         message.error(result.message)
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '启动失败')
+      message.error(err instanceof Error ? err.message : t('mcpConfig.messages.startFailed'))
     } finally {
       setStartingServer(false)
     }
@@ -129,7 +131,7 @@ export default function MCPConfigManager(): React.JSX.Element {
         message.error(result.message)
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '配置失败')
+      message.error(err instanceof Error ? err.message : t('mcpConfig.messages.configureFailed'))
     } finally {
       setConfiguringClaude(false)
     }
@@ -137,7 +139,7 @@ export default function MCPConfigManager(): React.JSX.Element {
 
   const handleUpdatePort = async (): Promise<void> => {
     if (!portValue || portValue < 1025 || portValue > 65535) {
-      message.error('端口号必须是 1025-65535 之间的整数')
+      message.error(t('mcpConfig.messages.portInvalid'))
       return
     }
 
@@ -152,7 +154,7 @@ export default function MCPConfigManager(): React.JSX.Element {
         message.error(result.message)
       }
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '更新端口失败')
+      message.error(err instanceof Error ? err.message : t('mcpConfig.messages.portUpdateFailed'))
     } finally {
       setUpdatingPort(false)
     }
@@ -161,9 +163,9 @@ export default function MCPConfigManager(): React.JSX.Element {
   const handleCopyInstructions = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(INSTRUCTIONS_TEXT)
-      message.success('使用指南已复制到剪贴板')
+      message.success(t('mcpConfig.messages.instructionsCopied'))
     } catch {
-      message.error('复制失败')
+      message.error(t('mcpConfig.messages.copyFailed'))
     }
   }
 
@@ -183,10 +185,10 @@ export default function MCPConfigManager(): React.JSX.Element {
         title={
           <Space>
             <SettingOutlined />
-            <span>HTTP 服务</span>
+            <span>{t('mcpConfig.httpServer.title')}</span>
             {isServerRunning
-              ? <Tag color="success">运行中</Tag>
-              : <Tag color="warning">未启动</Tag>
+              ? <Tag color="success">{t('mcpConfig.httpServer.statusRunning')}</Tag>
+              : <Tag color="warning">{t('mcpConfig.httpServer.statusStopped')}</Tag>
             }
           </Space>
         }
@@ -195,7 +197,7 @@ export default function MCPConfigManager(): React.JSX.Element {
           <Space wrap>
             {editingPort ? (
               <Space>
-                <Text>端口：</Text>
+                <Text>{t('mcpConfig.httpServer.port')}</Text>
                 <InputNumber
                   min={1025}
                   max={65535}
@@ -210,19 +212,19 @@ export default function MCPConfigManager(): React.JSX.Element {
                   loading={updatingPort}
                   onClick={handleUpdatePort}
                 >
-                  保存
+                  {t('mcpConfig.httpServer.savePort')}
                 </Button>
-                <Button size="small" onClick={() => setEditingPort(false)}>取消</Button>
+                <Button size="small" onClick={() => setEditingPort(false)}>{t('mcpConfig.httpServer.cancel')}</Button>
               </Space>
             ) : (
               <Space>
-                <Text>端口：{mcpStatus?.port || 9615}</Text>
+                <Text>{t('mcpConfig.httpServer.port')}{mcpStatus?.port || 9615}</Text>
                 <Button
                   icon={<EditOutlined />}
                   size="small"
                   onClick={() => setEditingPort(true)}
                 >
-                  修改
+                  {t('mcpConfig.httpServer.editPort')}
                 </Button>
               </Space>
             )}
@@ -230,7 +232,7 @@ export default function MCPConfigManager(): React.JSX.Element {
 
           {hasServerError && (
             <Alert
-              message="HTTP 服务错误"
+              message={t('mcpConfig.httpServer.errorTitle')}
               description={hasServerError}
               type="error"
               showIcon
@@ -244,7 +246,7 @@ export default function MCPConfigManager(): React.JSX.Element {
             onClick={handleStartServer}
             disabled={isServerRunning}
           >
-            {isServerRunning ? '服务运行中' : '启动服务'}
+            {isServerRunning ? t('mcpConfig.httpServer.buttonRunning') : t('mcpConfig.httpServer.buttonStart')}
           </Button>
         </Space>
       </Card>
@@ -255,10 +257,10 @@ export default function MCPConfigManager(): React.JSX.Element {
         title={
           <Space>
             <DesktopOutlined />
-            <span>Claude Desktop 配置</span>
+            <span>{t('mcpConfig.claudeConfig.title')}</span>
             {isConfigured
-              ? <Tag color="success">已配置</Tag>
-              : <Tag color="warning">未配置</Tag>
+              ? <Tag color="success">{t('mcpConfig.claudeConfig.statusConfigured')}</Tag>
+              : <Tag color="warning">{t('mcpConfig.claudeConfig.statusNotConfigured')}</Tag>
             }
           </Space>
         }
@@ -268,7 +270,7 @@ export default function MCPConfigManager(): React.JSX.Element {
             size="small"
             onClick={loadMCPStatus}
           >
-            刷新
+            {t('mcpConfig.claudeConfig.refresh')}
           </Button>
         }
       >
@@ -278,7 +280,7 @@ export default function MCPConfigManager(): React.JSX.Element {
             loading={configuringClaude}
             onClick={handleConfigureClaude}
           >
-            {isConfigured ? '重新配置' : '配置 Claude'}
+            {isConfigured ? t('mcpConfig.claudeConfig.buttonReconfigure') : t('mcpConfig.claudeConfig.buttonConfigure')}
           </Button>
 
           {isConfigured && (
@@ -289,7 +291,7 @@ export default function MCPConfigManager(): React.JSX.Element {
 
           {!isConfigured && (
             <Alert
-              message="配置后需重启 Claude Desktop 生效"
+              message={t('mcpConfig.claudeConfig.needsRestartInfo')}
               type="info"
               showIcon
             />
@@ -303,7 +305,7 @@ export default function MCPConfigManager(): React.JSX.Element {
         title={
           <Space>
             <FileTextOutlined />
-            <span>AI 使用指南</span>
+            <span>{t('mcpConfig.instructions.title')}</span>
           </Space>
         }
         extra={
@@ -312,12 +314,12 @@ export default function MCPConfigManager(): React.JSX.Element {
             size="small"
             onClick={handleCopyInstructions}
           >
-            复制
+            {t('mcpConfig.instructions.copy')}
           </Button>
         }
       >
         <Collapse ghost>
-          <Panel header="查看完整指南" key="1">
+          <Panel header={t('mcpConfig.instructions.viewFull')} key="1">
             <pre style={{
               fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
               fontSize: 12,

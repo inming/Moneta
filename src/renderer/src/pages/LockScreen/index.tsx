@@ -1,11 +1,13 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { Typography } from 'antd'
+import { useTranslation } from 'react-i18next'
 import PinInput, { type PinInputRef } from './PinInput'
 import { useAuthStore } from '../../stores/auth.store'
 
 const { Title, Text } = Typography
 
 export default function LockScreen(): React.JSX.Element {
+  const { t } = useTranslation('auth')
   const pinRef = useRef<PinInputRef>(null)
   const { lockedUntilMs, setRemainingAttempts, setLockedUntilMs, unlock } = useAuthStore()
   const [error, setError] = useState('')
@@ -46,20 +48,20 @@ export default function LockScreen(): React.JSX.Element {
           setRemainingAttempts(result.remainingAttempts)
           if (result.lockedUntilMs) {
             setLockedUntilMs(result.lockedUntilMs)
-            setError('错误次数过多，请稍后再试')
+            setError(t('lockScreen.errors.tooManyAttempts'))
           } else {
-            setError(`PIN 码错误，还剩 ${result.remainingAttempts} 次机会`)
+            setError(t('lockScreen.errors.wrongPin', { count: result.remainingAttempts }))
           }
           pinRef.current?.shake()
           setTimeout(() => pinRef.current?.clear(), 500)
         }
       } catch {
-        setError('验证失败，请重试')
+        setError(t('lockScreen.errors.verifyFailed'))
         pinRef.current?.shake()
         setTimeout(() => pinRef.current?.clear(), 500)
       }
     },
-    [unlock, setRemainingAttempts, setLockedUntilMs]
+    [unlock, setRemainingAttempts, setLockedUntilMs, t]
   )
 
   return (
@@ -94,14 +96,14 @@ export default function LockScreen(): React.JSX.Element {
           Moneta
         </Title>
         <Text type="secondary" style={{ marginBottom: 32 }}>
-          请输入 PIN 码解锁
+          {t('lockScreen.title')}
         </Text>
 
         <PinInput ref={pinRef} onComplete={handleVerify} disabled={isLockedOut} />
 
         <div style={{ height: 32, marginTop: 16, textAlign: 'center' }}>
           {isLockedOut && countdown > 0 ? (
-            <Text type="danger">已锁定，请等待 {countdown} 秒后重试</Text>
+            <Text type="danger">{t('lockScreen.lockedMessage', { seconds: countdown })}</Text>
           ) : error ? (
             <Text type="danger">{error}</Text>
           ) : null}

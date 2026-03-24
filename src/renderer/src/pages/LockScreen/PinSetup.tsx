@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState } from 'react'
 import { Typography, message } from 'antd'
+import { useTranslation } from 'react-i18next'
 import PinInput, { type PinInputRef } from './PinInput'
 import { useAuthStore } from '../../stores/auth.store'
 
@@ -8,6 +9,7 @@ const { Title, Text } = Typography
 type Step = 'create' | 'confirm'
 
 export default function PinSetup(): React.JSX.Element {
+  const { t } = useTranslation('auth')
   const pinRef = useRef<PinInputRef>(null)
   const { setHasPIN, unlock } = useAuthStore()
   const [step, setStep] = useState<Step>('create')
@@ -28,7 +30,7 @@ export default function PinSetup(): React.JSX.Element {
   const handleConfirm = useCallback(
     async (pin: string) => {
       if (pin !== firstPin) {
-        setError('两次输入的 PIN 码不一致，请重新设置')
+        setError(t('pinSetup.errors.mismatch'))
         pinRef.current?.shake()
         setTimeout(() => {
           pinRef.current?.clear()
@@ -42,9 +44,9 @@ export default function PinSetup(): React.JSX.Element {
         await window.api.auth.setPIN(pin)
         setHasPIN(true)
         unlock()
-        message.success('PIN 码设置成功')
+        message.success(t('pinSetup.messages.setupSuccess'))
       } catch {
-        setError('设置失败，请重试')
+        setError(t('pinSetup.errors.setupFailed'))
         pinRef.current?.shake()
         setTimeout(() => {
           pinRef.current?.clear()
@@ -53,7 +55,7 @@ export default function PinSetup(): React.JSX.Element {
         }, 500)
       }
     },
-    [firstPin, setHasPIN, unlock]
+    [firstPin, setHasPIN, unlock, t]
   )
 
   return (
@@ -88,7 +90,7 @@ export default function PinSetup(): React.JSX.Element {
           Moneta
         </Title>
         <Text type="secondary" style={{ marginBottom: 32 }}>
-          {step === 'create' ? '请设置 4 位数字 PIN 码' : '请再次输入确认'}
+          {step === 'create' ? t('pinSetup.prompts.create') : t('pinSetup.prompts.confirm')}
         </Text>
 
         <PinInput
