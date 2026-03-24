@@ -71,6 +71,9 @@
       "out/**/*",
       "resources/**/*"
     ],
+    "asarUnpack": [
+      "out/main/mcp.js"
+    ],
     "npmRebuild": true,
     "buildDependenciesFromSource": true,
     "win": {
