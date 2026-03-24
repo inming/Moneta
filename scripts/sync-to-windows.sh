@@ -84,6 +84,8 @@ rsync -avc --no-times --no-perms \
     --exclude=*.log \
     --exclude=.vscode \
     --exclude=scripts \
+    --exclude=.docker-home \
+    --exclude=.npm \
     "$REPO_ROOT/" \
     "$WIN_PATH/"
 
