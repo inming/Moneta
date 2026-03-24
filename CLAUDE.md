@@ -63,6 +63,26 @@ moneta/
     └── renderer/                   # 渲染进程测试
 ```
 
+## 环境要求
+
+| 依赖 | 版本 | 说明 |
+|------|------|------|
+| Node.js | 24+ (LTS) | 见 `.nvmrc` 和 `package.json` engines |
+| Python | 3.x | 需要安装 setuptools 包 |
+| setuptools | - | `pip install setuptools` |
+| Visual Studio Build Tools | 2022 | Windows 编译原生模块需要 |
+
+**快速配置**：
+```bash
+# macOS / Linux / WSL2
+bash scripts/setup-env.sh
+
+# Windows
+scripts\setup-env.bat
+```
+
+详细说明见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+
 ## 开发命令
 
 ```bash
