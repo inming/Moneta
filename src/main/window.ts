@@ -25,6 +25,7 @@ export function createWindow(): BrowserWindow {
     minWidth: 900,
     minHeight: 600,
     show: process.platform === 'win32', // Windows 下直接显示，便于调试
+    autoHideMenuBar: true, // 自动隐藏菜单栏（用户可按 Alt 键唤起）
     icon: icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
