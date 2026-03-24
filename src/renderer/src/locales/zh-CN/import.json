@@ -1,0 +1,35 @@
+{
+  "columns": {
+    "type": "类型",
+    "amount": "金额",
+    "category": "分类",
+    "description": "描述",
+    "operator": "操作人",
+    "actions": "操作"
+  },
+  "placeholders": {
+    "selectCategory": "请选择",
+    "optional": "可选"
+  },
+  "buttons": {
+    "insertAbove": "上方插入",
+    "addRow": "添加一行",
+    "cancel": "取消",
+    "confirm": "确认导入 ({{count}} 条)"
+  },
+  "info": {
+    "source": "来源：",
+    "totalRecords": "共识别：",
+    "recordCount": "{{count}} 条记录",
+    "missingCategory": "待补充分类: {{count}}",
+    "accountingDate": "记账日期：",
+    "operator": "操作人："
+  },
+  "messages": {
+    "noRecords": "没有可提交的记录",
+    "missingCategories": "还有 {{count}} 条交易未选择分类，请补充后再提交",
+    "missingCategoriesAlert": "还有 {{count}} 条交易未选择分类，请补充后提交",
+    "importSuccess": "成功录入 {{count}} 条交易记录",
+    "importFailed": "导入失败"
+  }
+}

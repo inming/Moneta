@@ -2,6 +2,7 @@ import { useRef, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { YearlyCategoryData } from '../../../../shared/types'
 import type { TransactionType } from '../../../../shared/types/transaction'
 import ContextMenu from '../../components/ContextMenu'
@@ -25,10 +26,22 @@ function formatAmount(value: number): string {
 }
 
 export default function YearlyBarChart({ data, type }: YearlyBarChartProps): React.JSX.Element {
+  const { t, i18n } = useTranslation('statistics')
   const navigate = useNavigate()
   const chartRef = useRef<ReactECharts>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const soloRef = useRef<string | null>(null)
+
+  // Number formatting based on language
+  const formatLargeNumber = (v: number): string => {
+    if (i18n.language === 'zh-CN') {
+      // Chinese: use 万 (10,000)
+      return v >= 10000 ? `${(v / 10000).toFixed(1)}万` : String(v)
+    } else {
+      // English: use K (1,000)
+      return v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v)
+    }
+  }
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -159,10 +172,10 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
   }, [])
 
   if (!data || data.totals.yearly === 0) {
-    return <Empty description="暂无数据" style={{ padding: 40 }} />
+    return <Empty description={t('table.noData')} style={{ padding: 40 }} />
   }
 
-  const yearLabels = data.rows.map((r) => `${r.year}年`)
+  const yearLabels = data.rows.map((r) => t('filter.yearLabel', { year: r.year }))
 
   const series = data.categories
     .map((cat, catIndex) => ({
@@ -187,7 +200,7 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
           html += `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:5px;"></span>${p.seriesName}: ¥${formatAmount(p.value)}<br/>`
         }
         if (sorted.length > 1) {
-          html += `<b>合计: ¥${formatAmount(total)}</b>`
+          html += `<b>${t('chart.totalLabel')}: ¥${formatAmount(total)}</b>`
         }
         return html
       }
@@ -205,8 +218,7 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
     yAxis: {
       type: 'value',
       axisLabel: {
-        formatter: (v: number): string =>
-          v >= 10000 ? `${(v / 10000).toFixed(1)}万` : String(v)
+        formatter: formatLargeNumber
       }
     },
     series,
@@ -241,7 +253,7 @@ export default function YearlyBarChart({ data, type }: YearlyBarChartProps): Rea
         items={[
           {
             key: 'view-details',
-            label: '查看明细',
+            label: t('chart.viewDetails'),
             onClick: handleViewDetails
           }
         ]}

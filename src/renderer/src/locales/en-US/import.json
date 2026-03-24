@@ -1,0 +1,35 @@
+{
+  "columns": {
+    "type": "Type",
+    "amount": "Amount",
+    "category": "Category",
+    "description": "Description",
+    "operator": "Operator",
+    "actions": "Actions"
+  },
+  "placeholders": {
+    "selectCategory": "Select",
+    "optional": "Optional"
+  },
+  "buttons": {
+    "insertAbove": "Insert Above",
+    "addRow": "Add Row",
+    "cancel": "Cancel",
+    "confirm": "Confirm Import ({{count}} items)"
+  },
+  "info": {
+    "source": "Source: ",
+    "totalRecords": "Total Recognized: ",
+    "recordCount": "{{count}} records",
+    "missingCategory": "Missing category: {{count}}",
+    "accountingDate": "Accounting Date: ",
+    "operator": "Operator: "
+  },
+  "messages": {
+    "noRecords": "No records to submit",
+    "missingCategories": "{{count}} transactions are missing categories, please complete before submitting",
+    "missingCategoriesAlert": "{{count}} transactions are missing categories, please complete before submitting",
+    "importSuccess": "Successfully imported {{count}} transactions",
+    "importFailed": "Import failed"
+  }
+}

@@ -4,8 +4,10 @@ import type { InputRef } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Operator } from '@shared/types'
+import { useTranslation } from 'react-i18next'
 
 export default function OperatorManager(): React.JSX.Element {
+  const { t } = useTranslation('settings')
   const [operators, setOperators] = useState<Operator[]>([])
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -44,10 +46,10 @@ export default function OperatorManager(): React.JSX.Element {
       const values = await form.validateFields()
       if (editingOperator) {
         await window.api.operator.update(editingOperator.id, values.name)
-        message.success('操作人已更新')
+        message.success(t('operatorManager.messages.updateSuccess'))
       } else {
         await window.api.operator.create(values.name)
-        message.success('操作人已创建')
+        message.success(t('operatorManager.messages.createSuccess'))
       }
       setModalOpen(false)
       loadOperators()
@@ -61,7 +63,7 @@ export default function OperatorManager(): React.JSX.Element {
   const handleDelete = async (id: number): Promise<void> => {
     try {
       await window.api.operator.delete(id)
-      message.success('操作人已删除')
+      message.success(t('operatorManager.messages.deleteSuccess'))
       loadOperators()
     } catch (err) {
       if (err instanceof Error) {
@@ -71,24 +73,24 @@ export default function OperatorManager(): React.JSX.Element {
   }
 
   const columns: ColumnsType<Operator> = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: '名称', dataIndex: 'name', width: 150 },
-    { title: '创建时间', dataIndex: 'created_at' },
+    { title: t('operatorManager.columns.id'), dataIndex: 'id', width: 60 },
+    { title: t('operatorManager.columns.name'), dataIndex: 'name', width: 150 },
+    { title: t('operatorManager.columns.createdAt'), dataIndex: 'created_at' },
     {
-      title: '操作',
+      title: t('operatorManager.columns.actions'),
       width: 160,
       render: (_: unknown, record: Operator) => (
         <Space size={4}>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            编辑
+            {t('operatorManager.buttons.edit')}
           </Button>
           <Popconfirm
-            title="确定删除该操作人？"
-            description="已关联交易的操作人无法删除"
+            title={t('operatorManager.deleteConfirm.title')}
+            description={t('operatorManager.deleteConfirm.description')}
             onConfirm={() => handleDelete(record.id)}
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
+              {t('operatorManager.buttons.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -100,7 +102,7 @@ export default function OperatorManager(): React.JSX.Element {
     <div>
       <div style={{ marginBottom: 16 }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新增操作人
+          {t('operatorManager.buttons.add')}
         </Button>
       </div>
 
@@ -114,7 +116,7 @@ export default function OperatorManager(): React.JSX.Element {
       />
 
       <Modal
-        title={editingOperator ? '编辑操作人' : '新增操作人'}
+        title={editingOperator ? t('operatorManager.modal.titleEdit') : t('operatorManager.modal.titleAdd')}
         open={modalOpen}
         onOk={handleModalOk}
         onCancel={() => setModalOpen(false)}
@@ -131,10 +133,10 @@ export default function OperatorManager(): React.JSX.Element {
         <Form form={form} layout="vertical" preserve={false}>
           <Form.Item
             name="name"
-            label="操作人名称"
-            rules={[{ required: true, message: '请输入操作人名称' }]}
+            label={t('operatorManager.modal.nameLabel')}
+            rules={[{ required: true, message: t('operatorManager.modal.nameRequired') }]}
           >
-            <Input ref={inputRef} placeholder="请输入操作人名称" />
+            <Input ref={inputRef} placeholder={t('operatorManager.modal.namePlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>

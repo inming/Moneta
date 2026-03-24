@@ -1,5 +1,6 @@
 import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { CrossTableData } from '../../../../shared/types'
 
 interface PieChartProps {
@@ -11,8 +12,10 @@ function formatAmount(value: number): string {
 }
 
 export default function PieChart({ data }: PieChartProps): React.JSX.Element {
+  const { t } = useTranslation('statistics')
+
   if (!data || data.rows.length === 0) {
-    return <Empty description="暂无数据" style={{ padding: 40 }} />
+    return <Empty description={t('table.noData')} style={{ padding: 40 }} />
   }
 
   // Merge items < 2% into "其他"
@@ -30,7 +33,7 @@ export default function PieChart({ data }: PieChartProps): React.JSX.Element {
     }
   }
   if (otherValue !== 0) {
-    items.push({ name: '其他', value: otherValue })
+    items.push({ name: t('chart.other'), value: otherValue })
   }
 
   const option = {

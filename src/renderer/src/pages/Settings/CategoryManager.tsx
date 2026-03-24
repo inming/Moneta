@@ -5,13 +5,10 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownO
 import type { ColumnsType } from 'antd/es/table'
 import type { Category, TransactionType, CreateCategoryDTO, UpdateCategoryDTO } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
-
-const typeOptions = Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
-  label: config.label,
-  value
-}))
+import { useTranslation } from 'react-i18next'
 
 export default function CategoryManager(): React.JSX.Element {
+  const { t } = useTranslation(['settings', 'common'])
   const [categories, setCategories] = useState<Category[]>([])
   const [activeType, setActiveType] = useState<TransactionType>('expense')
   const [loading, setLoading] = useState(false)
@@ -19,6 +16,12 @@ export default function CategoryManager(): React.JSX.Element {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [form] = Form.useForm()
   const inputRef = useRef<InputRef>(null)
+
+  // 交易类型选项（需要在组件内部定义以使用 t()）
+  const typeOptions = Object.keys(TRANSACTION_TYPE_CONFIG).map((key) => ({
+    label: t(`common:transactionTypes.${key}` as const),
+    value: key
+  }))
 
   const loadCategories = useCallback(async (type: TransactionType) => {
     setLoading(true)
@@ -56,11 +59,11 @@ export default function CategoryManager(): React.JSX.Element {
       if (editingCategory) {
         const dto: UpdateCategoryDTO = { name: values.name, description: values.description ?? '' }
         await window.api.category.update(editingCategory.id, dto)
-        message.success('分类已更新')
+        message.success(t('settings:categoryManager.messages.updateSuccess'))
       } else {
         const dto: CreateCategoryDTO = { name: values.name, type: activeType, description: values.description ?? '' }
         await window.api.category.create(dto)
-        message.success('分类已创建')
+        message.success(t('settings:categoryManager.messages.createSuccess'))
       }
       setModalOpen(false)
       loadCategories(activeType)
@@ -75,9 +78,9 @@ export default function CategoryManager(): React.JSX.Element {
     try {
       const result = await window.api.category.delete(id)
       if (result.softDeleted) {
-        message.info('该分类已关联交易记录，已标记为停用')
+        message.info(t('settings:categoryManager.messages.softDeleted'))
       } else {
-        message.success('分类已删除')
+        message.success(t('settings:categoryManager.messages.deleteSuccess'))
       }
       loadCategories(activeType)
     } catch (err) {
@@ -91,7 +94,11 @@ export default function CategoryManager(): React.JSX.Element {
     try {
       const dto: UpdateCategoryDTO = { is_active: !record.is_active }
       await window.api.category.update(record.id, dto)
-      message.success(record.is_active ? '分类已停用' : '分类已启用')
+      message.success(
+        record.is_active
+          ? t('settings:categoryManager.messages.disableSuccess')
+          : t('settings:categoryManager.messages.enableSuccess')
+      )
       loadCategories(activeType)
     } catch (err) {
       if (err instanceof Error) {
@@ -118,7 +125,7 @@ export default function CategoryManager(): React.JSX.Element {
 
   const columns: ColumnsType<Category> = [
     {
-      title: '排序',
+      title: t('settings:categoryManager.columns.sort'),
       width: 80,
       render: (_: unknown, __: Category, index: number) => (
         <Space size={4}>
@@ -139,49 +146,49 @@ export default function CategoryManager(): React.JSX.Element {
         </Space>
       )
     },
-    { title: '名称', dataIndex: 'name', width: 150 },
+    { title: t('settings:categoryManager.columns.name'), dataIndex: 'name', width: 150 },
     {
-      title: 'AI 描述',
+      title: t('settings:categoryManager.columns.aiDescription'),
       dataIndex: 'description',
       ellipsis: true,
-      render: (val: string) => val || <span style={{ color: '#bbb' }}>未设置</span>
+      render: (val: string) => val || <span style={{ color: '#bbb' }}>{t('settings:categoryManager.status.notSet')}</span>
     },
     {
-      title: '系统分类',
+      title: t('settings:categoryManager.columns.isSystem'),
       dataIndex: 'is_system',
       width: 90,
-      render: (val: boolean) => (val ? '是' : '否')
+      render: (val: boolean) => (val ? t('settings:categoryManager.status.yes') : t('settings:categoryManager.status.no'))
     },
     {
-      title: '状态',
+      title: t('settings:categoryManager.columns.status'),
       dataIndex: 'is_active',
       width: 80,
       render: (val: boolean) => (
-        val ? <Tag color="green">启用</Tag> : <Tag color="red">停用</Tag>
+        val ? <Tag color="green">{t('settings:categoryManager.status.active')}</Tag> : <Tag color="red">{t('settings:categoryManager.status.inactive')}</Tag>
       )
     },
     {
-      title: '操作',
-      width: 200,
+      title: t('settings:categoryManager.columns.actions'),
+      width: 240,
       render: (_: unknown, record: Category) => (
         <Space size={4}>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            编辑
+            {t('settings:categoryManager.buttons.edit')}
           </Button>
           <Button
             type="link"
             size="small"
             onClick={() => handleToggleActive(record)}
           >
-            {record.is_active ? '停用' : '启用'}
+            {record.is_active ? t('settings:categoryManager.buttons.disable') : t('settings:categoryManager.buttons.enable')}
           </Button>
           <Popconfirm
-            title="确定删除该分类？"
-            description="有关联交易时将标记为停用而非删除"
+            title={t('settings:categoryManager.deleteConfirm.title')}
+            description={t('settings:categoryManager.deleteConfirm.description')}
             onConfirm={() => handleDelete(record.id)}
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
+              {t('settings:categoryManager.buttons.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -194,7 +201,7 @@ export default function CategoryManager(): React.JSX.Element {
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Segmented options={typeOptions} value={activeType} onChange={handleTypeChange} />
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新增分类
+          {t('settings:categoryManager.buttons.add')}
         </Button>
       </div>
 
@@ -209,7 +216,7 @@ export default function CategoryManager(): React.JSX.Element {
       />
 
       <Modal
-        title={editingCategory ? '编辑分类' : '新增分类'}
+        title={editingCategory ? t('settings:categoryManager.modal.titleEdit') : t('settings:categoryManager.modal.titleAdd')}
         open={modalOpen}
         onOk={handleModalOk}
         onCancel={() => setModalOpen(false)}
@@ -226,18 +233,18 @@ export default function CategoryManager(): React.JSX.Element {
         <Form form={form} layout="vertical" preserve={false}>
           <Form.Item
             name="name"
-            label="分类名称"
-            rules={[{ required: true, message: '请输入分类名称' }]}
+            label={t('settings:categoryManager.modal.nameLabel')}
+            rules={[{ required: true, message: t('settings:categoryManager.modal.nameRequired') }]}
           >
-            <Input ref={inputRef} placeholder="请输入分类名称" />
+            <Input ref={inputRef} placeholder={t('settings:categoryManager.modal.namePlaceholder')} />
           </Form.Item>
           <Form.Item
             name="description"
-            label="AI 描述"
-            extra="辅助 AI 图片识别时进行分类匹配，如：外卖、堂食、食堂"
-            rules={[{ max: 100, message: 'AI 描述不超过 100 字符' }]}
+            label={t('settings:categoryManager.modal.aiDescriptionLabel')}
+            extra={t('settings:categoryManager.modal.aiDescriptionExtra')}
+            rules={[{ max: 100, message: t('settings:categoryManager.modal.aiDescriptionMaxLength') }]}
           >
-            <Input placeholder="输入该分类的典型场景或关键词（选填）" maxLength={100} showCount />
+            <Input placeholder={t('settings:categoryManager.modal.aiDescriptionPlaceholder')} maxLength={100} showCount />
           </Form.Item>
         </Form>
       </Modal>

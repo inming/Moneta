@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, Radio, Spin } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { TransactionType } from '../../../../shared/types/transaction'
 import type { CrossTableData, YearlyCategoryData } from '../../../../shared/types'
 import FilterBar from './FilterBar'
@@ -9,6 +10,7 @@ import BarChart from './BarChart'
 import YearlyBarChart from './YearlyBarChart'
 
 export default function Statistics(): React.JSX.Element {
+  const { t } = useTranslation('statistics')
   const currentDate = new Date()
   const [year, setYear] = useState(currentDate.getFullYear())
   const [type, setType] = useState<TransactionType>('expense')
@@ -68,8 +70,8 @@ export default function Statistics(): React.JSX.Element {
         optionType="button"
         buttonStyle="solid"
         options={[
-          { value: 'monthly', label: '月度明细' },
-          { value: 'yearly', label: '年度汇总' }
+          { value: 'monthly', label: t('viewTabs.monthly') },
+          { value: 'yearly', label: t('viewTabs.yearly') }
         ]}
       />
       <FilterBar
@@ -90,11 +92,11 @@ export default function Statistics(): React.JSX.Element {
         }
       </Card>
       {viewTab === 'monthly' ? (
-        <Card size="small" title="月度趋势">
+        <Card size="small" title={t('chartTitles.monthlyTrend')}>
           <BarChart data={crossTableData} year={year} type={type} />
         </Card>
       ) : (
-        <Card size="small" title="年度趋势">
+        <Card size="small" title={t('chartTitles.yearlyTrend')}>
           <YearlyBarChart data={yearlyCategoryData} type={type} />
         </Card>
       )}

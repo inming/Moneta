@@ -9,6 +9,7 @@ import {
   FileTextOutlined, ArrowLeftOutlined, LoadingOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { AIProviderView, CreateTransactionDTO, ImportDraft } from '@shared/types'
 
@@ -27,6 +28,7 @@ interface ImageItem {
 }
 
 export default function AIRecognition(): React.JSX.Element {
+  const { t } = useTranslation(['ai', 'common'])
   const navigate = useNavigate()
   const draftStore = useDraftStore()
   const [providers, setProviders] = useState<AIProviderView[]>([])
@@ -98,7 +100,7 @@ export default function AIRecognition(): React.JSX.Element {
         setDraftRestored(true)
         
         if (missingCount > 0) {
-          message.warning(`${missingCount} 张原图片已丢失，请重新上传`)
+          message.warning(t('ai:messages.imagesMissing', { count: missingCount }))
         }
         // 不显示恢复成功提示，用户主动点击继续导入，无需额外提示
       }
@@ -134,7 +136,7 @@ export default function AIRecognition(): React.JSX.Element {
             fileToDataUrl(file).then((dataUrl) => {
               setImages((prev) => [
                 ...prev,
-                { id: `paste-${Date.now()}`, dataUrl, name: `粘贴图片-${prev.length + 1}` }
+                { id: `paste-${Date.now()}`, dataUrl, name: t('ai:recognition.pastedImageName', { index: prev.length + 1 }) }
               ])
             })
           }
@@ -157,13 +159,13 @@ export default function AIRecognition(): React.JSX.Element {
 
   const handleUpload = async (file: File): Promise<false> => {
     if (file.size > 10 * 1024 * 1024) {
-      message.error('单张图片不能超过 10MB')
+      message.error(t('ai:messages.imagesTooLarge'))
       return false
     }
 
     const totalSize = images.reduce((sum, img) => sum + img.dataUrl.length * 0.75, 0) + file.size
     if (totalSize > 20 * 1024 * 1024) {
-      message.error('总图片大小不能超过 20MB')
+      message.error(t('ai:messages.totalTooLarge'))
       return false
     }
 
@@ -194,16 +196,18 @@ export default function AIRecognition(): React.JSX.Element {
   const formatElapsed = (s: number): string => {
     const min = Math.floor(s / 60)
     const sec = s % 60
-    return min > 0 ? `${min}分${sec}秒` : `${sec}秒`
+    return min > 0
+      ? `${min}${t('ai:time.minutes')}${sec}${t('ai:time.seconds')}`
+      : `${sec}${t('ai:time.seconds')}`
   }
 
   const handleRecognize = async (): Promise<void> => {
     if (images.length === 0) {
-      message.warning('请先上传图片')
+      message.warning(t('ai:messages.uploadFirst'))
       return
     }
     if (!selectedProviderId) {
-      message.warning('请选择 AI 供应商')
+      message.warning(t('ai:messages.selectProvider'))
       return
     }
 
@@ -241,10 +245,10 @@ export default function AIRecognition(): React.JSX.Element {
         response.warnings.forEach((w) => message.warning(w))
       }
       if (response.items.length > 0) {
-        message.success(`成功识别 ${response.items.length} 条交易记录`)
+        message.success(t('ai:messages.recognitionSuccess', { count: response.items.length }))
       }
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'AI 识别失败'
+      const errMsg = err instanceof Error ? err.message : t('ai:messages.recognitionFailed')
       if (!errMsg.includes('用户已取消')) {
         message.error(errMsg)
       }
@@ -263,7 +267,7 @@ export default function AIRecognition(): React.JSX.Element {
   const handleAbortRecognize = async (): Promise<void> => {
     try {
       await window.api.ai.abortRecognize()
-      message.info('已取消识别')
+      message.info(t('ai:messages.cancelled'))
     } catch {
       // ignore
     }
@@ -282,7 +286,7 @@ export default function AIRecognition(): React.JSX.Element {
 
     const result = await window.api.transaction.batchCreate(items)
     if ((result as { count: number }).count !== rows.length) {
-      throw new Error('导入数量不匹配')
+      throw new Error(t('ai:messages.importMismatch'))
     }
   }
 
@@ -300,7 +304,7 @@ export default function AIRecognition(): React.JSX.Element {
       <div style={{ padding: 24 }}>
         {showDraftOverwriteAlert && (
           <Alert
-            message={`已开始新的导入，之前的草稿（${draftStore.summary.count}条）已被替换`}
+            message={t('ai:messages.draftReplaced', { count: draftStore.summary.count })}
             type="info"
             showIcon
             closable
@@ -309,8 +313,8 @@ export default function AIRecognition(): React.JSX.Element {
           />
         )}
         <ImportConfirm
-          title="图片识别导入确认"
-          sourceInfo={`${images.length} 张图片识别结果`}
+          title={t('ai:recognition.confirmTitle')}
+          sourceInfo={t('ai:recognition.sourceInfo', { count: images.length })}
           initialRows={results}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
@@ -330,16 +334,16 @@ export default function AIRecognition(): React.JSX.Element {
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/')}
         />
-        <Title level={4} style={{ margin: 0 }}>图片识别导入</Title>
+        <Title level={4} style={{ margin: 0 }}>{t('ai:recognition.title')}</Title>
       </div>
 
       {hasNoProvider && (
         <Alert
           type="warning"
-          message="未配置 AI 模型"
+          message={t('ai:alerts.notConfigured')}
           description={
             <span>
-              请先前往 <a onClick={() => window.location.hash = '#/settings?tab=ai-providers'}>设置 &gt; AI 模型</a> 配置 API Key
+              {t('ai:alerts.notConfiguredHint')}
             </span>
           }
           style={{ marginBottom: 16 }}
@@ -352,13 +356,13 @@ export default function AIRecognition(): React.JSX.Element {
         <Space wrap>
           {configuredProviders.length > 0 ? (
             <>
-              <Text>AI 模型：</Text>
+              <Text>{t('ai:recognition.selectModel')}</Text>
               <Select
                 value={selectedProviderId || undefined}
-                placeholder="选择模型"
+                placeholder={t('ai:recognition.selectModelPlaceholder')}
                 style={{ width: 200 }}
                 options={configuredProviders.map((p) => ({
-                  label: `${p.name}${p.isDefault ? ' (默认)' : ''}`,
+                  label: `${p.name}${p.isDefault ? t('ai:recognition.defaultSuffix') : ''}`,
                   value: p.id
                 }))}
                 onChange={setSelectedProviderId}
@@ -380,9 +384,9 @@ export default function AIRecognition(): React.JSX.Element {
           <p>
             <CameraOutlined style={{ fontSize: 32, color: '#999' }} />
           </p>
-          <p>点击或拖拽图片到此处上传，也可以使用 Ctrl+V 粘贴截图</p>
+          <p>{t('ai:recognition.uploadHint')}</p>
           <p style={{ color: '#999', fontSize: 12 }}>
-            支持 JPEG、PNG、WebP、BMP，单张不超过 10MB，总量不超过 20MB
+            {t('ai:recognition.uploadLimits')}
           </p>
         </Dragger>
 
@@ -433,20 +437,20 @@ export default function AIRecognition(): React.JSX.Element {
                 onClick={handleRecognize}
                 disabled={images.length === 0 || !selectedProviderId}
               >
-                {loading ? `识别中 ${formatElapsed(elapsed)}` : '开始识别'}
+                {loading ? t('ai:recognition.recognizing', { elapsed: formatElapsed(elapsed) }) : t('ai:recognition.startRecognition')}
               </Button>
               {loading && (
                 <Button onClick={handleAbortRecognize}>
-                  取消
+                  {t('ai:recognition.cancel')}
                 </Button>
               )}
               {logs.length > 0 && (
                 <Button onClick={() => setLogsOpen(true)}>
-                  <FileTextOutlined /> 查看日志
+                  <FileTextOutlined /> {t('ai:recognition.viewLogs')}
                 </Button>
               )}
               <Button onClick={() => setImages([])}>
-                <CloseOutlined /> 清空图片
+                <CloseOutlined /> {t('ai:recognition.clearImages')}
               </Button>
             </Space>
           </div>
@@ -455,7 +459,7 @@ export default function AIRecognition(): React.JSX.Element {
 
       {/* Log Drawer */}
       <Drawer
-        title="AI 识别日志"
+        title={t('ai:recognition.logsTitle')}
         placement="right"
         width={600}
         onClose={() => setLogsOpen(false)}
@@ -471,7 +475,7 @@ export default function AIRecognition(): React.JSX.Element {
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word'
         }}>
-          {logs.join('\n') || '暂无日志'}
+          {logs.join('\n') || t('ai:recognition.noLogs')}
         </pre>
       </Drawer>
     </div>

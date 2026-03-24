@@ -1,0 +1,78 @@
+{
+  "title": "Transactions",
+  "rangePresets": {
+    "all": "All",
+    "thisMonth": "This Month",
+    "lastMonth": "Last Month",
+    "thisQuarter": "This Quarter",
+    "thisYear": "This Year"
+  },
+  "columns": {
+    "date": "Date",
+    "type": "Type",
+    "amount": "Amount",
+    "category": "Category",
+    "description": "Description",
+    "operator": "Operator",
+    "createdAt": "Created At",
+    "actions": "Actions"
+  },
+  "placeholders": {
+    "selectCategory": "Select category",
+    "optional": "Optional",
+    "amount": "Amount",
+    "description": "Description",
+    "searchDescription": "Search description",
+    "dateRangeStart": "Start date",
+    "dateRangeEnd": "End date"
+  },
+  "buttons": {
+    "manualEntry": "Manual Entry",
+    "aiRecognition": "AI Recognition",
+    "batchDelete": "Batch Delete",
+    "continueImport": "Continue Import",
+    "discard": "Discard"
+  },
+  "confirmations": {
+    "deleteOne": "Confirm to delete this record?",
+    "deleteBatch": "Confirm to delete {{count}} selected records?",
+    "discardDraft": "Are you sure to discard the unfinished import draft? This action cannot be undone.",
+    "discardDraftOk": "Discard"
+  },
+  "messages": {
+    "saveEditFirst": "Please save or cancel the current edit first",
+    "saveNewFirst": "Please save or cancel the new row first",
+    "requiredFields": "Please fill in all required fields (date, type, amount, category)",
+    "amountNotZero": "Amount cannot be 0",
+    "saveSuccess": "Saved successfully",
+    "saveFailed": "Failed to save",
+    "createSuccess": "Created successfully",
+    "createFailed": "Failed to create",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Failed to delete",
+    "batchDeleteSuccess": "Successfully deleted {{count}} records",
+    "batchDeleteFailed": "Failed to batch delete",
+    "draftDiscarded": "Draft discarded"
+  },
+  "draft": {
+    "alertTitle": "Unfinished import draft ({{count}} items{{missingCategory}})",
+    "missingCategory": ", {{count}} need category",
+    "sourceAI": "AI Recognition",
+    "sourceMCP": "MCP Import",
+    "lastEdited": "Last edited: {{time}}",
+    "modalTitle": "Continue Unfinished Import",
+    "source": "Source: ",
+    "sourceAILabel": "AI Recognition",
+    "sourceMCPLabel": "MCP Import",
+    "count": "Transaction Count: ",
+    "countValue": "{{count}} items",
+    "missingCategoryLabel": "Missing Category: ",
+    "missingCategoryValue": "{{count}} items",
+    "lastEditedLabel": "Last Edited: ",
+    "draftNotFound": "Draft not found"
+  },
+  "pagination": {
+    "total": "Total {{total}} items",
+    "showTotal": "Total {{total}}"
+  }
+}

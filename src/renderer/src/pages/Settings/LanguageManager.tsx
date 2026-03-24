@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Card, Radio, Button, Space, message } from 'antd'
 import type { RadioChangeEvent } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { useI18nStore } from '../../stores/i18n.store'
 
 export default function LanguageManager(): React.JSX.Element {
+  const { t } = useTranslation(['settings', 'common'])
   const { language, setLanguage } = useI18nStore()
   const [selectedLanguage, setSelectedLanguage] = useState(language)
   const [loading, setLoading] = useState(false)
@@ -14,36 +16,36 @@ export default function LanguageManager(): React.JSX.Element {
 
   const handleSave = async () => {
     if (selectedLanguage === language) {
-      message.info('语言未变更')
+      message.info(t('settings:language.noChange'))
       return
     }
 
     setLoading(true)
     try {
       await setLanguage(selectedLanguage)
-      message.success('语言已切换')
+      message.success(t('settings:language.saveSuccess'))
     } catch (error) {
-      message.error('语言切换失败，请重试')
+      message.error(t('settings:language.saveFailed'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Card title="语言设置" bordered={false}>
+    <Card title={t('settings:language.title')} bordered={false}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <div>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>界面语言</div>
+          <div style={{ marginBottom: 8, fontWeight: 500 }}>{t('settings:language.uiLanguage')}</div>
           <Radio.Group value={selectedLanguage} onChange={handleChange}>
             <Space direction="vertical">
-              <Radio value="zh-CN">简体中文</Radio>
-              <Radio value="en-US">English</Radio>
+              <Radio value="zh-CN">{t('settings:language.zhCN')}</Radio>
+              <Radio value="en-US">{t('settings:language.enUS')}</Radio>
             </Space>
           </Radio.Group>
         </div>
 
         <Button type="primary" onClick={handleSave} loading={loading}>
-          保存
+          {t('common:buttons.save')}
         </Button>
       </Space>
     </Card>

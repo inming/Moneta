@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Table, Empty } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import type { SorterResult } from 'antd/es/table/interface'
 import type { CrossTableData } from '../../../../shared/types'
@@ -19,8 +20,6 @@ interface TableRow {
 
 type MonthKey = 'm1' | 'm2' | 'm3' | 'm4' | 'm5' | 'm6' | 'm7' | 'm8' | 'm9' | 'm10' | 'm11' | 'm12'
 type SortableKey = MonthKey | 'yearly'
-
-const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
 function formatAmount(value: number): string {
   if (value === 0) return '—'
@@ -43,10 +42,17 @@ function makeSorter(field: SortableKey): ColumnType<TableRow>['sorter'] {
 }
 
 export default function CrossTable({ data, loading }: CrossTableProps): React.JSX.Element {
+  const { t } = useTranslation('statistics')
   const [sortedColumn, setSortedColumn] = useState<SortableKey | null>(null)
 
+  const MONTH_LABELS = [
+    t('months.jan'), t('months.feb'), t('months.mar'), t('months.apr'),
+    t('months.may'), t('months.jun'), t('months.jul'), t('months.aug'),
+    t('months.sep'), t('months.oct'), t('months.nov'), t('months.dec')
+  ]
+
   if (!loading && (!data || data.rows.length === 0)) {
-    return <Empty description="暂无数据" style={{ padding: 40 }} />
+    return <Empty description={t('table.noData')} style={{ padding: 40 }} />
   }
 
   // 获取某列的合计值，用于算占比
@@ -83,7 +89,7 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: '分类',
+      title: t('table.category'),
       dataIndex: 'category_name',
       key: 'category_name',
       fixed: 'left',
@@ -102,7 +108,7 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
       }
     }),
     {
-      title: '合计',
+      title: t('table.total'),
       dataIndex: 'yearly',
       key: 'yearly',
       fixed: 'right',
@@ -144,7 +150,7 @@ export default function CrossTable({ data, loading }: CrossTableProps): React.JS
         return (
           <Table.Summary fixed>
             <Table.Summary.Row style={{ fontWeight: 600, background: '#fafafa' }}>
-              <Table.Summary.Cell index={0} align="left">合计</Table.Summary.Cell>
+              <Table.Summary.Cell index={0} align="left">{t('table.total')}</Table.Summary.Cell>
               {data.totals.months.map((v, i) => (
                 <Table.Summary.Cell key={i} index={i + 1} align="right">
                   {renderSummaryCell(`m${i + 1}` as MonthKey, v)}

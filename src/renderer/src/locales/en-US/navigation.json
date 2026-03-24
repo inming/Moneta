@@ -1,0 +1,8 @@
+{
+  "menu": {
+    "transactions": "Transactions",
+    "statistics": "Statistics",
+    "settings": "Settings",
+    "lock": "Lock"
+  }
+}

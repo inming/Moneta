@@ -1,4 +1,5 @@
 import { Select, Radio, Space } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { TransactionType } from '../../../../shared/types/transaction'
 import { TRANSACTION_TYPE_CONFIG } from '../../../../shared/constants/transaction-type'
 
@@ -14,9 +15,11 @@ interface FilterBarProps {
 export default function FilterBar({
   year, type, minYear, maxYear, showYearFilter = true, onChange
 }: FilterBarProps): React.JSX.Element {
+  const { t } = useTranslation(['statistics', 'common'])
+
   const yearOptions = []
   for (let y = maxYear; y >= minYear; y--) {
-    yearOptions.push({ value: y, label: `${y} 年` })
+    yearOptions.push({ value: y, label: t('statistics:filter.yearLabel', { year: y }) })
   }
 
   return (
@@ -34,9 +37,9 @@ export default function FilterBar({
         onChange={(e) => onChange({ type: e.target.value as TransactionType })}
         optionType="button"
         buttonStyle="solid"
-        options={Object.entries(TRANSACTION_TYPE_CONFIG).map(([key, cfg]) => ({
+        options={Object.entries(TRANSACTION_TYPE_CONFIG).map(([key]) => ({
           value: key,
-          label: cfg.label
+          label: t(`common:transactionTypes.${key}` as const)
         }))}
       />
     </Space>

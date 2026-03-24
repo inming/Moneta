@@ -1,0 +1,43 @@
+{
+  "viewTabs": {
+    "monthly": "Monthly Details",
+    "yearly": "Yearly Summary"
+  },
+  "chartTitles": {
+    "monthlyTrend": "Monthly Trend",
+    "yearlyTrend": "Yearly Trend"
+  },
+  "table": {
+    "category": "Category",
+    "year": "Year",
+    "total": "Total",
+    "noData": "No data"
+  },
+  "months": {
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec"
+  },
+  "chart": {
+    "totalLabel": "Total",
+    "viewDetails": "View Details",
+    "other": "Other"
+  },
+  "filter": {
+    "yearLabel": "{{year}}"
+  },
+  "summary": {
+    "monthTotal": "{{month}} Total",
+    "monthOverMonth": "MoM",
+    "yearTotal": "Year Total"
+  }
+}

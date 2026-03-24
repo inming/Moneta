@@ -6,22 +6,24 @@ import {
   SettingOutlined,
   LockOutlined
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/auth.store'
 
 const { Sider, Content } = AntLayout
 
-const menuItems = [
-  { key: '/', icon: <TableOutlined />, label: '数据浏览' },
-  { key: '/statistics', icon: <BarChartOutlined />, label: '统计报表' },
-  { key: '/settings', icon: <SettingOutlined />, label: '设置' }
-]
-
 const LOCK_KEY = '__lock__'
 
 export default function Layout(): React.JSX.Element {
+  const { t } = useTranslation('navigation')
   const navigate = useNavigate()
   const location = useLocation()
   const lock = useAuthStore((s) => s.lock)
+
+  const menuItems = [
+    { key: '/', icon: <TableOutlined />, label: t('menu.transactions') },
+    { key: '/statistics', icon: <BarChartOutlined />, label: t('menu.statistics') },
+    { key: '/settings', icon: <SettingOutlined />, label: t('menu.settings') }
+  ]
 
   const handleMenuClick = ({ key }: { key: string }): void => {
     if (key === LOCK_KEY) {
@@ -75,7 +77,7 @@ export default function Layout(): React.JSX.Element {
           <Menu
             mode="inline"
             selectable={false}
-            items={[{ key: LOCK_KEY, icon: <LockOutlined />, label: '锁屏' }]}
+            items={[{ key: LOCK_KEY, icon: <LockOutlined />, label: t('menu.lock') }]}
             onClick={handleMenuClick}
             style={{ borderTop: '1px solid #f0f0f0', userSelect: 'none' }}
           />

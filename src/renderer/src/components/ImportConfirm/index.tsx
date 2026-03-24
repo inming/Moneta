@@ -8,6 +8,7 @@ import {
   CheckOutlined, ArrowLeftOutlined, PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -16,11 +17,6 @@ import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
 import { useDraftStore } from '../../stores/draft.store'
 
 const { Text, Title } = Typography
-
-const typeOptions = Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
-  label: config.label,
-  value
-}))
 
 // 导入行数据接口
 export interface ImportRow {
@@ -60,6 +56,7 @@ export default function ImportConfirm({
   imagePaths,
   mcpSource
 }: ImportConfirmProps): React.JSX.Element {
+  const { t } = useTranslation(['import', 'common'])
   const navigate = useNavigate()
   const draftStore = useDraftStore()
   const [rows, setRows] = useState<ImportRow[]>(initialRows)
@@ -68,9 +65,15 @@ export default function ImportConfirm({
   const [accountingDate, setAccountingDate] = useState(initialAccountingDate ?? dayjs())
   const [defaultOperatorId, setDefaultOperatorId] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  
+
   // 防抖保存的 timer
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // 交易类型选项（需要在组件内部定义以使用 t()）
+  const typeOptions = Object.keys(TRANSACTION_TYPE_CONFIG).map((key) => ({
+    label: t(`common:transactionTypes.${key}` as const),
+    value: key
+  }))
 
   // 加载分类和操作人
   useEffect(() => {
@@ -289,13 +292,13 @@ export default function ImportConfirm({
   // 确认导入
   const handleConfirm = async () => {
     if (rows.length === 0) {
-      message.warning('没有可提交的记录')
+      message.warning(t('import:messages.noRecords'))
       return
     }
 
     const emptyCategories = rows.filter((r) => r.category_id === null)
     if (emptyCategories.length > 0) {
-      message.error(`还有 ${emptyCategories.length} 条交易未选择分类，请补充后再提交`)
+      message.error(t('import:messages.missingCategories', { count: emptyCategories.length }))
       return
     }
 
@@ -306,11 +309,11 @@ export default function ImportConfirm({
       console.log('[ImportConfirm] Import successful, clearing draft...')
       await clearDraft()
       console.log('[ImportConfirm] Draft cleared after import')
-      message.success(`成功录入 ${rows.length} 条交易记录`)
+      message.success(t('import:messages.importSuccess', { count: rows.length }))
       navigate('/')
     } catch (err) {
       console.error('[ImportConfirm] Import failed:', err)
-      message.error(err instanceof Error ? err.message : '导入失败')
+      message.error(err instanceof Error ? err.message : t('import:messages.importFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -336,7 +339,7 @@ export default function ImportConfirm({
   // 使用 useMemo 缓存 columns 配置，避免每次渲染都重新创建
   const columns = useMemo<ColumnsType<ImportRow>>(() => [
     {
-      title: '类型',
+      title: t('import:columns.type'),
       dataIndex: 'type',
       width: 110,
       render: (type: TransactionType, record) => (
@@ -350,7 +353,7 @@ export default function ImportConfirm({
       )
     },
     {
-      title: '金额',
+      title: t('import:columns.amount'),
       dataIndex: 'amount',
       width: 120,
       render: (amount: number, record) => (
@@ -364,14 +367,14 @@ export default function ImportConfirm({
       )
     },
     {
-      title: '分类',
+      title: t('import:columns.category'),
       dataIndex: 'category_id',
       width: 150,
       render: (categoryId: number | null, record) => (
         <Select
           size="small"
           value={categoryId}
-          placeholder="请选择"
+          placeholder={t('import:placeholders.selectCategory')}
           style={{ width: '100%' }}
           status={categoryId === null ? 'error' : undefined}
           options={getCategoriesForType(record.type).map((c) => ({
@@ -383,7 +386,7 @@ export default function ImportConfirm({
       )
     },
     {
-      title: '描述',
+      title: t('import:columns.description'),
       dataIndex: 'description',
       render: (desc: string, record) => (
         <Input
@@ -394,7 +397,7 @@ export default function ImportConfirm({
       )
     },
     {
-      title: '操作人',
+      title: t('import:columns.operator'),
       dataIndex: 'operator_id',
       width: 120,
       render: (operatorId: number | null, record) => (
@@ -402,7 +405,7 @@ export default function ImportConfirm({
           size="small"
           value={operatorId}
           allowClear
-          placeholder="可选"
+          placeholder={t('import:placeholders.optional')}
           style={{ width: '100%' }}
           options={operators.map((o) => ({ label: o.name, value: o.id }))}
           onChange={(val) => updateRow(record.key, 'operator_id', val ?? null)}
@@ -410,8 +413,8 @@ export default function ImportConfirm({
       )
     },
     {
-      title: '操作',
-      width: 120,
+      title: t('import:columns.actions'),
+      width: 160,
       render: (_, record) => (
         <Space size="small">
           <Button
@@ -419,7 +422,7 @@ export default function ImportConfirm({
             type="text"
             onClick={() => insertRow(record.key)}
           >
-            上方插入
+            {t('import:buttons.insertAbove')}
           </Button>
           <Button
             size="small"
@@ -431,7 +434,7 @@ export default function ImportConfirm({
         </Space>
       )
     }
-  ], [categories, operators, updateRow, insertRow, deleteRow])
+  ], [categories, operators, updateRow, insertRow, deleteRow, t, typeOptions])
 
   return (
     <div>
@@ -450,21 +453,21 @@ export default function ImportConfirm({
           <Space wrap>
             {sourceInfo && (
               <Text>
-                <strong>来源：</strong>{sourceInfo}
+                <strong>{t('import:info.source')}</strong>{sourceInfo}
               </Text>
             )}
             <Text>
-              <strong>共识别：</strong>{rows.length} 条记录
+              <strong>{t('import:info.totalRecords')}</strong>{t('import:info.recordCount', { count: rows.length })}
               {unmatchedCount > 0 && (
                 <Badge
-                  count={`待补充分类: ${unmatchedCount}`}
+                  count={t('import:info.missingCategory', { count: unmatchedCount })}
                   style={{ backgroundColor: '#ff4d4f', marginLeft: 8 }}
                 />
               )}
             </Text>
           </Space>
           <Space>
-            <Text strong>记账日期：</Text>
+            <Text strong>{t('import:info.accountingDate')}</Text>
             <DatePicker
               value={accountingDate}
               onChange={(date) => {
@@ -476,7 +479,7 @@ export default function ImportConfirm({
               }}
               allowClear={false}
             />
-            <Text>操作人：</Text>
+            <Text>{t('import:info.operator')}</Text>
             <Select
               value={defaultOperatorId}
               style={{ width: 120 }}
@@ -494,7 +497,7 @@ export default function ImportConfirm({
           </Space>
           {unmatchedCount > 0 && (
             <Alert
-              message={`还有 ${unmatchedCount} 条交易未选择分类，请补充后提交`}
+              message={t('import:messages.missingCategoriesAlert', { count: unmatchedCount })}
               type="warning"
               showIcon
             />
@@ -522,9 +525,9 @@ export default function ImportConfirm({
       {/* 底部操作 */}
       <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
         <Button icon={<PlusOutlined />} onClick={appendRow}>
-          添加一行
+          {t('import:buttons.addRow')}
         </Button>
-        <Button onClick={handleCancel}>取消</Button>
+        <Button onClick={handleCancel}>{t('import:buttons.cancel')}</Button>
         <Button
           type="primary"
           icon={<CheckOutlined />}
@@ -532,7 +535,7 @@ export default function ImportConfirm({
           onClick={handleConfirm}
           disabled={rows.length === 0 || unmatchedCount > 0}
         >
-          确认导入 ({rows.length} 条)
+          {t('import:buttons.confirm', { count: rows.length })}
         </Button>
       </div>
 

@@ -11,10 +11,9 @@ import {
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/zh-cn'
+import { useTranslation } from 'react-i18next'
 
 dayjs.extend(relativeTime)
-dayjs.locale('zh-cn')
 import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import type {
   Transaction, TransactionType, Category, Operator,
@@ -26,20 +25,6 @@ import { useDraftStore } from '../../stores/draft.store'
 
 const { Text } = Typography
 const { RangePicker } = DatePicker
-
-const typeOptions = Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
-  label: config.label,
-  value
-}))
-
-// 日期范围预设快捷选项
-const rangePresets = [
-  { label: '全部', value: null as [Dayjs, Dayjs] | null },
-  { label: '本月', value: [dayjs().startOf('month'), dayjs().endOf('month')] as [Dayjs, Dayjs] },
-  { label: '上月', value: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')] as [Dayjs, Dayjs] },
-  { label: '本季度', value: [dayjs().startOf('quarter'), dayjs().endOf('quarter')] as [Dayjs, Dayjs] },
-  { label: '本年', value: [dayjs().startOf('year'), dayjs().endOf('year')] as [Dayjs, Dayjs] }
-]
 
 interface NewRow {
   date: string
@@ -57,9 +42,25 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 export default function Transactions(): React.JSX.Element {
+  const { t } = useTranslation(['transactions', 'common'])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const draftStore = useDraftStore()
+
+  // Date range presets
+  const rangePresets = [
+    { label: t('transactions:rangePresets.all'), value: null as [Dayjs, Dayjs] | null },
+    { label: t('transactions:rangePresets.thisMonth'), value: [dayjs().startOf('month'), dayjs().endOf('month')] as [Dayjs, Dayjs] },
+    { label: t('transactions:rangePresets.lastMonth'), value: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')] as [Dayjs, Dayjs] },
+    { label: t('transactions:rangePresets.thisQuarter'), value: [dayjs().startOf('quarter'), dayjs().endOf('quarter')] as [Dayjs, Dayjs] },
+    { label: t('transactions:rangePresets.thisYear'), value: [dayjs().startOf('year'), dayjs().endOf('year')] as [Dayjs, Dayjs] }
+  ]
+
+  const typeOptions = Object.keys(TRANSACTION_TYPE_CONFIG).map((key) => ({
+    label: t(`common:transactionTypes.${key}` as const),
+    value: key
+  }))
+
   const [transactions, setTransactions] = useState<PaginatedResult<Transaction>>({
     items: [],
     total: 0,
@@ -194,7 +195,7 @@ export default function Transactions(): React.JSX.Element {
   ): void => {
     // Handle editing guard
     if (editingKey !== null || newRow !== null) {
-      message.warning('请先保存或取消当前编辑')
+      message.warning(t('transactions:messages.saveEditFirst'))
       return
     }
 
@@ -242,7 +243,7 @@ export default function Transactions(): React.JSX.Element {
 
   const handleKeywordSearch = (value: string): void => {
     if (editingKey !== null || newRow !== null) {
-      message.warning('请先保存或取消当前编辑')
+      message.warning(t('transactions:messages.saveEditFirst'))
       return
     }
     setKeyword(value)
@@ -259,7 +260,7 @@ export default function Transactions(): React.JSX.Element {
   // Handle date range change with debounce
   const handleDateRangeChange = (dates: [Dayjs | null, Dayjs | null] | null): void => {
     if (editingKey !== null || newRow !== null) {
-      message.warning('请先保存或取消当前编辑')
+      message.warning(t('transactions:messages.saveEditFirst'))
       return
     }
     setDateRange(dates)
@@ -287,7 +288,7 @@ export default function Transactions(): React.JSX.Element {
   // --- Edit existing row ---
   const startEdit = (record: Transaction): void => {
     if (newRow !== null) {
-      message.warning('请先保存或取消新增行')
+      message.warning(t('transactions:messages.saveNewFirst'))
       return
     }
     setEditingKey(record.id)
@@ -320,11 +321,11 @@ export default function Transactions(): React.JSX.Element {
 
     // Validate required fields
     if (!editingRow.date || !editingRow.type || !editingRow.amount || !editingRow.category_id) {
-      message.error('请填写所有必填字段（日期、类型、金额、分类）')
+      message.error(t('transactions:messages.requiredFields'))
       return
     }
     if (editingRow.amount === 0) {
-      message.error('金额不能为 0')
+      message.error(t('transactions:messages.amountNotZero'))
       return
     }
 
@@ -344,17 +345,17 @@ export default function Transactions(): React.JSX.Element {
 
     try {
       await window.api.transaction.update(editingKey, dto)
-      message.success('保存成功')
+      message.success(t('transactions:messages.saveSuccess'))
       reload()
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '保存失败')
+      message.error(err instanceof Error ? err.message : t('transactions:messages.saveFailed'))
     }
   }
 
   // --- New row ---
   const startNewRow = (): void => {
     if (editingKey !== null) {
-      message.warning('请先保存或取消当前编辑')
+      message.warning(t('transactions:messages.saveEditFirst'))
       return
     }
     setNewRow({
@@ -388,11 +389,11 @@ export default function Transactions(): React.JSX.Element {
     if (!newRow) return
 
     if (!newRow.date || !newRow.type || !newRow.amount || !newRow.category_id) {
-      message.error('请填写所有必填字段（日期、类型、金额、分类）')
+      message.error(t('transactions:messages.requiredFields'))
       return
     }
     if (newRow.amount === 0) {
-      message.error('金额不能为 0')
+      message.error(t('transactions:messages.amountNotZero'))
       return
     }
 
@@ -407,12 +408,12 @@ export default function Transactions(): React.JSX.Element {
 
     try {
       await window.api.transaction.create(dto)
-      message.success('新增成功')
+      message.success(t('transactions:messages.createSuccess'))
       setLastInputDate(newRow.date)
       setNewRow(null)
       loadTransactions(1, transactions.pageSize, queryParams)
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '新增失败')
+      message.error(err instanceof Error ? err.message : t('transactions:messages.createFailed'))
     }
   }
 
@@ -420,10 +421,10 @@ export default function Transactions(): React.JSX.Element {
   const handleDelete = async (id: number): Promise<void> => {
     try {
       await window.api.transaction.delete(id)
-      message.success('删除成功')
+      message.success(t('transactions:messages.deleteSuccess'))
       reload()
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '删除失败')
+      message.error(err instanceof Error ? err.message : t('transactions:messages.deleteFailed'))
     }
   }
 
@@ -432,10 +433,10 @@ export default function Transactions(): React.JSX.Element {
 
     try {
       await window.api.transaction.batchDelete(selectedRowKeys)
-      message.success(`成功删除 ${selectedRowKeys.length} 条记录`)
+      message.success(t('transactions:messages.batchDeleteSuccess', { count: selectedRowKeys.length }))
       reload()
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '批量删除失败')
+      message.error(err instanceof Error ? err.message : t('transactions:messages.batchDeleteFailed'))
     }
   }
 
@@ -480,7 +481,7 @@ export default function Transactions(): React.JSX.Element {
         }
         return (
           <Tag color={TRANSACTION_TYPE_CONFIG[value as TransactionType].color}>
-            {TRANSACTION_TYPE_CONFIG[value as TransactionType].label}
+            {t(`common:transactionTypes.${value}` as const)}
           </Tag>
         )
 
@@ -510,7 +511,7 @@ export default function Transactions(): React.JSX.Element {
             <Select
               size="small"
               value={editingRow.category_id ?? undefined}
-              placeholder="请选择分类"
+              placeholder={t('transactions:placeholders.selectCategory')}
               style={{ width: '100%' }}
               status={!editingRow.category_id ? 'error' : undefined}
               options={getCategoriesForType(type).map((c) => ({
@@ -542,7 +543,7 @@ export default function Transactions(): React.JSX.Element {
               size="small"
               value={editingRow.operator_id ?? undefined}
               allowClear
-              placeholder="可选"
+              placeholder={t('transactions:placeholders.optional')}
               style={{ width: '100%' }}
               options={operators.map((o) => ({ label: o.name, value: o.id }))}
               onChange={(val) => updateEditField('operator_id', val ?? null)}
@@ -591,7 +592,7 @@ export default function Transactions(): React.JSX.Element {
             size="small"
             value={newRow.amount || undefined}
             precision={2}
-            placeholder="金额"
+            placeholder={t('transactions:placeholders.amount')}
             style={{ width: '100%' }}
             status={newRow.amount == null || newRow.amount === 0 ? 'error' : undefined}
             onChange={(val) => updateNewField('amount', val ?? 0)}
@@ -617,7 +618,7 @@ export default function Transactions(): React.JSX.Element {
           <Input
             size="small"
             value={newRow.description}
-            placeholder="描述"
+            placeholder={t('transactions:placeholders.description')}
             onChange={(e) => updateNewField('description', e.target.value)}
           />
         )
@@ -649,7 +650,7 @@ export default function Transactions(): React.JSX.Element {
 
   const columns: ColumnsType<Transaction> = [
     {
-      title: '日期',
+      title: t('transactions:columns.date'),
       dataIndex: 'date',
       width: 130,
       sorter: true,
@@ -657,7 +658,7 @@ export default function Transactions(): React.JSX.Element {
       render: (val: string, record) => renderCell('date', val, record)
     },
     {
-      title: '类型',
+      title: t('transactions:columns.type'),
       dataIndex: 'type',
       width: 100,
       filters: typeOptions.map((o) => ({ text: o.label, value: o.value })),
@@ -665,7 +666,7 @@ export default function Transactions(): React.JSX.Element {
       render: (val: TransactionType, record) => renderCell('type', val, record)
     },
     {
-      title: '金额',
+      title: t('transactions:columns.amount'),
       dataIndex: 'amount',
       width: 110,
       align: 'right',
@@ -673,7 +674,7 @@ export default function Transactions(): React.JSX.Element {
       render: (val: number, record) => renderCell('amount', val, record)
     },
     {
-      title: '分类',
+      title: t('transactions:columns.category'),
       dataIndex: 'category_id',
       width: 130,
       filters: categories.map((c) => ({ text: c.name, value: c.id })),
@@ -681,27 +682,27 @@ export default function Transactions(): React.JSX.Element {
       render: (val: number, record) => renderCell('category_id', val, record)
     },
     {
-      title: '描述',
+      title: t('transactions:columns.description'),
       dataIndex: 'description',
       ellipsis: true,
       render: (val: string, record) => renderCell('description', val, record)
     },
     {
-      title: '操作人',
+      title: t('transactions:columns.operator'),
       dataIndex: 'operator_id',
       width: 110,
       filters: operators.map((o) => ({ text: o.name, value: o.id })),
       render: (val: number | null, record) => renderCell('operator_id', val, record)
     },
     {
-      title: '添加时间',
+      title: t('transactions:columns.createdAt'),
       dataIndex: 'created_at',
       width: 180,
       sorter: true,
       render: (val: string, record) => renderCell('created_at', val, record)
     },
     {
-      title: '操作',
+      title: t('transactions:columns.actions'),
       key: 'actions',
       width: 100,
       render: (_, record) => {
@@ -723,10 +724,10 @@ export default function Transactions(): React.JSX.Element {
               disabled={editingKey !== null || newRow !== null}
             />
             <Popconfirm
-              title="确认删除这条记录？"
+              title={t('transactions:confirmations.deleteOne')}
               onConfirm={() => handleDelete(record.id)}
-              okText="确认"
-              cancelText="取消"
+              okText={t('common:buttons.confirm')}
+              cancelText={t('common:buttons.cancel')}
             >
               <Button
                 size="small"
@@ -748,7 +749,7 @@ export default function Transactions(): React.JSX.Element {
   return (
     <div>
       <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16, userSelect: 'none' }}>
-        数据浏览
+        {t('transactions:title')}
       </Text>
 
       {/* Draft Alert */}
@@ -758,17 +759,19 @@ export default function Transactions(): React.JSX.Element {
             <Space>
               <FileTextOutlined />
               <span>
-                有未完成的导入草稿（{draftStore.summary.count}条
-                {draftStore.summary.missingCategoryCount > 0 && (
-                  <span style={{ color: '#ff4d4f' }}>，{draftStore.summary.missingCategoryCount}条待补充分类</span>
-                )}）
+                {t('transactions:draft.alertTitle', {
+                  count: draftStore.summary.count,
+                  missingCategory: draftStore.summary.missingCategoryCount > 0
+                    ? t('transactions:draft.missingCategory', { count: draftStore.summary.missingCategoryCount })
+                    : ''
+                })}
               </span>
               <Tag color={draftStore.summary.source === 'ai' ? 'blue' : 'purple'}>
-                {draftStore.summary.source === 'ai' ? 'AI识别' : 'MCP导入'}
+                {draftStore.summary.source === 'ai' ? t('transactions:draft.sourceAI') : t('transactions:draft.sourceMCP')}
               </Tag>
               {draftStore.summary.updatedAt && (
                 <span style={{ color: '#888', fontSize: 12 }}>
-                  最后编辑：{dayjs(draftStore.summary.updatedAt).fromNow()}
+                  {t('transactions:draft.lastEdited', { time: dayjs(draftStore.summary.updatedAt).fromNow() })}
                 </span>
               )}
             </Space>
@@ -787,26 +790,26 @@ export default function Transactions(): React.JSX.Element {
                 type="primary"
                 onClick={() => setDraftModalOpen(true)}
               >
-                继续导入
+                {t('transactions:buttons.continueImport')}
               </Button>
               <Button
                 size="small"
                 onClick={() => {
                   Modal.confirm({
-                    title: '放弃草稿',
+                    title: t('common:buttons.discard'),
                     icon: <ExclamationCircleOutlined />,
-                    content: '确定放弃未完成的导入草稿？此操作不可恢复。',
-                    okText: '确定放弃',
+                    content: t('transactions:confirmations.discardDraft'),
+                    okText: t('transactions:confirmations.discardDraftOk'),
                     okType: 'danger',
-                    cancelText: '取消',
+                    cancelText: t('common:buttons.cancel'),
                     onOk: async () => {
                       await draftStore.deleteDraft()
-                      message.success('已放弃草稿')
+                      message.success(t('transactions:messages.draftDiscarded'))
                     }
                   })
                 }}
               >
-                放弃
+                {t('transactions:buttons.discard')}
               </Button>
             </Space>
           }
@@ -815,12 +818,12 @@ export default function Transactions(): React.JSX.Element {
 
       {/* Draft Continue Modal */}
       <Modal
-        title="继续未完成的导入"
+        title={t('transactions:draft.modalTitle')}
         open={draftModalOpen}
         onCancel={() => setDraftModalOpen(false)}
         footer={[
           <Button key="cancel" onClick={() => setDraftModalOpen(false)}>
-            取消
+            {t('common:buttons.cancel')}
           </Button>,
           <Button
             key="continue"
@@ -837,35 +840,35 @@ export default function Transactions(): React.JSX.Element {
               }
             }}
           >
-            继续导入
+            {t('transactions:buttons.continueImport')}
           </Button>
         ]}
       >
         {draftStore.summary.exists ? (
           <div>
             <p>
-              <strong>来源：</strong>
-              {draftStore.summary.source === 'ai' ? 'AI 图片识别' : 'MCP 导入'}
+              <strong>{t('transactions:draft.source')}</strong>
+              {draftStore.summary.source === 'ai' ? t('transactions:draft.sourceAILabel') : t('transactions:draft.sourceMCPLabel')}
             </p>
             <p>
-              <strong>交易条数：</strong>
-              {draftStore.summary.count} 条
+              <strong>{t('transactions:draft.count')}</strong>
+              {t('transactions:draft.countValue', { count: draftStore.summary.count })}
             </p>
             {draftStore.summary.missingCategoryCount > 0 && (
               <p style={{ color: '#ff4d4f' }}>
-                <strong>待补充分类：</strong>
-                {draftStore.summary.missingCategoryCount} 条
+                <strong>{t('transactions:draft.missingCategoryLabel')}</strong>
+                {t('transactions:draft.missingCategoryValue', { count: draftStore.summary.missingCategoryCount })}
               </p>
             )}
             {draftStore.summary.updatedAt && (
               <p>
-                <strong>最后编辑：</strong>
+                <strong>{t('transactions:draft.lastEditedLabel')}</strong>
                 {dayjs(draftStore.summary.updatedAt).format('YYYY-MM-DD HH:mm:ss')}
               </p>
             )}
           </div>
         ) : (
-          <p>草稿已不存在</p>
+          <p>{t('transactions:draft.draftNotFound')}</p>
         )}
       </Modal>
 
@@ -878,23 +881,23 @@ export default function Transactions(): React.JSX.Element {
             onClick={startNewRow}
             disabled={newRow !== null || editingKey !== null}
           >
-            手工录入
+            {t('transactions:buttons.manualEntry')}
           </Button>
           <Button
             icon={<CameraOutlined />}
             onClick={() => navigate('/ai-recognition')}
           >
-            图片识别导入
+            {t('transactions:buttons.aiRecognition')}
           </Button>
           {selectedRowKeys.length > 0 && (
             <Popconfirm
-              title={`确认删除选中的 ${selectedRowKeys.length} 条记录？`}
+              title={t('transactions:confirmations.deleteBatch', { count: selectedRowKeys.length })}
               onConfirm={handleBatchDelete}
-              okText="确认"
-              cancelText="取消"
+              okText={t('common:buttons.confirm')}
+              cancelText={t('common:buttons.cancel')}
             >
               <Button danger icon={<DeleteOutlined />}>
-                批量删除 ({selectedRowKeys.length})
+                {t('transactions:buttons.batchDelete')} ({selectedRowKeys.length})
               </Button>
             </Popconfirm>
           )}
@@ -906,12 +909,12 @@ export default function Transactions(): React.JSX.Element {
             onChange={(dates) => handleDateRangeChange(dates as [Dayjs | null, Dayjs | null] | null)}
             presets={rangePresets}
             format="YYYY-MM-DD"
-            placeholder={['开始日期', '结束日期']}
+            placeholder={[t('transactions:placeholders.dateRangeStart'), t('transactions:placeholders.dateRangeEnd')]}
             disabled={editingKey !== null || newRow !== null}
             style={{ width: 240 }}
           />
           <Input.Search
-            placeholder="搜索描述"
+            placeholder={t('transactions:placeholders.searchDescription')}
             allowClear
             size="small"
             prefix={<SearchOutlined />}
@@ -920,7 +923,7 @@ export default function Transactions(): React.JSX.Element {
             onChange={(e) => setKeyword(e.target.value)}
             onSearch={handleKeywordSearch}
           />
-          <Text type="secondary">共 {transactions.total} 条</Text>
+          <Text type="secondary">{t('transactions:pagination.total', { total: transactions.total })}</Text>
         </Space>
       </div>
 
@@ -966,7 +969,7 @@ export default function Transactions(): React.JSX.Element {
           current: transactions.page,
           pageSize: transactions.pageSize,
           total: transactions.total,
-          showTotal: (total) => `共 ${total} 条`,
+          showTotal: (total) => t('transactions:pagination.showTotal', { total }),
           showSizeChanger: true,
           pageSizeOptions: ['20', '50', '100']
         }}

@@ -1,0 +1,78 @@
+{
+  "title": "数据浏览",
+  "rangePresets": {
+    "all": "全部",
+    "thisMonth": "本月",
+    "lastMonth": "上月",
+    "thisQuarter": "本季度",
+    "thisYear": "本年"
+  },
+  "columns": {
+    "date": "日期",
+    "type": "类型",
+    "amount": "金额",
+    "category": "分类",
+    "description": "描述",
+    "operator": "操作人",
+    "createdAt": "添加时间",
+    "actions": "操作"
+  },
+  "placeholders": {
+    "selectCategory": "请选择分类",
+    "optional": "可选",
+    "amount": "金额",
+    "description": "描述",
+    "searchDescription": "搜索描述",
+    "dateRangeStart": "开始日期",
+    "dateRangeEnd": "结束日期"
+  },
+  "buttons": {
+    "manualEntry": "手工录入",
+    "aiRecognition": "图片识别导入",
+    "batchDelete": "批量删除",
+    "continueImport": "继续导入",
+    "discard": "放弃"
+  },
+  "confirmations": {
+    "deleteOne": "确认删除这条记录？",
+    "deleteBatch": "确认删除选中的 {{count}} 条记录？",
+    "discardDraft": "确定放弃未完成的导入草稿？此操作不可恢复。",
+    "discardDraftOk": "确定放弃"
+  },
+  "messages": {
+    "saveEditFirst": "请先保存或取消当前编辑",
+    "saveNewFirst": "请先保存或取消新增行",
+    "requiredFields": "请填写所有必填字段（日期、类型、金额、分类）",
+    "amountNotZero": "金额不能为 0",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败",
+    "createSuccess": "新增成功",
+    "createFailed": "新增失败",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败",
+    "batchDeleteSuccess": "成功删除 {{count}} 条记录",
+    "batchDeleteFailed": "批量删除失败",
+    "draftDiscarded": "已放弃草稿"
+  },
+  "draft": {
+    "alertTitle": "有未完成的导入草稿（{{count}}条{{missingCategory}}）",
+    "missingCategory": "，{{count}}条待补充分类",
+    "sourceAI": "AI识别",
+    "sourceMCP": "MCP导入",
+    "lastEdited": "最后编辑：{{time}}",
+    "modalTitle": "继续未完成的导入",
+    "source": "来源：",
+    "sourceAILabel": "AI 图片识别",
+    "sourceMCPLabel": "MCP 导入",
+    "count": "交易条数：",
+    "countValue": "{{count}} 条",
+    "missingCategoryLabel": "待补充分类：",
+    "missingCategoryValue": "{{count}} 条",
+    "lastEditedLabel": "最后编辑：",
+    "draftNotFound": "草稿已不存在"
+  },
+  "pagination": {
+    "total": "共 {{total}} 条",
+    "showTotal": "共 {{total}} 条"
+  }
+}

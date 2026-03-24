@@ -3,27 +3,30 @@ import { Card, Button, Typography, message, Steps, Select, Space } from 'antd'
 import { LockOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import PinInput, { type PinInputRef } from '../LockScreen/PinInput'
 import { useAuthStore } from '../../stores/auth.store'
+import { useTranslation } from 'react-i18next'
 
 const { Text } = Typography
 
 type ChangePinStep = 'idle' | 'current' | 'new' | 'confirm'
 
-const AUTO_LOCK_OPTIONS = [
-  { value: 5, label: '5 分钟' },
-  { value: 10, label: '10 分钟' },
-  { value: 15, label: '15 分钟' },
-  { value: 30, label: '30 分钟' },
-  { value: 60, label: '1 小时' },
-  { value: 0, label: '不自动锁屏' }
-]
-
 export default function PinManager(): React.JSX.Element {
+  const { t } = useTranslation('settings')
   const pinRef = useRef<PinInputRef>(null)
   const [step, setStep] = useState<ChangePinStep>('idle')
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
   const [error, setError] = useState('')
   const { autoLockMinutes, setAutoLockMinutes } = useAuthStore()
+
+  // 自动锁屏选项（需要在组件内部定义以使用 t()）
+  const AUTO_LOCK_OPTIONS = [
+    { value: 5, label: t('pinManager.autoLock.minutes5') },
+    { value: 10, label: t('pinManager.autoLock.minutes10') },
+    { value: 15, label: t('pinManager.autoLock.minutes15') },
+    { value: 30, label: t('pinManager.autoLock.minutes30') },
+    { value: 60, label: t('pinManager.autoLock.hour1') },
+    { value: 0, label: t('pinManager.autoLock.disabled') }
+  ]
 
   const reset = useCallback(() => {
     setStep('idle')
@@ -61,7 +64,7 @@ export default function PinManager(): React.JSX.Element {
   const handleConfirmPin = useCallback(
     async (pin: string) => {
       if (pin !== newPin) {
-        setError('两次输入的新 PIN 码不一致')
+        setError(t('pinManager.messages.mismatch'))
         pinRef.current?.shake()
         setTimeout(() => {
           pinRef.current?.clear()
@@ -74,10 +77,10 @@ export default function PinManager(): React.JSX.Element {
       try {
         const result = await window.api.auth.changePIN(currentPin, pin)
         if (result.success) {
-          message.success('PIN 码修改成功')
+          message.success(t('pinManager.messages.changeSuccess'))
           reset()
         } else {
-          setError('当前 PIN 码验证失败')
+          setError(t('pinManager.messages.currentPinFailed'))
           pinRef.current?.shake()
           setTimeout(() => {
             pinRef.current?.clear()
@@ -87,12 +90,12 @@ export default function PinManager(): React.JSX.Element {
           }, 500)
         }
       } catch {
-        setError('修改失败，请重试')
+        setError(t('pinManager.messages.changeFailed'))
         pinRef.current?.shake()
         setTimeout(() => pinRef.current?.clear(), 500)
       }
     },
-    [newPin, currentPin, reset]
+    [newPin, currentPin, reset, t]
   )
 
   const handleAutoLockChange = useCallback(
@@ -100,19 +103,19 @@ export default function PinManager(): React.JSX.Element {
       try {
         await window.api.auth.setAutoLockMinutes(minutes)
         setAutoLockMinutes(minutes)
-        message.success('自动锁屏时间已更新')
+        message.success(t('pinManager.messages.autoLockUpdated'))
       } catch {
-        message.error('设置失败')
+        message.error(t('pinManager.messages.autoLockFailed'))
       }
     },
-    [setAutoLockMinutes]
+    [setAutoLockMinutes, t]
   )
 
   const stepLabels: Record<ChangePinStep, string> = {
     idle: '',
-    current: '请输入当前 PIN 码',
-    new: '请输入新 PIN 码',
-    confirm: '请再次输入新 PIN 码确认'
+    current: t('pinManager.prompts.current'),
+    new: t('pinManager.prompts.new'),
+    confirm: t('pinManager.prompts.confirm')
   }
 
   const currentStepIndex = step === 'current' ? 0 : step === 'new' ? 1 : step === 'confirm' ? 2 : -1
@@ -126,15 +129,15 @@ export default function PinManager(): React.JSX.Element {
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
             <CheckCircleOutlined style={{ fontSize: 20, color: '#52c41a', marginRight: 8 }} />
-            <Text strong>PIN 码已启用</Text>
+            <Text strong>{t('pinManager.title')}</Text>
           </div>
           <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-            每次启动应用时需要输入 4 位 PIN 码解锁
+            {t('pinManager.description')}
           </Text>
 
           {step === 'idle' ? (
             <Button icon={<LockOutlined />} onClick={handleStartChange}>
-              修改 PIN 码
+              {t('pinManager.buttons.changePin')}
             </Button>
           ) : (
             <div>
@@ -142,9 +145,9 @@ export default function PinManager(): React.JSX.Element {
                 size="small"
                 current={currentStepIndex}
                 items={[
-                  { title: '验证当前 PIN' },
-                  { title: '输入新 PIN' },
-                  { title: '确认新 PIN' }
+                  { title: t('pinManager.steps.verifyCurrent') },
+                  { title: t('pinManager.steps.enterNew') },
+                  { title: t('pinManager.steps.confirmNew') }
                 ]}
                 style={{ marginBottom: 24 }}
               />
@@ -159,7 +162,7 @@ export default function PinManager(): React.JSX.Element {
                   </Text>
                 )}
                 <Button size="small" onClick={reset}>
-                  取消
+                  {t('pinManager.buttons.cancel')}
                 </Button>
               </div>
             </div>
@@ -169,10 +172,10 @@ export default function PinManager(): React.JSX.Element {
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
             <ClockCircleOutlined style={{ fontSize: 20, color: '#1677ff', marginRight: 8 }} />
-            <Text strong>自动锁屏</Text>
+            <Text strong>{t('pinManager.autoLock.title')}</Text>
           </div>
           <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            无操作超过设定时间后自动锁定应用
+            {t('pinManager.autoLock.description')}
           </Text>
           <Select
             value={autoLockMinutes}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Table, Empty } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import type { SorterResult } from 'antd/es/table/interface'
 import type { YearlyCategoryData } from '../../../../shared/types'
@@ -22,10 +23,11 @@ function formatAmount(value: number): string {
 }
 
 export default function YearlyTable({ data, loading }: YearlyTableProps): React.JSX.Element {
+  const { t } = useTranslation('statistics')
   const [sortedColumn, setSortedColumn] = useState<string | null>(null)
 
   if (!loading && (!data || data.rows.length === 0)) {
-    return <Empty description="暂无数据" style={{ padding: 40 }} />
+    return <Empty description={t('table.noData')} style={{ padding: 40 }} />
   }
 
   const categories = data?.categories ?? []
@@ -67,7 +69,7 @@ export default function YearlyTable({ data, loading }: YearlyTableProps): React.
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: '年度',
+      title: t('table.year'),
       dataIndex: 'year',
       key: 'year',
       fixed: 'left',
@@ -86,7 +88,7 @@ export default function YearlyTable({ data, loading }: YearlyTableProps): React.
       }
     }),
     {
-      title: '合计',
+      title: t('table.total'),
       dataIndex: 'yearly',
       key: 'yearly',
       fixed: 'right',
@@ -136,7 +138,7 @@ export default function YearlyTable({ data, loading }: YearlyTableProps): React.
         return (
           <Table.Summary fixed>
             <Table.Summary.Row style={{ fontWeight: 600, background: '#fafafa' }}>
-              <Table.Summary.Cell index={0} align="left">合计</Table.Summary.Cell>
+              <Table.Summary.Cell index={0} align="left">{t('table.total')}</Table.Summary.Cell>
               {data.totals.amounts.map((v, i) => (
                 <Table.Summary.Cell key={i} index={i + 1} align="right">
                   {renderSummaryCell(`c${i}`, v)}

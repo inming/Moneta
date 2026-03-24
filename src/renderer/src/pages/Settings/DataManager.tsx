@@ -8,6 +8,7 @@ import {
   UploadOutlined, ImportOutlined, DeleteOutlined, WarningOutlined,
   DownloadOutlined
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import type { TransactionType, Category, Operator, TransactionListParams } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
 import type { Dayjs } from 'dayjs'
@@ -31,6 +32,7 @@ interface ImportResultData {
 type ExportFormat = 'xlsx' | 'csv'
 
 export default function DataManager(): React.JSX.Element {
+  const { t } = useTranslation(['settings', 'common'])
   const navigate = useNavigate()
 
   // ── 导入状态 ──
@@ -102,7 +104,7 @@ export default function DataManager(): React.JSX.Element {
   const handleExport = async (): Promise<void> => {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const ext = exportFormat === 'csv' ? 'csv' : 'xlsx'
-    const defaultName = `Moneta_导出_${today}.${ext}`
+    const defaultName = `Moneta_Export_${today}.${ext}`
     const filters = exportFormat === 'csv'
       ? [{ name: 'CSV Files', extensions: ['csv'] }]
       : [{ name: 'Excel Files', extensions: ['xlsx'] }]
@@ -118,9 +120,9 @@ export default function DataManager(): React.JSX.Element {
         filePath: savePath,
         ...params
       })
-      message.success(`成功导出 ${result.exported} 条记录`)
+      message.success(t('settings:dataManager.export.successMessage', { count: result.exported }))
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '导出失败')
+      message.error(err instanceof Error ? err.message : t('settings:dataManager.export.failedMessage'))
     } finally {
       setExportLoading(false)
     }
@@ -154,18 +156,18 @@ export default function DataManager(): React.JSX.Element {
     if (!filePath) return
 
     Modal.confirm({
-      title: '确认导入',
-      content: '导入将清空所有现有交易记录和操作人数据，此操作不可撤销。确定继续？',
-      okText: '确认导入',
+      title: t('settings:dataManager.import.confirmTitle'),
+      content: t('settings:dataManager.import.confirmContent'),
+      okText: t('settings:dataManager.import.confirmButton'),
       okType: 'danger',
-      cancelText: '取消',
+      cancelText: t('settings:dataManager.import.cancel'),
       onOk: async () => {
         setLoading(true)
         setError(null)
         try {
           const result = (await window.api.importExport.executeImport(filePath)) as ImportResultData
           setImportResult(result)
-          message.success(`成功导入 ${result.imported} 条记录，即将返回数据浏览页面`)
+          message.success(t('settings:dataManager.messages.importSuccess', { count: result.imported }))
           // 导入成功后返回数据浏览页面
           setTimeout(() => {
             navigate('/')
@@ -181,18 +183,18 @@ export default function DataManager(): React.JSX.Element {
 
   const handleClearTransactions = (): void => {
     Modal.confirm({
-      title: '确认清空交易记录',
+      title: t('settings:dataManager.dangerous.clearConfirmTitle'),
       icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-      content: '将删除所有交易记录和操作人数据，分类设置将保留。此操作不可撤销，确定继续？',
-      okText: '清空交易记录',
+      content: t('settings:dataManager.dangerous.clearConfirmContent'),
+      okText: t('settings:dataManager.dangerous.clearButton'),
       okType: 'danger',
-      cancelText: '取消',
+      cancelText: t('settings:dataManager.import.cancel'),
       onOk: async () => {
         try {
           await window.api.data.clearTransactions()
-          message.success('已清空所有交易记录和操作人')
+          message.success(t('settings:dataManager.dangerous.clearSuccessMessage'))
         } catch (err) {
-          message.error(err instanceof Error ? err.message : '清空失败')
+          message.error(err instanceof Error ? err.message : t('settings:dataManager.dangerous.clearFailedMessage'))
         }
       }
     })
@@ -200,18 +202,18 @@ export default function DataManager(): React.JSX.Element {
 
   const handleFactoryReset = (): void => {
     Modal.confirm({
-      title: '确认恢复出厂设置',
+      title: t('settings:dataManager.dangerous.resetConfirmTitle'),
       icon: <WarningOutlined style={{ color: '#ff4d4f' }} />,
-      content: '将清空所有数据（交易记录、操作人、自定义分类），恢复到初始安装状态。此操作不可撤销，确定继续？',
-      okText: '恢复出厂设置',
+      content: t('settings:dataManager.dangerous.resetConfirmContent'),
+      okText: t('settings:dataManager.dangerous.resetButton'),
       okType: 'danger',
-      cancelText: '取消',
+      cancelText: t('settings:dataManager.import.cancel'),
       onOk: async () => {
         try {
           await window.api.data.factoryReset()
-          message.success('已恢复出厂设置')
+          message.success(t('settings:dataManager.dangerous.resetSuccessMessage'))
         } catch (err) {
-          message.error(err instanceof Error ? err.message : '恢复失败')
+          message.error(err instanceof Error ? err.message : t('settings:dataManager.dangerous.resetFailedMessage'))
         }
       }
     })
@@ -225,38 +227,38 @@ export default function DataManager(): React.JSX.Element {
   return (
     <div>
       {/* Excel 导入 */}
-      <Card title="Excel 导入" size="small" style={{ marginBottom: 16 }}>
+      <Card title={t('settings:dataManager.import.title')} size="small" style={{ marginBottom: 16 }}>
         <Space>
           <Button icon={<UploadOutlined />} onClick={handleSelectFile} loading={loading}>
-            选择 Excel 文件
+            {t('settings:dataManager.import.selectFile')}
           </Button>
           {filePath && <Text type="secondary">{filePath}</Text>}
         </Space>
 
         {error && (
-          <Alert type="error" message="错误" description={error} showIcon closable style={{ marginTop: 12 }} />
+          <Alert type="error" message={t('settings:dataManager.import.error')} description={error} showIcon closable style={{ marginTop: 12 }} />
         )}
 
         {loading && !preview && (
           <div style={{ marginTop: 12, textAlign: 'center' }}>
-            <Spin tip="解析中..." />
+            <Spin tip={t('settings:dataManager.import.parsing')} />
           </div>
         )}
 
         {preview && (
           <div style={{ marginTop: 12 }}>
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="有效记录数">{preview.rowCount} 条</Descriptions.Item>
-              <Descriptions.Item label="操作人">
+              <Descriptions.Item label={t('settings:dataManager.import.validRows')}>{preview.rowCount}</Descriptions.Item>
+              <Descriptions.Item label={t('settings:dataManager.import.operators')}>
                 {preview.uniqueOperators.length > 0
                   ? preview.uniqueOperators.map((name) => (
                       <Tag key={name} color="blue">
                         {name}
                       </Tag>
                     ))
-                  : '无'}
+                  : t('settings:dataManager.import.none')}
               </Descriptions.Item>
-              <Descriptions.Item label="分类">
+              <Descriptions.Item label={t('settings:dataManager.import.categories')}>
                 {preview.uniqueCategories.map((cat) => (
                   <Tag key={`${cat.name}:${cat.type}`} color={TRANSACTION_TYPE_CONFIG[cat.type as TransactionType]?.tagColor ?? 'default'}>
                     {cat.name}
@@ -268,13 +270,13 @@ export default function DataManager(): React.JSX.Element {
             {preview.errors.length > 0 && (
               <Alert
                 type="warning"
-                message={`${preview.errors.length} 行数据有问题（已跳过）`}
+                message={`${preview.errors.length} ${t('settings:dataManager.import.errors')}`}
                 description={
                   <ul style={{ margin: 0, paddingLeft: 20 }}>
                     {preview.errors.slice(0, 10).map((e, i) => (
                       <li key={i}>{e}</li>
                     ))}
-                    {preview.errors.length > 10 && <li>...还有 {preview.errors.length - 10} 条</li>}
+                    {preview.errors.length > 10 && <li>{t('settings:dataManager.import.moreErrors', { count: preview.errors.length - 10 })}</li>}
                   </ul>
                 }
                 showIcon
@@ -291,7 +293,7 @@ export default function DataManager(): React.JSX.Element {
                 loading={loading}
                 disabled={preview.rowCount === 0}
               >
-                执行导入（全量覆盖）
+                {t('settings:dataManager.import.execute')}
               </Button>
             </div>
           </div>
@@ -300,12 +302,12 @@ export default function DataManager(): React.JSX.Element {
         {importResult && (
           <Alert
             type="success"
-            message="导入成功"
+            message={t('settings:dataManager.import.success')}
             description={
               <Descriptions column={1} size="small">
-                <Descriptions.Item label="导入记录数">{importResult.imported} 条</Descriptions.Item>
-                <Descriptions.Item label="创建操作人">{importResult.operatorsCreated} 个</Descriptions.Item>
-                <Descriptions.Item label="新建分类">{importResult.categoriesCreated} 个</Descriptions.Item>
+                <Descriptions.Item label={t('settings:dataManager.import.importedRecords')}>{importResult.imported}</Descriptions.Item>
+                <Descriptions.Item label={t('settings:dataManager.import.operatorsCreated')}>{importResult.operatorsCreated}</Descriptions.Item>
+                <Descriptions.Item label={t('settings:dataManager.import.categoriesCreated')}>{importResult.categoriesCreated}</Descriptions.Item>
               </Descriptions>
             }
             showIcon
@@ -315,15 +317,15 @@ export default function DataManager(): React.JSX.Element {
       </Card>
 
       {/* 数据导出 */}
-      <Card title="数据导出" size="small" style={{ marginBottom: 16 }}>
+      <Card title={t('settings:dataManager.export.title')} size="small" style={{ marginBottom: 16 }}>
         <div style={{ marginBottom: 12 }}>
-          <Text style={{ marginRight: 8 }}>导出格式：</Text>
+          <Text style={{ marginRight: 8 }}>{t('settings:dataManager.export.formatLabel')}</Text>
           <Radio.Group
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value)}
           >
-            <Radio.Button value="xlsx">Excel (.xlsx)</Radio.Button>
-            <Radio.Button value="csv">CSV (.csv)</Radio.Button>
+            <Radio.Button value="xlsx">{t('settings:dataManager.export.formatExcel')}</Radio.Button>
+            <Radio.Button value="csv">{t('settings:dataManager.export.formatCsv')}</Radio.Button>
           </Radio.Group>
         </div>
 
@@ -332,11 +334,11 @@ export default function DataManager(): React.JSX.Element {
           items={[
             {
               key: 'filters',
-              label: '筛选条件（可选，默认导出全部）',
+              label: t('settings:dataManager.export.filtersLabel'),
               children: (
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
                   <div>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>日期范围</Text>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>{t('settings:dataManager.export.dateRange')}</Text>
                     <RangePicker
                       style={{ width: '100%' }}
                       value={exportDateRange}
@@ -345,40 +347,40 @@ export default function DataManager(): React.JSX.Element {
                     />
                   </div>
                   <div>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>交易类型</Text>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>{t('settings:dataManager.export.transactionType')}</Text>
                     <Checkbox.Group
                       value={exportTypes}
                       onChange={(values) => {
                         setExportTypes(values as TransactionType[])
                         setExportCategoryIds([])
                       }}
-                      options={Object.entries(TRANSACTION_TYPE_CONFIG).map(([value, config]) => ({
-                        label: config.label,
-                        value
+                      options={Object.keys(TRANSACTION_TYPE_CONFIG).map((key) => ({
+                        label: t(`common:transactionTypes.${key}` as const),
+                        value: key
                       }))}
                     />
                   </div>
                   <div>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>分类</Text>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>{t('settings:dataManager.export.category')}</Text>
                     <Select
                       mode="multiple"
                       style={{ width: '100%' }}
-                      placeholder="不限"
+                      placeholder={t('settings:dataManager.export.categoryPlaceholder')}
                       value={exportCategoryIds}
                       onChange={setExportCategoryIds}
                       allowClear
                       options={filteredCategories.map((c) => ({
-                        label: `${c.name}（${TRANSACTION_TYPE_CONFIG[c.type]?.label}）`,
+                        label: `${c.name}（${t(`common:transactionTypes.${c.type}` as const)}）`,
                         value: c.id
                       }))}
                     />
                   </div>
                   <div>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>操作人</Text>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>{t('settings:dataManager.export.operator')}</Text>
                     <Select
                       mode="multiple"
                       style={{ width: '100%' }}
-                      placeholder="不限"
+                      placeholder={t('settings:dataManager.export.operatorPlaceholder')}
                       value={exportOperatorIds}
                       onChange={setExportOperatorIds}
                       allowClear
@@ -389,9 +391,9 @@ export default function DataManager(): React.JSX.Element {
                     />
                   </div>
                   <div>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>关键词（搜索描述）</Text>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>{t('settings:dataManager.export.keyword')}</Text>
                     <Input
-                      placeholder="输入关键词"
+                      placeholder={t('settings:dataManager.export.keywordPlaceholder')}
                       value={exportKeyword}
                       onChange={(e) => setExportKeyword(e.target.value)}
                       allowClear
@@ -405,7 +407,7 @@ export default function DataManager(): React.JSX.Element {
 
         <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text type="secondary">
-            {exportCount !== null ? `符合条件的记录：${exportCount} 条` : '正在统计...'}
+            {exportCount !== null ? t('settings:dataManager.export.recordCount', { count: exportCount }) : t('settings:dataManager.export.calculating')}
           </Text>
           <Button
             type="primary"
@@ -414,15 +416,15 @@ export default function DataManager(): React.JSX.Element {
             loading={exportLoading}
             disabled={exportCount === 0}
           >
-            导出
+            {t('settings:dataManager.export.exportButton')}
           </Button>
         </div>
 
         {exportCount === 0 && (
           <Alert
             type="info"
-            message="没有符合条件的记录"
-            description="请调整筛选条件后重试"
+            message={t('settings:dataManager.export.noRecords')}
+            description={t('settings:dataManager.export.noRecordsHint')}
             showIcon
             style={{ marginTop: 12 }}
           />
@@ -431,27 +433,27 @@ export default function DataManager(): React.JSX.Element {
 
       {/* 危险操作 */}
       <Card
-        title={<Text type="danger">危险操作</Text>}
+        title={<Text type="danger">{t('settings:dataManager.dangerous.title')}</Text>}
         size="small"
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <Text strong>清空交易记录</Text>
+            <Text strong>{t('settings:dataManager.dangerous.clearTitle')}</Text>
             <br />
-            <Text type="secondary">删除所有交易记录和操作人，保留分类设置</Text>
+            <Text type="secondary">{t('settings:dataManager.dangerous.clearDescription')}</Text>
           </div>
           <Button danger icon={<DeleteOutlined />} onClick={handleClearTransactions}>
-            清空交易记录
+            {t('settings:dataManager.dangerous.clearButton')}
           </Button>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <Text strong>恢复出厂设置</Text>
+            <Text strong>{t('settings:dataManager.dangerous.resetTitle')}</Text>
             <br />
-            <Text type="secondary">清空所有数据，恢复到初始安装状态</Text>
+            <Text type="secondary">{t('settings:dataManager.dangerous.resetDescription')}</Text>
           </div>
           <Button danger icon={<DeleteOutlined />} onClick={handleFactoryReset}>
-            恢复出厂设置
+            {t('settings:dataManager.dangerous.resetButton')}
           </Button>
         </div>
       </Card>

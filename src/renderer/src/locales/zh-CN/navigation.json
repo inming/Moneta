@@ -1,0 +1,8 @@
+{
+  "menu": {
+    "transactions": "数据浏览",
+    "statistics": "统计报表",
+    "settings": "设置",
+    "lock": "锁屏"
+  }
+}

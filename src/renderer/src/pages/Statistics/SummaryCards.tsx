@@ -1,5 +1,6 @@
 import { Card, Col, Row, Statistic } from 'antd'
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import type { SummaryData } from '../../../../shared/types'
 
 interface SummaryCardsProps {
@@ -8,6 +9,8 @@ interface SummaryCardsProps {
 }
 
 export default function SummaryCards({ data, month }: SummaryCardsProps): React.JSX.Element {
+  const { t } = useTranslation('statistics')
+
   if (!data) {
     return <div />
   }
@@ -23,7 +26,7 @@ export default function SummaryCards({ data, month }: SummaryCardsProps): React.
       <Col span={8}>
         <Card size="small">
           <Statistic
-            title={`${month} 月合计`}
+            title={t('summary.monthTotal', { month })}
             value={currentMonth}
             precision={2}
             prefix="¥"
@@ -33,7 +36,7 @@ export default function SummaryCards({ data, month }: SummaryCardsProps): React.
       <Col span={8}>
         <Card size="small">
           <Statistic
-            title="环比上月"
+            title={t('summary.monthOverMonth')}
             value={hasChange ? Math.abs(change) : undefined}
             precision={1}
             suffix={hasChange ? '%' : undefined}
@@ -58,7 +61,7 @@ export default function SummaryCards({ data, month }: SummaryCardsProps): React.
       <Col span={8}>
         <Card size="small">
           <Statistic
-            title="年度合计"
+            title={t('summary.yearTotal')}
             value={yearTotal}
             precision={2}
             prefix="¥"

@@ -1,0 +1,43 @@
+{
+  "viewTabs": {
+    "monthly": "月度明细",
+    "yearly": "年度汇总"
+  },
+  "chartTitles": {
+    "monthlyTrend": "月度趋势",
+    "yearlyTrend": "年度趋势"
+  },
+  "table": {
+    "category": "分类",
+    "year": "年度",
+    "total": "合计",
+    "noData": "暂无数据"
+  },
+  "months": {
+    "jan": "1月",
+    "feb": "2月",
+    "mar": "3月",
+    "apr": "4月",
+    "may": "5月",
+    "jun": "6月",
+    "jul": "7月",
+    "aug": "8月",
+    "sep": "9月",
+    "oct": "10月",
+    "nov": "11月",
+    "dec": "12月"
+  },
+  "chart": {
+    "totalLabel": "合计",
+    "viewDetails": "查看明细",
+    "other": "其他"
+  },
+  "filter": {
+    "yearLabel": "{{year}} 年"
+  },
+  "summary": {
+    "monthTotal": "{{month}} 月合计",
+    "monthOverMonth": "环比上月",
+    "yearTotal": "年度合计"
+  }
+}

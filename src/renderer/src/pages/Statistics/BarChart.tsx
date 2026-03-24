@@ -2,6 +2,7 @@ import { useRef, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { CrossTableData } from '../../../../shared/types'
 import type { TransactionType } from '../../../../shared/types/transaction'
 import ContextMenu from '../../components/ContextMenu'
@@ -21,13 +22,29 @@ interface ContextMenuState {
   categoryId: number | null
 }
 
-const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-
 function formatAmount(value: number): string {
   return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export default function BarChart({ data, year, type }: BarChartProps): React.JSX.Element {
+  const { t, i18n } = useTranslation('statistics')
+
+  const MONTH_LABELS = [
+    t('months.jan'), t('months.feb'), t('months.mar'), t('months.apr'),
+    t('months.may'), t('months.jun'), t('months.jul'), t('months.aug'),
+    t('months.sep'), t('months.oct'), t('months.nov'), t('months.dec')
+  ]
+
+  // Number formatting based on language
+  const formatLargeNumber = (v: number): string => {
+    if (i18n.language === 'zh-CN') {
+      // Chinese: use 万 (10,000)
+      return v >= 10000 ? `${(v / 10000).toFixed(1)}万` : String(v)
+    } else {
+      // English: use K (1,000)
+      return v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v)
+    }
+  }
   const navigate = useNavigate()
   const chartRef = useRef<ReactECharts>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -166,7 +183,7 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
   }, [])
 
   if (!data || data.totals.yearly === 0) {
-    return <Empty description="暂无数据" style={{ padding: 40 }} />
+    return <Empty description={t('table.noData')} style={{ padding: 40 }} />
   }
 
   const series = data.rows
@@ -191,7 +208,7 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
           html += `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:5px;"></span>${p.seriesName}: ¥${formatAmount(p.value)}<br/>`
         }
         if (sorted.length > 1) {
-          html += `<b>合计: ¥${formatAmount(total)}</b>`
+          html += `<b>${t('chart.totalLabel')}: ¥${formatAmount(total)}</b>`
         }
         return html
       }
@@ -209,8 +226,7 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
     yAxis: {
       type: 'value',
       axisLabel: {
-        formatter: (v: number): string =>
-          v >= 10000 ? `${(v / 10000).toFixed(1)}万` : String(v)
+        formatter: formatLargeNumber
       }
     },
     series,
@@ -245,7 +261,7 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
         items={[
           {
             key: 'view-details',
-            label: '查看明细',
+            label: t('chart.viewDetails'),
             onClick: handleViewDetails
           }
         ]}

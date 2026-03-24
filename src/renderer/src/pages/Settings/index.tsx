@@ -1,5 +1,6 @@
 import { Tabs, Typography } from 'antd'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import CategoryManager from './CategoryManager'
 import OperatorManager from './OperatorManager'
 import AIProviderManager from './AIProviderManager'
@@ -14,6 +15,7 @@ const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'language'
 const DEFAULT_TAB = 'categories'
 
 export default function Settings(): React.JSX.Element {
+  const { t } = useTranslation('settings')
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const activeTab = tabParam && VALID_TABS.includes(tabParam) ? tabParam : DEFAULT_TAB
@@ -25,37 +27,37 @@ export default function Settings(): React.JSX.Element {
   const tabItems = [
     {
       key: 'categories',
-      label: '分类管理',
+      label: t('tabs.categories'),
       children: <CategoryManager />
     },
     {
       key: 'operators',
-      label: '操作人管理',
+      label: t('tabs.operators'),
       children: <OperatorManager />
     },
     {
       key: 'ai-providers',
-      label: 'AI 模型',
+      label: t('tabs.aiProviders'),
       children: <AIProviderManager />
     },
     {
       key: 'mcp',
-      label: 'MCP 配置',
+      label: t('tabs.mcp'),
       children: <MCPConfigManager />
     },
     {
       key: 'language',
-      label: '语言',
+      label: t('tabs.language'),
       children: <LanguageManager />
     },
     {
       key: 'security',
-      label: '安全设置',
+      label: t('tabs.security'),
       children: <PinManager />
     },
     {
       key: 'data',
-      label: '数据管理',
+      label: t('tabs.data'),
       children: <DataManager />
     }
   ]
@@ -63,7 +65,7 @@ export default function Settings(): React.JSX.Element {
   return (
     <div>
       <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16, userSelect: 'none' }}>
-        设置
+        {t('title')}
       </Text>
       <Tabs items={tabItems} activeKey={activeTab} onChange={handleTabChange} />
     </div>
