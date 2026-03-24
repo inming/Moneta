@@ -37,7 +37,20 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install dependencies
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "Configuring npm..."
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set fetch-timeout 120000
+          npm config set loglevel verbose
+          echo "Installing dependencies..."
+          npm install --no-audit --legacy-peer-deps
+        shell: cmd
+        continue-on-error: false
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
         run: npm ci --ignore-scripts
 
       - name: Rebuild native modules
