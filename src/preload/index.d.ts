@@ -95,6 +95,10 @@ export interface MonetaAPI {
     delete(): Promise<void>
     getSummary(): Promise<DraftSummary>
   }
+  i18n: {
+    getLanguage(): Promise<string>
+    setLanguage(language: string): Promise<string>
+  }
 }
 
 declare global {

@@ -80,5 +80,9 @@ export const IPC_CHANNELS = {
   DRAFT_GET: 'db:draft:get',
   DRAFT_SAVE: 'db:draft:save',
   DRAFT_DELETE: 'db:draft:delete',
-  DRAFT_GET_SUMMARY: 'db:draft:get-summary'
+  DRAFT_GET_SUMMARY: 'db:draft:get-summary',
+
+  // 国际化
+  I18N_GET_LANGUAGE: 'i18n:get-language',
+  I18N_SET_LANGUAGE: 'i18n:set-language'
 } as const

@@ -25,6 +25,7 @@ interface AppConfig {
   pinFailCount: number
   pinLockedUntil: string
   autoLockMinutes: number
+  language?: string
 }
 
 /** 内置模型列表，后续新增模型只需往这里加一项 */
@@ -95,6 +96,23 @@ export function maskApiKey(key: string): string {
   return `${prefix}****${suffix}`
 }
 
+function detectSystemLanguage(): string {
+  const locale = app.getLocale().toLowerCase()
+
+  // 所有中文变体（zh、zh-CN、zh-TW、zh-Hans、zh-Hant）默认简体中文
+  if (locale.startsWith('zh')) {
+    return 'zh-CN'
+  }
+
+  // 所有英文变体默认美式英文
+  if (locale.startsWith('en')) {
+    return 'en-US'
+  }
+
+  // 其他语言默认英文
+  return 'en-US'
+}
+
 function createDefaultConfig(): AppConfig {
   return {
     aiProviders: BUILTIN_MODELS.map((m) => ({ ...m, apiKeyEncrypted: '' })),
@@ -102,7 +120,8 @@ function createDefaultConfig(): AppConfig {
     pinEncrypted: '',
     pinFailCount: 0,
     pinLockedUntil: '',
-    autoLockMinutes: 30
+    autoLockMinutes: 30,
+    language: detectSystemLanguage()
   }
 }
 
@@ -140,6 +159,7 @@ export function loadConfig(): AppConfig {
     if (config.pinFailCount === undefined) config.pinFailCount = 0
     if (config.pinLockedUntil === undefined) config.pinLockedUntil = ''
     if (config.autoLockMinutes === undefined) config.autoLockMinutes = 30
+    if (config.language === undefined) config.language = detectSystemLanguage()
 
     // Validate default provider
     if (!config.defaultProviderId || !config.aiProviders.find((p) => p.id === config.defaultProviderId)) {

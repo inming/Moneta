@@ -96,6 +96,10 @@ const api = {
     save: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_SAVE, dto),
     delete: () => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_DELETE),
     getSummary: () => ipcRenderer.invoke(IPC_CHANNELS.DRAFT_GET_SUMMARY)
+  },
+  i18n: {
+    getLanguage: () => ipcRenderer.invoke(IPC_CHANNELS.I18N_GET_LANGUAGE),
+    setLanguage: (language: string) => ipcRenderer.invoke(IPC_CHANNELS.I18N_SET_LANGUAGE, language)
   }
 }
 
