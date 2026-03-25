@@ -43,15 +43,18 @@ function getMCPServerPath(): string {
     // 开发环境：使用 electron-vite 的输出目录
     return path.join(process.cwd(), 'out', 'main', 'mcp.js')
   }
-  // 生产环境：使用 app.getAppPath() 获取应用路径
-  // electron-builder 打包后，out/main 目录在 app.asar 内或同级
+  // 生产环境：MCP Server 需要被原生 node 执行，不能在 asar 内
+  // asarUnpack 会将文件解包到 app.asar.unpacked 目录
   const appPath = app.getAppPath()
-  // 尝试多个可能的位置
+  const unpackedPath = appPath.replace('app.asar', 'app.asar.unpacked')
   const possiblePaths = [
-    path.join(appPath, 'out', 'main', 'mcp.js'),                    // asar 内或未打包
+    path.join(unpackedPath, 'out', 'main', 'mcp.js'),               // asarUnpack 解包位置（优先）
+    path.join(appPath, 'out', 'main', 'mcp.js'),                    // 未使用 asar 打包时
     path.join(path.dirname(appPath), 'out', 'main', 'mcp.js'),      // asar 同级
-    path.join(app.getPath('exe'), '..', 'resources', 'app', 'out', 'main', 'mcp.js'), // Windows
-    path.join(app.getPath('exe'), '..', '..', 'Resources', 'app', 'out', 'main', 'mcp.js') // macOS
+    path.join(app.getPath('exe'), '..', 'resources', 'app.asar.unpacked', 'out', 'main', 'mcp.js'), // Windows unpacked
+    path.join(app.getPath('exe'), '..', 'resources', 'app', 'out', 'main', 'mcp.js'), // Windows 无 asar
+    path.join(app.getPath('exe'), '..', '..', 'Resources', 'app.asar.unpacked', 'out', 'main', 'mcp.js'), // macOS unpacked
+    path.join(app.getPath('exe'), '..', '..', 'Resources', 'app', 'out', 'main', 'mcp.js') // macOS 无 asar
   ]
   
   // 返回第一个存在的路径，或默认返回第一个
