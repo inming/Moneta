@@ -577,12 +577,15 @@ const newRow = {
 
 - **全量编辑模式**：所有行始终处于可编辑状态，无需「进入编辑」开关
 - **实时校验**：分类为空时 `status="error"`，行背景色变为红色（`row-missing-category`）
-- **批量提交校验**：点击「确认录入」时遍历所有行检查 `category_id`，阻止提交并提示未填写数量
+- **批量提交校验**：点击「确认录入」时检查所有行的 `category_id`、全局日期和操作人是否已设置，任一缺失则阻止提交并提示
 
-### 操作人联动机制
+### 日期与操作人必填机制
 
-- 全局操作人选择器变化时，通过 `useEffect` 更新所有行的 `operator_id`
-- 无论 AI 识别结果还是手动插入行，均参与联动更新
+- **初始留空**：日期选择器和操作人选择器默认为空（`null`），不预填任何默认值，要求用户主动确认
+- **视觉提示**：未选择时显示 `status="error"` 红色边框 + placeholder 文本
+- **提交校验**：`handleConfirm` 中依次检查分类 → 日期 → 操作人，未填则 `message.error` 提示
+- **操作人联动**：全局操作人选择器变化时，`onChange` 中同步更新所有行的 `operator_id`
+- **MCP 日期清空**：MCP 数据中携带的日期在确认页统一清空，使用全局日期选择器
 
 ## 统计报表架构
 
@@ -839,22 +842,34 @@ Tab 状态通过 URL search params（`?tab=xxx`）持久化，支持直接链接
   - 数据浏览页显示草稿提示卡片，提供「继续导入」和「放弃」按钮
   - MCP 新数据直接覆盖旧草稿，仅显示弱提示，不打断 AI 助手工作流
 
-### 草稿存储策略
+### 草稿保存策略
+
+采用 **`useEffect` 响应式即时保存**，监听 `rows`、`defaultOperatorId`、`accountingDate` 状态变化：
 
 | 场景 | 保存行为 | 实现方式 |
 |------|---------|---------|
-| 首次进入导入页 | 立即保存 | `useEffect` 初始化时创建草稿 |
-| 编辑单元格 | 防抖 5 秒保存 | `setTimeout` 延迟执行 |
-| 切换操作人/日期 | 即时保存 | 直接调用 `saveDraftImmediate()` |
-| 删除/插入/追加行 | 即时保存 | 直接调用 `saveDraftImmediate()` |
-| 点击返回 | 即时保存 | `handleCancel` 中同步保存 |
+| 首次进入导入页（全新导入） | 立即创建草稿 | `useEffect` 初始化时创建 |
+| 首次进入导入页（恢复草稿） | 跳过创建 | `restoredFromDraft` prop 控制 |
+| 任何编辑操作 | 即时保存 | `useEffect` 监听状态变化自动触发 |
 | 确认入库 | 删除草稿 | `clearDraft()` 清理数据 |
+| MCP 退出确认页 | 清除 pending 数据 | `handleCancel` 中调用 `clearImportData()` |
+
+**设计要点**：
+- 不使用防抖：单条草稿的 JSON 序列化 + SQLite 写入性能足够（亚毫秒级），无需延迟
+- 跳过首次渲染：`isInitialRenderRef` 防止初始化时重复保存
+- 无闭包陷阱：`useEffect` 依赖数组确保始终使用最新状态值
+
+### 草稿恢复策略
+
+- ImportConfirm 新增 `restoredFromDraft` prop，恢复草稿时跳过初始草稿创建，避免覆盖用户编辑
+- 新增 `initialOperatorId` prop，恢复草稿时还原全局操作人选择
+- `initialAccountingDate` prop 恢复草稿时还原日期选择
+- MCPImport 的 `handleCancel` 中调用 `clearImportData()` 清除 pending MCP 数据，防止再次进入时旧数据覆盖草稿
 
 ### 性能优化
 
 - **虚拟滚动**：`Table` 组件启用 `virtual` 属性，配合固定高度 `scroll.y`，流畅支持 100+ 条数据编辑
 - **Columns 缓存**：使用 `useMemo` 缓存表格列配置，避免每次渲染重新创建
-- **防抖写入**：单元格编辑采用防抖策略，避免频繁 SQLite 写入导致卡顿
 
 ### 状态管理
 

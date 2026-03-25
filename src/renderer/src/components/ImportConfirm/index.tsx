@@ -43,6 +43,10 @@ interface ImportConfirmProps {
   imagePaths?: string[]
   /** MCP 数据来源描述 */
   mcpSource?: string
+  /** 初始操作人 ID（草稿恢复用） */
+  initialOperatorId?: number | null
+  /** 是否从草稿恢复（跳过初始草稿创建，避免覆盖已保存的编辑） */
+  restoredFromDraft?: boolean
 }
 
 export default function ImportConfirm({
@@ -54,7 +58,9 @@ export default function ImportConfirm({
   draftSource,
   initialAccountingDate,
   imagePaths,
-  mcpSource
+  mcpSource,
+  initialOperatorId,
+  restoredFromDraft = false
 }: ImportConfirmProps): React.JSX.Element {
   const { t } = useTranslation(['import', 'common'])
   const navigate = useNavigate()
@@ -62,12 +68,12 @@ export default function ImportConfirm({
   const [rows, setRows] = useState<ImportRow[]>(initialRows)
   const [categories, setCategories] = useState<Category[]>([])
   const [operators, setOperators] = useState<Operator[]>([])
-  const [accountingDate, setAccountingDate] = useState(initialAccountingDate ?? dayjs())
-  const [defaultOperatorId, setDefaultOperatorId] = useState<number | null>(null)
+  const [accountingDate, setAccountingDate] = useState<Dayjs | null>(initialAccountingDate ?? null)
+  const [defaultOperatorId, setDefaultOperatorId] = useState<number | null>(initialOperatorId ?? null)
   const [submitting, setSubmitting] = useState(false)
 
-  // 防抖保存的 timer
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 用于防止已卸载组件触发保存
+  const unmountedRef = useRef(false)
 
   // 交易类型选项（需要在组件内部定义以使用 t()）
   const typeOptions = Object.keys(TRANSACTION_TYPE_CONFIG).map((key) => ({
@@ -86,48 +92,45 @@ export default function ImportConfirm({
       ])
       setCategories([...expense, ...income, ...investment])
       setOperators(ops)
-      if (ops.length > 0) {
-        setDefaultOperatorId(ops[0].id)
-        // 如果初始行没有操作人，设置默认值
-        setRows(prev => prev.map(row => ({
-          ...row,
-          operator_id: row.operator_id ?? ops[0].id
-        })))
-      }
-      
-      // 首次进入页面时立即创建草稿（覆盖旧草稿）
-      // 这样即使用户不做任何操作就关闭，数据也不会丢失
-      const initialDraftData: DraftData = {
-        transactions: initialRows.map(row => ({
-          key: row.key,
-          date: (initialAccountingDate ?? dayjs()).format('YYYY-MM-DD'),
-          type: row.type,
-          amount: row.amount,
-          category_id: row.category_id,
-          description: row.description,
-          operator_id: row.operator_id ?? ops[0]?.id ?? null
-        })),
-        operatorId: ops[0]?.id ?? null,
-        ...(draftSource === 'ai' && {
-          aiSpecific: {
-            accountingDate: (initialAccountingDate ?? dayjs()).format('YYYY-MM-DD'),
-            imagePaths: imagePaths ?? []
-          }
-        }),
-        ...(draftSource === 'mcp' && mcpSource && {
-          mcpSpecific: { source: mcpSource }
+
+      // 从草稿恢复时跳过初始草稿创建，避免覆盖用户已保存的编辑
+      if (!restoredFromDraft) {
+        // 首次进入页面时立即创建草稿（覆盖旧草稿）
+        // 这样即使用户不做任何操作就关闭，数据也不会丢失
+        const initialDraftData: DraftData = {
+          transactions: initialRows.map(row => ({
+            key: row.key,
+            date: initialAccountingDate?.format('YYYY-MM-DD') ?? '',
+            type: row.type,
+            amount: row.amount,
+            category_id: row.category_id,
+            description: row.description,
+            operator_id: row.operator_id ?? null
+          })),
+          operatorId: null,
+          ...(draftSource === 'ai' && {
+            aiSpecific: {
+              accountingDate: initialAccountingDate?.format('YYYY-MM-DD') ?? '',
+              imagePaths: imagePaths ?? []
+            }
+          }),
+          ...(draftSource === 'mcp' && mcpSource && {
+            mcpSpecific: { source: mcpSource }
+          })
+        }
+
+        console.log('[ImportConfirm] Creating initial draft with', initialRows.length, 'rows')
+        await draftStore.saveDraft({
+          id: 'current',
+          source: draftSource,
+          data: initialDraftData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         })
+        console.log('[ImportConfirm] Initial draft created')
+      } else {
+        console.log('[ImportConfirm] Restored from draft, skipping initial draft creation')
       }
-      
-      console.log('[ImportConfirm] Creating initial draft with', initialRows.length, 'rows')
-      await draftStore.saveDraft({
-        id: 'current',
-        source: draftSource,
-        data: initialDraftData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      console.log('[ImportConfirm] Initial draft created')
     }
     loadData()
   }, [])
@@ -136,7 +139,7 @@ export default function ImportConfirm({
   const toDraftTransactions = useCallback((rows: ImportRow[]): DraftTransaction[] => {
     return rows.map(row => ({
       key: row.key,
-      date: accountingDate.format('YYYY-MM-DD'),
+      date: accountingDate?.format('YYYY-MM-DD') ?? '',
       type: row.type,
       amount: row.amount,
       category_id: row.category_id,
@@ -145,53 +148,22 @@ export default function ImportConfirm({
     }))
   }, [accountingDate])
 
-  // 保存草稿（防抖）
-  const saveDraft = useCallback(() => {
-    // 清除之前的 timer
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current)
+  // 自动保存草稿：监听所有可变状态，变化时即时保存
+  // 跳过首次渲染（初始草稿由 loadData useEffect 处理）
+  const isInitialRenderRef = useRef(true)
+  useEffect(() => {
+    if (isInitialRenderRef.current) {
+      isInitialRenderRef.current = false
+      return
     }
-    
-    // 2 秒后保存
-    saveTimerRef.current = setTimeout(async () => {
-      const draftData: DraftData = {
-        transactions: toDraftTransactions(rows),
-        operatorId: defaultOperatorId,
-        ...(draftSource === 'ai' && {
-          aiSpecific: {
-            accountingDate: accountingDate.format('YYYY-MM-DD'),
-            imagePaths: imagePaths ?? []
-          }
-        }),
-        ...(draftSource === 'mcp' && mcpSource && {
-          mcpSpecific: { source: mcpSource }
-        })
-      }
-      
-      await draftStore.saveDraft({
-        id: 'current',
-        source: draftSource,
-        data: draftData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-    }, 5000)  // 增加到 5 秒，减少保存频率
-  }, [rows, defaultOperatorId, accountingDate, imagePaths, mcpSource, draftSource, draftStore, toDraftTransactions])
+    if (unmountedRef.current) return
 
-  // 即时保存草稿（关键操作）
-  const saveDraftImmediate = useCallback(async () => {
-    // 清除防抖 timer
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-    }
-    
     const draftData: DraftData = {
       transactions: toDraftTransactions(rows),
       operatorId: defaultOperatorId,
       ...(draftSource === 'ai' && {
         aiSpecific: {
-          accountingDate: accountingDate.format('YYYY-MM-DD'),
+          accountingDate: accountingDate?.format('YYYY-MM-DD') ?? '',
           imagePaths: imagePaths ?? []
         }
       }),
@@ -199,36 +171,23 @@ export default function ImportConfirm({
         mcpSpecific: { source: mcpSource }
       })
     }
-    
-    await draftStore.saveDraft({
+
+    draftStore.saveDraft({
       id: 'current',
       source: draftSource,
       data: draftData,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
-  }, [rows, defaultOperatorId, accountingDate, imagePaths, mcpSource, draftSource, draftStore, toDraftTransactions])
+  }, [rows, defaultOperatorId, accountingDate])
 
   // 清理草稿
   const clearDraft = useCallback(async () => {
-    // 清除防抖 timer
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-    }
     console.log('[ImportConfirm] Clearing draft...')
+    unmountedRef.current = true  // 阻止 useEffect 再触发保存
     await draftStore.deleteDraft()
     console.log('[ImportConfirm] Draft cleared')
   }, [draftStore])
-
-  // 组件卸载时清理 timer
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current)
-      }
-    }
-  }, [])
 
   // 更新行数据
   const updateRow = useCallback((key: string, field: keyof ImportRow, value: unknown) => {
@@ -239,16 +198,12 @@ export default function ImportConfirm({
       }
       return { ...row, [field]: value } as ImportRow
     }))
-    // 防抖保存（5秒）
-    saveDraft()
-  }, [saveDraft])
+  }, [])
 
   // 删除行
   const deleteRow = useCallback((key: string) => {
     setRows((prev) => prev.filter((row) => row.key !== key))
-    // 即时保存
-    saveDraftImmediate()
-  }, [saveDraftImmediate])
+  }, [])
 
   // 插入行
   const insertRow = useCallback((key: string) => {
@@ -267,9 +222,7 @@ export default function ImportConfirm({
       newRows.splice(index, 0, newRow)
       return newRows
     })
-    // 即时保存
-    saveDraftImmediate()
-  }, [defaultOperatorId, saveDraftImmediate])
+  }, [defaultOperatorId])
 
   // 追加行
   const appendRow = useCallback(() => {
@@ -285,9 +238,7 @@ export default function ImportConfirm({
       }
       return [...prev, newRow]
     })
-    // 即时保存
-    saveDraftImmediate()
-  }, [defaultOperatorId, saveDraftImmediate])
+  }, [defaultOperatorId])
 
   // 确认导入
   const handleConfirm = async () => {
@@ -299,6 +250,16 @@ export default function ImportConfirm({
     const emptyCategories = rows.filter((r) => r.category_id === null)
     if (emptyCategories.length > 0) {
       message.error(t('import:messages.missingCategories', { count: emptyCategories.length }))
+      return
+    }
+
+    if (!accountingDate) {
+      message.error(t('import:messages.missingDate'))
+      return
+    }
+
+    if (!defaultOperatorId) {
+      message.error(t('import:messages.missingOperator'))
       return
     }
 
@@ -321,8 +282,6 @@ export default function ImportConfirm({
 
   // 取消/返回
   const handleCancel = async () => {
-    // 离开前立即保存草稿
-    await saveDraftImmediate()
     if (onCancel) {
       onCancel()
     } else {
@@ -470,18 +429,20 @@ export default function ImportConfirm({
             <Text strong>{t('import:info.accountingDate')}</Text>
             <DatePicker
               value={accountingDate}
+              placeholder={t('import:placeholders.selectDate')}
+              status={!accountingDate ? 'error' : undefined}
               onChange={(date) => {
                 if (date) {
                   setAccountingDate(date)
-                  // 切换记账日期即时保存
-                  saveDraftImmediate()
                 }
               }}
               allowClear={false}
             />
-            <Text>{t('import:info.operator')}</Text>
+            <Text strong>{t('import:info.operator')}</Text>
             <Select
               value={defaultOperatorId}
+              placeholder={t('import:placeholders.selectOperator')}
+              status={!defaultOperatorId ? 'error' : undefined}
               style={{ width: 120 }}
               options={operators.map((o) => ({ label: o.name, value: o.id }))}
               onChange={(val) => {
@@ -490,8 +451,6 @@ export default function ImportConfirm({
                   ...row,
                   operator_id: val
                 })))
-                // 切换操作人即时保存
-                saveDraftImmediate()
               }}
             />
           </Space>

@@ -42,6 +42,8 @@ export default function AIRecognition(): React.JSX.Element {
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [draftRestored, setDraftRestored] = useState(false)
+  const [draftAccountingDate, setDraftAccountingDate] = useState<Dayjs | undefined>(undefined)
+  const [draftOperatorId, setDraftOperatorId] = useState<number | null>(null)
   const [showDraftOverwriteAlert, setShowDraftOverwriteAlert] = useState(false)
   const hasCheckedDraftRef = useRef(false)
 
@@ -98,6 +100,11 @@ export default function AIRecognition(): React.JSX.Element {
         
         setResults(importRows)
         setDraftRestored(true)
+        // 恢复日期和操作人
+        if (aiSpecific.accountingDate) {
+          setDraftAccountingDate(dayjs(aiSpecific.accountingDate))
+        }
+        setDraftOperatorId(draft.data.operatorId ?? null)
         
         if (missingCount > 0) {
           message.warning(t('ai:messages.imagesMissing', { count: missingCount }))
@@ -319,8 +326,10 @@ export default function AIRecognition(): React.JSX.Element {
           onConfirm={handleConfirm}
           onCancel={handleCancel}
           draftSource="ai"
-          initialAccountingDate={dayjs()}
           imagePaths={images.map(img => img.name)}
+          restoredFromDraft={draftRestored}
+          initialAccountingDate={draftAccountingDate}
+          initialOperatorId={draftOperatorId}
         />
       </div>
     )

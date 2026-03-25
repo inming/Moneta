@@ -9,7 +9,9 @@
   },
   "placeholders": {
     "selectCategory": "请选择",
-    "optional": "可选"
+    "optional": "可选",
+    "selectDate": "请选择日期",
+    "selectOperator": "请选择操作人"
   },
   "buttons": {
     "insertAbove": "上方插入",
@@ -30,7 +32,9 @@
     "missingCategories": "还有 {{count}} 条交易未选择分类，请补充后再提交",
     "missingCategoriesAlert": "还有 {{count}} 条交易未选择分类，请补充后提交",
     "importSuccess": "成功录入 {{count}} 条交易记录",
-    "importFailed": "导入失败"
+    "importFailed": "导入失败",
+    "missingDate": "请先选择记账日期",
+    "missingOperator": "请先选择操作人"
   },
   "mcp": {
     "title": "MCP 账单导入确认",

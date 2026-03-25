@@ -9,7 +9,9 @@
   },
   "placeholders": {
     "selectCategory": "Select",
-    "optional": "Optional"
+    "optional": "Optional",
+    "selectDate": "Select date",
+    "selectOperator": "Select operator"
   },
   "buttons": {
     "insertAbove": "Insert Above",
@@ -30,7 +32,9 @@
     "missingCategories": "{{count}} transactions are missing categories, please complete before submitting",
     "missingCategoriesAlert": "{{count}} transactions are missing categories, please complete before submitting",
     "importSuccess": "Successfully imported {{count}} transactions",
-    "importFailed": "Import failed"
+    "importFailed": "Import failed",
+    "missingDate": "Please select an accounting date",
+    "missingOperator": "Please select an operator"
   },
   "mcp": {
     "title": "MCP Import Confirmation",

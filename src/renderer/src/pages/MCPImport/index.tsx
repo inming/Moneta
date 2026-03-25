@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Spin, message, Alert } from 'antd'
 import { useTranslation } from 'react-i18next'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import ImportConfirm, { type ImportRow } from '../../components/ImportConfirm'
 import type { MCPSendTransactionsParams } from '../../../mcp/types'
 import type { CreateTransactionDTO, ImportDraft } from '@shared/types'
@@ -16,6 +16,9 @@ export default function MCPImport(): React.JSX.Element {
   const [importData, setImportData] = useState<MCPSendTransactionsParams | null>(null)
   const [initialRows, setInitialRows] = useState<ImportRow[]>([])
   const [showDraftOverwriteAlert, setShowDraftOverwriteAlert] = useState(false)
+  const [restoredFromDraft, setRestoredFromDraft] = useState(false)
+  const [draftOperatorId, setDraftOperatorId] = useState<number | null>(null)
+  const [draftAccountingDate, setDraftAccountingDate] = useState<string | null>(null)
   const hasCheckedDraftRef = useRef(false)
   const importedRef = useRef(false)
 
@@ -57,6 +60,13 @@ export default function MCPImport(): React.JSX.Element {
       }))
       
       setInitialRows(rows)
+      setRestoredFromDraft(true)
+      setDraftOperatorId(draft.data.operatorId ?? null)
+      // MCP 草稿的日期存在每行的 date 字段中，取第一行作为全局日期恢复
+      const firstDate = draft.data.transactions[0]?.date
+      if (firstDate) {
+        setDraftAccountingDate(firstDate)
+      }
       // 不显示提示，用户主动点击继续导入，无需额外提示
       return true
     } catch (err) {
@@ -184,7 +194,9 @@ export default function MCPImport(): React.JSX.Element {
   }
 
   // 取消
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    // 清除待导入数据，避免下次进入时重复加载旧数据覆盖草稿
+    await window.api.mcp.clearImportData()
     navigate('/')
   }
 
@@ -217,6 +229,9 @@ export default function MCPImport(): React.JSX.Element {
         onCancel={handleCancel}
         draftSource="mcp"
         mcpSource={importData?.source}
+        restoredFromDraft={restoredFromDraft}
+        initialAccountingDate={draftAccountingDate ? dayjs(draftAccountingDate) : undefined}
+        initialOperatorId={draftOperatorId}
       />
     </div>
   )
