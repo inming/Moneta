@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Button, Select, InputNumber, Input, Table, Space,
@@ -17,6 +17,54 @@ import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
 import { useDraftStore } from '../../stores/draft.store'
 
 const { Text, Title } = Typography
+
+// 本地状态编辑的 Input，失焦时才提交，避免每次按键触发全表重渲染
+const BlurInput = memo(({ value, onChange, ...props }: {
+  value: string
+  onChange: (val: string) => void
+  size?: 'small' | 'middle' | 'large'
+}) => {
+  const [local, setLocal] = useState(value)
+  const ref = useRef(value)
+  ref.current = value
+
+  useEffect(() => { setLocal(value) }, [value])
+
+  return (
+    <Input
+      {...props}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => { if (local !== ref.current) onChange(local) }}
+      onPressEnter={() => { if (local !== ref.current) onChange(local) }}
+    />
+  )
+})
+
+// 本地状态编辑的 InputNumber，失焦时才提交
+const BlurInputNumber = memo(({ value, onChange, ...props }: {
+  value: number
+  onChange: (val: number) => void
+  size?: 'small' | 'middle' | 'large'
+  precision?: number
+  style?: React.CSSProperties
+}) => {
+  const [local, setLocal] = useState(value)
+  const ref = useRef(value)
+  ref.current = value
+
+  useEffect(() => { setLocal(value) }, [value])
+
+  return (
+    <InputNumber
+      {...props}
+      value={local}
+      onChange={(val) => setLocal(val ?? 0)}
+      onBlur={() => { if (local !== ref.current) onChange(local) }}
+      onPressEnter={() => { if (local !== ref.current) onChange(local) }}
+    />
+  )
+})
 
 // 导入行数据接口
 export interface ImportRow {
@@ -316,12 +364,12 @@ export default function ImportConfirm({
       dataIndex: 'amount',
       width: 120,
       render: (amount: number, record) => (
-        <InputNumber
+        <BlurInputNumber
           size="small"
           value={amount}
           precision={2}
           style={{ width: '100%' }}
-          onChange={(val) => updateRow(record.key, 'amount', val || 0)}
+          onChange={(val) => updateRow(record.key, 'amount', val)}
         />
       )
     },
@@ -348,10 +396,10 @@ export default function ImportConfirm({
       title: t('import:columns.description'),
       dataIndex: 'description',
       render: (desc: string, record) => (
-        <Input
+        <BlurInput
           size="small"
           value={desc}
-          onChange={(e) => updateRow(record.key, 'description', e.target.value)}
+          onChange={(val) => updateRow(record.key, 'description', val)}
         />
       )
     },
@@ -477,7 +525,6 @@ export default function ImportConfirm({
           return `${typeClass}${missingClass}`
         }}
         scroll={{ x: 'max-content', y: 600 }}
-        virtual
         sticky
       />
 
