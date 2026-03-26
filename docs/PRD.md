@@ -1393,16 +1393,17 @@ AI 草稿中保存的是图片文件的绝对路径。恢复时：
 
 **任务清单**：
 
-- [ ] 修改月度趋势图 tooltip，只显示鼠标悬停的数据块（分类名 + 金额）
-- [ ] 修改年度趋势图 tooltip，只显示鼠标悬停的数据块（分类名 + 金额）
-- [ ] tooltip 仍显示当前月份/年份作为标题（便于确认）
-- [ ] 使用 ECharts 的 `tooltip.trigger: 'item'` 或自定义 formatter 实现
-- [ ] 验收标准 AC-S49 通过
+- [x] 修改月度趋势图 tooltip，只显示鼠标悬停的数据块（分类名 + 金额）
+- [x] 修改年度趋势图 tooltip，只显示鼠标悬停的数据块（分类名 + 金额）
+- [x] tooltip 仍显示当前月份/年份作为标题（便于确认）
+- [x] 使用 ECharts 的 `tooltip.trigger: 'item'` 实现
+- [x] 验收标准 AC-S49 通过
 
 **技术要点**：
-- 将 `tooltip.trigger` 从 `'axis'` 改为 `'item'`，或在 formatter 中通过 `params.componentIndex` 判断当前悬停的是哪个数据块
-- 保持 tooltip 样式一致（颜色圆点、千分号格式等）
-- 考虑保留「合计」行或移除，根据用户反馈决定
+- 将 `tooltip.trigger` 从 `'axis'` 改为 `'item'`，formatter 接收单个参数对象而非数组
+- formatter 参数类型从 `Array<...>` 改为 `{ seriesName: string; value: number; color: string; name: string }`
+- 保持 tooltip 样式一致（颜色圆点、千分号格式、月份/年份标题）
+- 移除「合计」行显示，简化交互
 
 ### 5.11 未来考虑
 
