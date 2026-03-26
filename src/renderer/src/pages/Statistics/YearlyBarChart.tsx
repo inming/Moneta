@@ -229,19 +229,10 @@ export default function YearlyBarChart({ data, type, year, initialSoloCategory }
 
   const option = {
     tooltip: {
-      trigger: 'axis',
-      formatter: (params: Array<{ seriesName: string; value: number; color: string; axisValue: string }>): string => {
-        if (params.length === 0) return ''
-        const sorted = [...params].filter((p) => p.value !== 0).sort((a, b) => b.value - a.value)
-        const total = sorted.reduce((sum, p) => sum + p.value, 0)
-        let html = `<b>${params[0].axisValue}</b><br/>`
-        for (const p of sorted) {
-          html += `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:5px;"></span>${p.seriesName}: ¥${formatAmount(p.value)}<br/>`
-        }
-        if (sorted.length > 1) {
-          html += `<b>${t('chart.totalLabel')}: ¥${formatAmount(total)}</b>`
-        }
-        return html
+      trigger: 'item',
+      formatter: (params: { seriesName: string; value: number; color: string; name: string }): string => {
+        if (params.value === 0) return ''
+        return `<b>${params.name}</b><br/><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${params.color};margin-right:5px;"></span>${params.seriesName}: ¥${formatAmount(params.value)}`
       }
     },
     legend: {
