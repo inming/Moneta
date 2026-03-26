@@ -6,7 +6,7 @@ import {
 } from 'antd'
 import {
   PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, SearchOutlined,
-  CameraOutlined, FileTextOutlined, ExclamationCircleOutlined
+  CameraOutlined, FileTextOutlined, ExclamationCircleOutlined, ArrowLeftOutlined
 } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
@@ -71,6 +71,24 @@ export default function Transactions(): React.JSX.Element {
   const [operators, setOperators] = useState<Operator[]>([])
   const [loading, setLoading] = useState(false)
   const [draftModalOpen, setDraftModalOpen] = useState(false)
+
+  // Back-to-statistics: parse parameters and navigation handler
+  const fromStats = searchParams.get('from') === 'statistics'
+  const statsYear = searchParams.get('year')
+  const statsTab = searchParams.get('tab')
+  const statsType = searchParams.get('statsType')
+  const statsSoloCategory = searchParams.get('soloCategory')
+
+  const handleBackToStats = (): void => {
+    const params = new URLSearchParams()
+    if (statsYear) params.set('year', statsYear)
+    if (statsTab) params.set('tab', statsTab)
+    if (statsType) params.set('type', statsType)
+    if (statsSoloCategory) params.set('soloCategory', statsSoloCategory)
+
+    const queryString = params.toString()
+    navigate(queryString ? `/statistics?${queryString}` : '/statistics', { replace: true })
+  }
 
   // Editing state
   const [editingKey, setEditingKey] = useState<number | null>(null)
@@ -748,9 +766,21 @@ export default function Transactions(): React.JSX.Element {
 
   return (
     <div>
-      <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 16, userSelect: 'none' }}>
-        {t('transactions:title')}
-      </Text>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        {fromStats && (
+          <Button
+            type="link"
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBackToStats}
+            style={{ padding: 0, marginRight: 8 }}
+          >
+            {t('transactions:buttons.backToStatistics')}
+          </Button>
+        )}
+        <Text strong style={{ fontSize: 18, userSelect: 'none' }}>
+          {t('transactions:title')}
+        </Text>
+      </div>
 
       {/* Draft Alert */}
       {draftStore.summary.exists && (

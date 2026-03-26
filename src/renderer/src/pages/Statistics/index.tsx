@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card, Radio, Spin } from 'antd'
 import { useTranslation } from 'react-i18next'
 import type { TransactionType } from '../../../../shared/types/transaction'
@@ -11,10 +12,25 @@ import YearlyBarChart from './YearlyBarChart'
 
 export default function Statistics(): React.JSX.Element {
   const { t } = useTranslation('statistics')
+  const [searchParams] = useSearchParams()
   const currentDate = new Date()
-  const [year, setYear] = useState(currentDate.getFullYear())
-  const [type, setType] = useState<TransactionType>('expense')
-  const [viewTab, setViewTab] = useState<'monthly' | 'yearly'>('monthly')
+
+  // Restore state from URL parameters
+  const urlYear = searchParams.get('year')
+  const urlTab = searchParams.get('tab')
+  const urlType = searchParams.get('type') as TransactionType | null
+  const urlSoloCategory = searchParams.get('soloCategory')
+
+  const [year, setYear] = useState(
+    urlYear ? parseInt(urlYear, 10) || currentDate.getFullYear() : currentDate.getFullYear()
+  )
+  const [type, setType] = useState<TransactionType>(
+    urlType && ['expense', 'income', 'investment'].includes(urlType) ? urlType : 'expense'
+  )
+  const [viewTab, setViewTab] = useState<'monthly' | 'yearly'>(urlTab === 'yearly' ? 'yearly' : 'monthly')
+
+  // Save soloCategory for passing to chart components
+  const [initialSoloCategory] = useState<string | null>(urlSoloCategory)
 
   const [crossTableData, setCrossTableData] = useState<CrossTableData | null>(null)
   const [yearlyCategoryData, setYearlyCategoryData] = useState<YearlyCategoryData | null>(null)
@@ -93,11 +109,11 @@ export default function Statistics(): React.JSX.Element {
       </Card>
       {viewTab === 'monthly' ? (
         <Card size="small" title={t('chartTitles.monthlyTrend')}>
-          <BarChart data={crossTableData} year={year} type={type} />
+          <BarChart data={crossTableData} year={year} type={type} initialSoloCategory={initialSoloCategory} />
         </Card>
       ) : (
         <Card size="small" title={t('chartTitles.yearlyTrend')}>
-          <YearlyBarChart data={yearlyCategoryData} type={type} />
+          <YearlyBarChart data={yearlyCategoryData} type={type} year={year} initialSoloCategory={initialSoloCategory} />
         </Card>
       )}
     </div>

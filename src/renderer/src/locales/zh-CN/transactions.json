@@ -31,7 +31,8 @@
     "aiRecognition": "图片识别导入",
     "batchDelete": "批量删除",
     "continueImport": "继续导入",
-    "discard": "放弃"
+    "discard": "放弃",
+    "backToStatistics": "返回统计页"
   },
   "confirmations": {
     "deleteOne": "确认删除这条记录？",

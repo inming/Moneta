@@ -31,7 +31,8 @@
     "aiRecognition": "AI Recognition",
     "batchDelete": "Batch Delete",
     "continueImport": "Continue Import",
-    "discard": "Discard"
+    "discard": "Discard",
+    "backToStatistics": "Back to Statistics"
   },
   "confirmations": {
     "deleteOne": "Confirm to delete this record?",

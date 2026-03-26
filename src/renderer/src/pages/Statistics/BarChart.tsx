@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
@@ -11,6 +11,7 @@ interface BarChartProps {
   data: CrossTableData | null
   year: number
   type: TransactionType
+  initialSoloCategory?: string | null
 }
 
 interface ContextMenuState {
@@ -26,7 +27,7 @@ function formatAmount(value: number): string {
   return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export default function BarChart({ data, year, type }: BarChartProps): React.JSX.Element {
+export default function BarChart({ data, year, type, initialSoloCategory }: BarChartProps): React.JSX.Element {
   const { t, i18n } = useTranslation('statistics')
 
   const MONTH_LABELS = [
@@ -175,12 +176,49 @@ export default function BarChart({ data, year, type }: BarChartProps): React.JSX
     queryParams.set('category_id', String(contextMenu.categoryId))
     queryParams.set('type', type)
 
+    // Add back-to-statistics parameters
+    queryParams.set('from', 'statistics')
+    queryParams.set('year', String(year))
+    queryParams.set('tab', 'monthly')
+    queryParams.set('statsType', type)
+    if (soloRef.current) {
+      queryParams.set('soloCategory', soloRef.current)
+    }
+
     navigate(`/?${queryParams.toString()}`)
   }, [contextMenu, year, type, navigate])
 
   const closeContextMenu = useCallback((): void => {
     setContextMenu((prev) => ({ ...prev, visible: false }))
   }, [])
+
+  // Restore solo category state from URL parameter
+  useEffect(() => {
+    if (!initialSoloCategory || !data) return
+
+    const chart = chartRef.current?.getEchartsInstance()
+    if (!chart) return
+
+    // Check if category exists and has data
+    const categoryExists = data.rows.some(
+      (r) => r.category_name === initialSoloCategory && r.yearly !== 0
+    )
+    if (!categoryExists) return
+
+    // Defer execution to next tick to ensure ECharts is ready
+    setTimeout(() => {
+      const allNames = data.rows.filter((r) => r.yearly !== 0).map((r) => r.category_name)
+      soloRef.current = initialSoloCategory
+
+      // Select all first, then unselect others
+      chart.dispatchAction({ type: 'legendAllSelect' })
+      for (const name of allNames) {
+        if (name !== initialSoloCategory) {
+          chart.dispatchAction({ type: 'legendUnSelect', name })
+        }
+      }
+    }, 0)
+  }, [data, initialSoloCategory])
 
   if (!data || data.totals.yearly === 0) {
     return <Empty description={t('table.noData')} style={{ padding: 40 }} />
