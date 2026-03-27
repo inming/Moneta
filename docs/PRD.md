@@ -1027,7 +1027,7 @@ src/renderer/src/locales/
 | 加密方案 | SQLCipher 数据库级加密 | 数据始终加密（含 WAL 日志），查询/索引/搜索完全不受影响 |
 | 密钥管理 | OS 级自动加密（safeStorage） | 用户无感知，无需额外密码；macOS Keychain / Windows DPAPI 保护 |
 | 密钥派生 | 32 字节随机密钥 | 首次启动自动生成，通过 safeStorage 加密后存入 config.json |
-| 加密算法 | sqleet（ChaCha20） | SQLite3MultipleCiphers 默认算法，性能优于 AES-256-CBC |
+| 加密算法 | sqlcipher（AES-256-CBC） | SQLite3MultipleCiphers 社区默认，文档和测试覆盖充分；`sqlcipher_export()` 确认支持 |
 | 依赖替换 | `better-sqlite3` → `better-sqlite3-multiple-ciphers` | API 完全兼容的 fork，维护活跃（v12.8.0），支持 Electron 33 |
 
 #### 3.10.3 密钥管理
@@ -1050,8 +1050,8 @@ src/renderer/src/locales/
 
 ```
 1. new Database(dbPath)
-2. PRAGMA key = "x'<hex_key>'"
-3. PRAGMA cipher = 'sqleet'
+2. PRAGMA key = "x'<hex_key>'"    （必须是打开数据库后的第一条 PRAGMA）
+3. PRAGMA cipher = 'sqlcipher'
 4. PRAGMA cipher_page_size = 4096
 5. PRAGMA kdf_iter = 256000
 6. PRAGMA journal_mode = WAL       （现有）
@@ -1064,43 +1064,55 @@ src/renderer/src/locales/
 
 现有用户的数据库为明文格式，升级后需自动迁移为加密格式。
 
-**迁移策略**：SQLCipher 原生 `sqlcipher_export` + `ATTACH DATABASE`。
+**迁移策略**：SQLCipher 原生 `sqlcipher_export` + `ATTACH DATABASE`，直接写入最终 `moneta.db` 路径（避免 Windows 文件锁问题）。
 
-**迁移流程**：
+**迁移状态机**：通过 `config.json` 的 `dbMigrationState` 字段（`'pending'` | `'done'`）跟踪迁移进度，确保崩溃后可恢复。
 
-1. **检测**：启动时检查 `config.json` 是否有 `dbKeyEncrypted` 字段
-   - 无 → 执行迁移（旧用户升级或新安装）
-   - 有 → 正常打开加密数据库
+| `dbKeyEncrypted` | `dbMigrationState` | Action |
+|---|---|---|
+| 缺失 | 缺失 | 新安装或旧版本 → 生成密钥，直接创建加密数据库（无迁移） |
+| 存在 | `'pending'` | 上次迁移被中断 → 从 `.bak` 重新执行迁移 |
+| 存在 | `'done'` | 正常启动 → 打开加密数据库 |
+| 存在 | 缺失 | 旧版迁移（无状态追踪）→ 视为 `'pending'` |
 
-2. **迁移步骤**：
-   - 以明文模式打开现有 `moneta.db`
-   - 生成 32 字节随机密钥，加密存入 `config.json`
-   - 将原数据库备份为 `moneta.db.plain.bak`
-   - `ATTACH DATABASE` 创建加密临时数据库 `moneta.db.enc`
-   - 执行 `SELECT sqlcipher_export('moneta.db.enc')` 导出全部数据
-   - 验证导出完整性（检查表数、行数）
-   - 关闭连接，用加密数据库替换原文件（删除 WAL/SHM 文件）
-   - 删除备份文件
+**迁移步骤**：
 
-3. **回退机制**：
-   - 迁移前备份原数据库为 `moneta.db.plain.bak`
-   - 检测到 `.bak` 文件存在且加密数据库不可读时，优先恢复备份
-   - 迁移成功并验证通过后删除备份
+1. **备份**：将 `moneta.db` 重命名为 `moneta.db.plain.bak`
+2. **设置状态**：保存 `dbMigrationState = 'pending'` 到 `config.json`
+3. **打开明文**：以明文模式打开 `moneta.db.plain.bak`（不设置 PRAGMA key）
+4. **挂载加密库**：`ATTACH DATABASE 'moneta.db' AS encrypted KEY "x'<hex_key>'"`
+5. **导出**：`SELECT sqlcipher_export('encrypted')`
+6. **连接内验证**：检查源库和目标库的表数、行数一致
+7. **关闭连接**：关闭所有数据库（释放文件锁）
+8. **清理 WAL/SHM**：删除 `moneta.db.plain.bak-wal` 和 `moneta.db.plain.bak-shm`
+9. **重新打开验证**：用加密密钥打开 `moneta.db`，执行测试查询（如 `SELECT count(*) FROM _migrations`）
+10. **标记完成**：保存 `dbMigrationState = 'done'` 到 `config.json`
+11. **删除备份**：删除 `moneta.db.plain.bak`
 
-4. **边界处理**：
-   - **空数据库**（新安装）：直接创建加密数据库，跳过迁移
-   - **迁移中断**（崩溃/断电）：检测到 `.bak` 文件时恢复备份重新迁移
-   - **MCP Server**：迁移过程中 HTTP Server 尚未启动，不受影响
+**失败恢复场景**：
+
+| 场景 | 检测条件 | 处理方式 |
+|------|---------|---------|
+| 步骤 2-6 间崩溃 | `state='pending'` + `.bak` 存在 | 删除部分 `moneta.db`/WAL/SHM，从步骤 1 重新迁移 |
+| 步骤 7-8 间崩溃 | `state='pending'` + `.bak` 存在 | 清理 WAL/SHM，尝试打开 `moneta.db`；可读则跳至步骤 9，否则重新迁移 |
+| 步骤 9-10 间崩溃 | `state='pending'` 但 `moneta.db` 可正常打开 | 跳至步骤 10（标记完成 + 删除备份） |
+| 无 `.bak` 但 state='pending' | `state='pending'` + `.bak` 不存在 | 尝试打开 `moneta.db`；成功则标记 `'done'`，否则提示用户恢复 |
+
+**边界处理**：
+- **空数据库**（新安装）：直接创建加密数据库，跳过迁移
+- **MCP Server**：迁移过程中 HTTP Server 尚未启动，不受影响
 
 #### 3.10.6 MCP 兼容性
 
-MCP Server 不直接访问数据库文件，仅通过 HTTP 与主应用通信。主应用中的 MCP HTTP Server 使用与所有 IPC Handler 相同的 `getDatabase()` 连接。因此数据库加密对 MCP 功能完全透明，无需任何改动。
+MCP Server 不直接访问数据库文件，仅通过 HTTP 与主应用通信（已验证 `src/mcp/` 无任何对 `connection.ts` 或 `better-sqlite3` 的 import）。主应用中的 MCP HTTP Server 使用与所有 IPC Handler 相同的 `getDatabase()` 连接。因此数据库加密对 MCP 功能完全透明，无需任何改动。
+
+注意：`connection.ts` 中有独立 Node.js 进程的数据库路径（非 Electron 环境），但 MCP Server 当前未使用此路径。未来如需使用，需要另行设计密钥管理机制（独立进程中无 `safeStorage`）。
 
 #### 3.10.7 安全性分析
 
 | 攻击场景 | 当前状态 | 加密后 |
 |---------|---------|--------|
-| 直接拷贝 .db 文件查看 | 明文可读 | ChaCha20 加密，无法读取 |
+| 直接拷贝 .db 文件查看 | 明文可读 | AES-256-CBC 加密，无法读取 |
 | DB Browser 等工具打开 | 可直接查看 | 需要密钥才能打开 |
 | 磁盘取证 | 明文数据可恢复 | 磁盘上的数据始终加密（含 WAL） |
 | 运行时内存提取 | 数据在内存中明文 | 同左（不可避免，需 OS 级保护） |
@@ -1114,9 +1126,9 @@ MCP Server 不直接访问数据库文件，仅通过 HTTP 与主应用通信。
 | 文件 | 改动 | 说明 |
 |------|------|------|
 | `package.json` | 替换依赖 | `better-sqlite3` → `better-sqlite3-multiple-ciphers` |
-| `src/main/database/connection.ts` | 核心改动 | 添加密钥解密 + PRAGMA key 设置 + 明文→加密迁移逻辑 |
-| `src/main/services/config.service.ts` | 小改 | `loadConfig()` 增加 `dbKeyEncrypted` 字段处理 |
-| `src/shared/types/` | 小改 | `AppConfig` 类型新增 `dbKeyEncrypted?: string` 字段 |
+| `src/main/database/connection.ts` | 核心改动 | 添加密钥解密 + PRAGMA key 设置 + 迁移状态机 |
+| `src/main/services/config.service.ts` | 小改 | `loadConfig()` 增加 `dbKeyEncrypted`、`dbMigrationState` 字段处理 |
+| `src/shared/types/` | 小改 | `AppConfig` 类型新增 `dbKeyEncrypted?: string`、`dbMigrationState?: 'pending' | 'done'` 字段 |
 | MCP Server (`src/mcp/`) | 无改动 | 通过 HTTP 访问，加密透明 |
 | 所有 Repository 文件 | 无改动 | 通过 `getDatabase()` 透明访问 |
 | 所有 IPC Handler | 无改动 | 通过 `getDatabase()` 透明访问 |
