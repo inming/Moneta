@@ -113,49 +113,40 @@ export default function BarChart({ data, year, type, initialSoloCategory }: BarC
 
     const monthIndex = Math.floor(xIndex)
 
-    // Get all series to find which one was clicked based on y value
-    const series = chart.getOption().series as Array<{
-      name: string
-      data: number[]
-      type: string
-    }>
+    // Use data.rows directly instead of chart.getOption().series
+    // to ensure consistency with the rendered chart
+    const visibleRows = data.rows.filter((row) => row.yearly !== 0)
 
-    if (!series || series.length === 0) return
+    if (visibleRows.length === 0) return
 
-    // For stacked bar chart, we need to calculate which series was clicked
-    // based on the cumulative value at this xIndex
+    // For stacked bar chart, calculate which category was clicked
+    // based on the cumulative value at this monthIndex
     let cumulativeValue = 0
-    let clickedSeriesIndex = -1
+    let clickedRow: (typeof visibleRows)[0] | null = null
 
-    for (let i = 0; i < series.length; i++) {
-      const seriesData = series[i].data[monthIndex] || 0
+    for (const row of visibleRows) {
+      const value = row.months[monthIndex] || 0
       const seriesStart = cumulativeValue
-      const seriesEnd = cumulativeValue + seriesData
+      const seriesEnd = cumulativeValue + value
 
-      // Check if yValue falls within this series' range
+      // Check if yValue falls within this category's range
       if (yValue >= seriesStart && yValue <= seriesEnd) {
-        clickedSeriesIndex = i
+        clickedRow = row
         break
       }
 
       cumulativeValue = seriesEnd
     }
 
-    if (clickedSeriesIndex === -1) return
-
-    const categoryName = series[clickedSeriesIndex].name
-
-    // Find category ID from data
-    const row = data.rows.find((r) => r.category_name === categoryName)
-    if (!row) return
+    if (!clickedRow) return
 
     setContextMenu({
       visible: true,
       x: e.clientX,
       y: e.clientY,
       monthIndex,
-      categoryName,
-      categoryId: row.category_id
+      categoryName: clickedRow.category_name,
+      categoryId: clickedRow.category_id
     })
 
 
@@ -277,6 +268,7 @@ export default function BarChart({ data, year, type, initialSoloCategory }: BarC
         <ReactECharts
           ref={chartRef}
           option={option}
+          notMerge={true}
           style={{ height: '100%', width: '100%' }}
           onEvents={{
             legendselectchanged: handleLegendClick

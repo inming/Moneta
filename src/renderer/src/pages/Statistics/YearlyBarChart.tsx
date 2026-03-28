@@ -104,52 +104,44 @@ export default function YearlyBarChart({ data, type, year, initialSoloCategory }
     if (xIndex == null || xIndex < 0 || xIndex >= data.rows.length) return
 
     const rowIndex = Math.floor(xIndex)
-    const year = data.rows[rowIndex]?.year
-    if (!year) return
+    const clickedYear = data.rows[rowIndex]?.year
+    if (!clickedYear) return
 
-    // Get all series to find which one was clicked
-    const series = chart.getOption().series as Array<{
-      name: string
-      data: number[]
-      type: string
-    }>
+    // Use data.categories directly instead of chart.getOption().series
+    // Filter to only visible categories (totalAmount !== 0)
+    const visibleCategories = data.categories.filter(
+      (_, catIndex) => data.totals.amounts[catIndex] !== 0
+    )
 
-    if (!series || series.length === 0) return
+    if (visibleCategories.length === 0) return
 
-    // For stacked bar chart, calculate which series was clicked
+    // For stacked bar chart, calculate which category was clicked
     let cumulativeValue = 0
-    let clickedSeriesIndex = -1
+    let clickedCategory: { id: number; name: string } | null = null
 
-    for (let i = 0; i < series.length; i++) {
-      const seriesData = series[i].data[rowIndex] || 0
+    for (const cat of visibleCategories) {
+      const catIndex = data.categories.findIndex((c) => c.id === cat.id)
+      const value = data.rows[rowIndex].amounts[catIndex] || 0
       const seriesStart = cumulativeValue
-      const seriesEnd = cumulativeValue + seriesData
+      const seriesEnd = cumulativeValue + value
 
       if (yValue >= seriesStart && yValue <= seriesEnd) {
-        clickedSeriesIndex = i
+        clickedCategory = cat
         break
       }
 
       cumulativeValue = seriesEnd
     }
 
-    if (clickedSeriesIndex === -1) return
-
-    const categoryName = series[clickedSeriesIndex].name
-
-    // Find category ID from data
-    const catIndex = data.categories.findIndex((c) => c.name === categoryName)
-    if (catIndex === -1) return
-
-    const categoryId = data.categories[catIndex].id
+    if (!clickedCategory) return
 
     setContextMenu({
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      year,
-      categoryName,
-      categoryId
+      year: clickedYear,
+      categoryName: clickedCategory.name,
+      categoryId: clickedCategory.id
     })
   }, [data])
 
@@ -270,6 +262,7 @@ export default function YearlyBarChart({ data, type, year, initialSoloCategory }
         <ReactECharts
           ref={chartRef}
           option={option}
+          notMerge={true}
           style={{ height: '100%', width: '100%' }}
           onEvents={{
             legendselectchanged: handleLegendClick
