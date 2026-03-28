@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type Database from 'better-sqlite3-multiple-ciphers'
 import type { Category, CreateCategoryDTO, UpdateCategoryDTO, TransactionType } from '../../../shared/types'
 
 interface CategoryRow {

@@ -31,7 +31,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "antd": "^5.22.0",
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3-multiple-ciphers": "^12.8.0",
     "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.2",

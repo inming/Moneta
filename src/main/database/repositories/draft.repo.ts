@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type Database from 'better-sqlite3-multiple-ciphers'
 import type { ImportDraft, DraftSummary, SaveDraftDTO } from '../../../shared/types'
 
 interface DraftRow {

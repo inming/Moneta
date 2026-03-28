@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3'
+import type Database from 'better-sqlite3-multiple-ciphers'
 import type { CrossTableParams, CrossTableData, CrossTableRow, SummaryParams, SummaryData, YearRangeData, YearlyCategoryParams, YearlyCategoryData } from '../../../shared/types'
 
 interface CrossTableRawRow {

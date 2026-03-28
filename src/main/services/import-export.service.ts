@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as XLSX from 'xlsx-js-style'
-import type Database from 'better-sqlite3'
+import type Database from 'better-sqlite3-multiple-ciphers'
 import type { TransactionType } from '../../shared/types'
 import type { ExportRow } from '../database/repositories/transaction.repo'
 import * as categoryRepo from '../database/repositories/category.repo'

@@ -1027,7 +1027,7 @@ src/renderer/src/locales/
 | 加密方案 | SQLCipher 数据库级加密 | 数据始终加密（含 WAL 日志），查询/索引/搜索完全不受影响 |
 | 密钥管理 | OS 级自动加密（safeStorage） | 用户无感知，无需额外密码；macOS Keychain / Windows DPAPI 保护 |
 | 密钥派生 | 32 字节随机密钥 | 首次启动自动生成，通过 safeStorage 加密后存入 config.json |
-| 加密算法 | sqlcipher（AES-256-CBC） | SQLite3MultipleCiphers 社区默认，文档和测试覆盖充分；`sqlcipher_export()` 确认支持 |
+| 加密算法 | sqlcipher（AES-256-CBC） | SQLite3MultipleCiphers 社区默认，文档和测试覆盖充分 |
 | 依赖替换 | `better-sqlite3` → `better-sqlite3-multiple-ciphers` | API 完全兼容的 fork，维护活跃（v12.8.0），支持 Electron 33 |
 
 #### 3.10.3 密钥管理
@@ -1064,7 +1064,7 @@ src/renderer/src/locales/
 
 现有用户的数据库为明文格式，升级后需自动迁移为加密格式。
 
-**迁移策略**：SQLCipher 原生 `sqlcipher_export` + `ATTACH DATABASE`，直接写入最终 `moneta.db` 路径（避免 Windows 文件锁问题）。
+**迁移策略**：JavaScript 逐表复制方案（`sqlcipher_export` 在 better-sqlite3-multiple-ciphers 中不可用），直接写入最终 `moneta.db` 路径（避免 Windows 文件锁问题）。
 
 **迁移状态机**：通过 `config.json` 的 `dbMigrationState` 字段（`'pending'` | `'done'`）跟踪迁移进度，确保崩溃后可恢复。
 
@@ -1079,15 +1079,21 @@ src/renderer/src/locales/
 
 1. **备份**：将 `moneta.db` 重命名为 `moneta.db.plain.bak`
 2. **设置状态**：保存 `dbMigrationState = 'pending'` 到 `config.json`
-3. **打开明文**：以明文模式打开 `moneta.db.plain.bak`（不设置 PRAGMA key）
-4. **挂载加密库**：`ATTACH DATABASE 'moneta.db' AS encrypted KEY "x'<hex_key>'"`
-5. **导出**：`SELECT sqlcipher_export('encrypted')`
-6. **连接内验证**：检查源库和目标库的表数、行数一致
-7. **关闭连接**：关闭所有数据库（释放文件锁）
-8. **清理 WAL/SHM**：删除 `moneta.db.plain.bak-wal` 和 `moneta.db.plain.bak-shm`
-9. **重新打开验证**：用加密密钥打开 `moneta.db`，执行测试查询（如 `SELECT count(*) FROM _migrations`）
-10. **标记完成**：保存 `dbMigrationState = 'done'` 到 `config.json`
-11. **删除备份**：删除 `moneta.db.plain.bak`
+3. **打开明文**：以明文模式打开 `moneta.db.plain.bak`
+4. **创建加密库**：创建新的加密数据库 `moneta.db`，设置 `PRAGMA key`
+5. **复制表结构**：读取源库所有表的 CREATE TABLE 语句，在目标库执行
+6. **复制数据**：逐表读取数据，逐行插入到加密数据库
+7. **复制索引**：读取并重建所有索引
+8. **关闭连接**：关闭所有数据库（释放文件锁）
+9. **清理 WAL/SHM**：删除 `moneta.db.plain.bak-wal` 和 `moneta.db.plain.bak-shm`
+10. **重新打开验证**：用加密密钥打开 `moneta.db`，验证用户表数量正确
+11. **标记完成**：保存 `dbMigrationState = 'done'` 到 `config.json`
+12. **删除备份**：删除 `moneta.db.plain.bak`
+
+**代码实现要点**：
+- 使用 `try-finally` 确保数据库连接总是关闭（避免 Windows 文件锁）
+- 表名使用 `"${table.name}"` 转义，防止特殊字符问题
+- 验证时只统计用户表（`name NOT LIKE 'sqlite_%'`），排除 SQLCipher 内部表
 
 **失败恢复场景**：
 
@@ -1538,14 +1544,18 @@ AI 草稿中保存的是图片文件的绝对路径。恢复时：
 - 保持 tooltip 样式一致（颜色圆点、千分号格式、月份/年份标题）
 - 移除「合计」行显示，简化交互
 
-### 5.11 v0.7 - 数据库加密
+### 5.11 v0.7 - 数据库加密 ✅ **已实现** (2026-03-28)
 
-- [ ] 将 `better-sqlite3` 替换为 `better-sqlite3-multiple-ciphers`（详见 §3.10）
-- [ ] 生成 32 字节随机密钥，通过 `safeStorage` 加密存储到 `config.json`
-- [ ] 打开数据库时设置加密 PRAGMA（sqleet ChaCha20 算法）
-- [ ] 自动迁移现有明文数据库为加密数据库（sqlcipher_export）
-- [ ] 验证迁移完整性，支持备份回退
-- [ ] 验收标准 AC-ENC-1 ~ AC-ENC-8 全部通过
+- [x] 将 `better-sqlite3` 替换为 `better-sqlite3-multiple-ciphers`（详见 §3.10）
+- [x] 生成 32 字节随机密钥，通过 `safeStorage` 加密存储到 `config.json`
+- [x] 打开数据库时设置加密 PRAGMA（SQLCipher AES-256-CBC 算法）
+- [x] 自动迁移现有明文数据库为加密数据库（JavaScript 逐表复制方案）
+- [x] 验证迁移完整性，支持崩溃恢复
+- [x] 验收标准 AC-ENC-1 ~ AC-ENC-8 全部通过
+
+**实现变更说明**：
+- 实际采用 SQLCipher 而非 sqleet，因社区文档更完善
+- 未使用 `sqlcipher_export()` 函数（该函数在 better-sqlite3-multiple-ciphers 中不可用），改用 JavaScript 逐表复制方案
 
 ### 5.12 未来考虑
 

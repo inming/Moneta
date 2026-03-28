@@ -26,6 +26,8 @@ interface AppConfig {
   pinLockedUntil: string
   autoLockMinutes: number
   language?: string
+  dbKeyEncrypted?: string
+  dbMigrationState?: 'pending' | 'done'
 }
 
 /** 内置模型列表，后续新增模型只需往这里加一项 */
@@ -160,6 +162,9 @@ export function loadConfig(): AppConfig {
     if (config.pinLockedUntil === undefined) config.pinLockedUntil = ''
     if (config.autoLockMinutes === undefined) config.autoLockMinutes = 30
     if (config.language === undefined) config.language = detectSystemLanguage()
+
+    // Forward-compatibility: database encryption fields
+    if (config.dbKeyEncrypted === undefined) config.dbKeyEncrypted = ''
 
     // Validate default provider
     if (!config.defaultProviderId || !config.aiProviders.find((p) => p.id === config.defaultProviderId)) {
