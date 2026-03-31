@@ -6,6 +6,7 @@
     "aiProviders": "AI 模型",
     "mcp": "MCP 配置",
     "language": "语言",
+    "appearance": "外观",
     "security": "安全设置",
     "data": "数据管理"
   },
@@ -17,6 +18,16 @@
     "saveSuccess": "语言已切换",
     "saveFailed": "语言切换失败，请重试",
     "noChange": "语言未变更"
+  },
+  "appearance": {
+    "title": "界面外观",
+    "theme": "主题模式",
+    "system": "跟随系统",
+    "light": "浅色模式",
+    "dark": "深色模式",
+    "saveSuccess": "外观设置已保存",
+    "saveFailed": "保存失败",
+    "noChange": "设置未变更"
   },
   "operatorManager": {
     "columns": {

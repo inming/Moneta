@@ -209,6 +209,7 @@ created_at DATETIME DEFAULT datetime('now', 'localtime')
 | 数据浏览与编辑 | [`docs/architecture/data-browsing.md`](docs/architecture/data-browsing.md) | 服务端分页排序；editingKey 互斥；URL 参数筛选；侧栏导航结构 |
 | 数据管理 | [`docs/architecture/data-management.md`](docs/architecture/data-management.md) | 导出用 xlsx-js-style；CSV UTF-8 BOM；导入全量覆盖；草稿 useEffect 即时保存 |
 | 跨页面导航 | [`docs/architecture/cross-page-navigation.md`](docs/architecture/cross-page-navigation.md) | URL params 传状态；setTimeout(0) 恢复 ECharts 独显 |
+| 深色模式 | [`docs/architecture/dark-mode.md`](docs/architecture/dark-mode.md) | CSS 变量 + Ant Design Token；ECharts 内置 dark 主题；Zustand 状态管理；系统主题监听（matchMedia） |
 
 ### 产品需求文档
 

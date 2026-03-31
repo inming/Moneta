@@ -6,3 +6,4 @@ export type { AIProviderFormat, AIProviderConfig, UpdateAIProviderDTO, AIProvide
 export type { AIRecognizedItem, RecognitionResultRow, RecognizeRequest, RecognizeResponse } from './ai-recognition'
 export type { VerifyPINResult, ChangePINResult } from './auth'
 export type { ImportDraft, DraftSource, DraftTransaction, DraftData, DraftSummary, SaveDraftDTO, AIDraftSpecific, MCPDraftSpecific } from './import-draft'
+export type { ThemeMode } from './theme'

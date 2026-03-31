@@ -10,7 +10,8 @@ import type {
   AIProviderView, UpdateAIProviderDTO, AITestResult,
   RecognizeRequest, RecognizeResponse,
   VerifyPINResult, ChangePINResult,
-  ImportDraft, DraftSummary, SaveDraftDTO
+  ImportDraft, DraftSummary, SaveDraftDTO,
+  ThemeMode
 } from '../shared/types'
 
 export interface MonetaAPI {
@@ -98,6 +99,10 @@ export interface MonetaAPI {
   i18n: {
     getLanguage(): Promise<string>
     setLanguage(language: string): Promise<string>
+  }
+  theme: {
+    getMode(): Promise<ThemeMode>
+    setMode(mode: ThemeMode): Promise<void>
   }
 }
 

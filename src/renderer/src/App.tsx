@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
-import { ConfigProvider, Spin } from 'antd'
+import { ConfigProvider, Spin, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import enUS from 'antd/locale/en_US'
 import Layout from './components/Layout'
@@ -13,6 +13,7 @@ import LockScreen from './pages/LockScreen'
 import PinSetup from './pages/LockScreen/PinSetup'
 import { useAuthStore } from './stores/auth.store'
 import { useI18nStore } from './stores/i18n.store'
+import { useThemeStore } from './stores/theme.store'
 import { useAutoLock } from './hooks/useAutoLock'
 import { setDayjsLocale } from './utils/dayjs-config'
 
@@ -57,12 +58,14 @@ function MainApp(): React.JSX.Element {
 function App(): React.JSX.Element {
   const { initialized: authInitialized, hasPIN, isLocked, initialize: initializeAuth } = useAuthStore()
   const { language, initialized: i18nInitialized, initialize: initializeI18n } = useI18nStore()
+  const { isDark, initialized: themeInitialized, initialize: initializeTheme } = useThemeStore()
 
-  // 初始化：加载认证和语言配置
+  // 初始化：加载认证、语言和主题配置
   useEffect(() => {
     initializeAuth()
     initializeI18n()
-  }, [initializeAuth, initializeI18n])
+    initializeTheme()
+  }, [initializeAuth, initializeI18n, initializeTheme])
 
   // 语言变化时同步 dayjs locale
   useEffect(() => {
@@ -78,8 +81,8 @@ function App(): React.JSX.Element {
     return localeMap[language as keyof typeof localeMap] || zhCN
   }, [language])
 
-  // 等待两个初始化都完成
-  if (!authInitialized || !i18nInitialized) {
+  // 等待三个初始化都完成
+  if (!authInitialized || !i18nInitialized || !themeInitialized) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Spin size="large" />
@@ -87,13 +90,20 @@ function App(): React.JSX.Element {
     )
   }
 
-  // 统一 ConfigProvider 到顶层
+  // 统一 ConfigProvider 到顶层，添加主题配置
   return (
-    <ConfigProvider locale={antdLocale}>
-      {!hasPIN && <PinSetup />}
-      {hasPIN && isLocked && <LockScreen />}
-      {hasPIN && !isLocked && <MainApp />}
-    </ConfigProvider>
+    <div data-theme={isDark ? 'dark' : 'light'} style={{ height: '100vh' }}>
+      <ConfigProvider 
+        locale={antdLocale}
+        theme={{
+          algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm
+        }}
+      >
+        {!hasPIN && <PinSetup />}
+        {hasPIN && isLocked && <LockScreen />}
+        {hasPIN && !isLocked && <MainApp />}
+      </ConfigProvider>
+    </div>
   )
 }
 

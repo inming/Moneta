@@ -6,6 +6,7 @@
     "aiProviders": "AI Models",
     "mcp": "MCP Config",
     "language": "Language",
+    "appearance": "Appearance",
     "security": "Security",
     "data": "Data Management"
   },
@@ -17,6 +18,16 @@
     "saveSuccess": "Language switched successfully",
     "saveFailed": "Failed to switch language, please try again",
     "noChange": "Language not changed"
+  },
+  "appearance": {
+    "title": "Interface Appearance",
+    "theme": "Theme Mode",
+    "system": "Follow System",
+    "light": "Light Mode",
+    "dark": "Dark Mode",
+    "saveSuccess": "Appearance settings saved",
+    "saveFailed": "Failed to save",
+    "noChange": "No changes made"
   },
   "operatorManager": {
     "columns": {

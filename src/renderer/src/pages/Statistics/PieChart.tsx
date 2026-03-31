@@ -2,6 +2,7 @@ import ReactECharts from 'echarts-for-react'
 import { Empty } from 'antd'
 import { useTranslation } from 'react-i18next'
 import type { CrossTableData } from '../../../../shared/types'
+import { useThemeStore } from '../../stores/theme.store'
 
 interface PieChartProps {
   data: CrossTableData | null
@@ -13,6 +14,7 @@ function formatAmount(value: number): string {
 
 export default function PieChart({ data }: PieChartProps): React.JSX.Element {
   const { t } = useTranslation('statistics')
+  const { isDark } = useThemeStore()
 
   if (!data || data.rows.length === 0) {
     return <Empty description={t('table.noData')} style={{ padding: 40 }} />
@@ -56,7 +58,8 @@ export default function PieChart({ data }: PieChartProps): React.JSX.Element {
         text: `¥${formatAmount(total)}`,
         fontSize: 14,
         fontWeight: 'bold',
-        textAlign: 'center'
+        textAlign: 'center',
+        fill: isDark ? '#ffffff' : '#000000'
       }
     },
     series: [
@@ -74,5 +77,5 @@ export default function PieChart({ data }: PieChartProps): React.JSX.Element {
     ]
   }
 
-  return <ReactECharts option={option} style={{ height: 300 }} />
+  return <ReactECharts option={option} theme={isDark ? 'dark' : undefined} notMerge={true} style={{ height: 300 }} />
 }

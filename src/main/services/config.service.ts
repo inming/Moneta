@@ -6,7 +6,8 @@ import type {
   AIProviderConfig,
   AIProviderView,
   AIProviderFormat,
-  UpdateAIProviderDTO
+  UpdateAIProviderDTO,
+  ThemeMode
 } from '../../shared/types'
 
 interface StoredProvider {
@@ -28,6 +29,7 @@ interface AppConfig {
   language?: string
   dbKeyEncrypted?: string
   dbMigrationState?: 'pending' | 'done'
+  theme?: 'system' | 'light' | 'dark'
 }
 
 /** 内置模型列表，后续新增模型只需往这里加一项 */
@@ -123,7 +125,8 @@ function createDefaultConfig(): AppConfig {
     pinFailCount: 0,
     pinLockedUntil: '',
     autoLockMinutes: 30,
-    language: detectSystemLanguage()
+    language: detectSystemLanguage(),
+    theme: 'system'
   }
 }
 
@@ -165,6 +168,9 @@ export function loadConfig(): AppConfig {
 
     // Forward-compatibility: database encryption fields
     if (config.dbKeyEncrypted === undefined) config.dbKeyEncrypted = ''
+
+    // Forward-compatibility: theme setting
+    if (config.theme === undefined) config.theme = 'system'
 
     // Validate default provider
     if (!config.defaultProviderId || !config.aiProviders.find((p) => p.id === config.defaultProviderId)) {
@@ -242,5 +248,16 @@ export function setDefaultProvider(id: string): void {
     throw new Error(`模型不存在: ${id}`)
   }
   config.defaultProviderId = id
+  saveConfig(config)
+}
+
+export function getTheme(): ThemeMode {
+  const config = loadConfig()
+  return config.theme ?? 'system'
+}
+
+export function setTheme(theme: ThemeMode): void {
+  const config = loadConfig()
+  config.theme = theme
   saveConfig(config)
 }

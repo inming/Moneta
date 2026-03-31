@@ -100,6 +100,10 @@ const api = {
   i18n: {
     getLanguage: () => ipcRenderer.invoke(IPC_CHANNELS.I18N_GET_LANGUAGE),
     setLanguage: (language: string) => ipcRenderer.invoke(IPC_CHANNELS.I18N_SET_LANGUAGE, language)
+  },
+  theme: {
+    getMode: () => ipcRenderer.invoke(IPC_CHANNELS.THEME_GET),
+    setMode: (mode: import('../shared/types').ThemeMode) => ipcRenderer.invoke(IPC_CHANNELS.THEME_SET, mode)
   }
 }
 

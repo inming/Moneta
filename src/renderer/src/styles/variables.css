@@ -4,4 +4,54 @@
   --warning-color: #faad14;
   --error-color: #ff4d4f;
   --sidebar-width: 220px;
+
+  /* Light mode colors */
+  --bg-primary: #f5f5f5;
+  --sidebar-bg: #ffffff;
+  --border-color: #f0f0f0;
+  --lock-gradient-start: #667eea;
+  --lock-gradient-end: #764ba2;
+  --lock-card-bg: rgba(255, 255, 255, 0.95);
+
+  /* Table colors */
+  --table-summary-bg: #fafafa;
+
+  /* Transaction row type colors for light mode */
+  --row-expense-bg: #fff7e6;
+  --row-expense-hover: #fff1d6;
+  --row-income-bg: #f6ffed;
+  --row-income-hover: #eeffdd;
+  --row-investment-bg: #e6f4ff;
+  --row-investment-hover: #d6ebff;
+}
+
+[data-theme='dark'] {
+  /* Dark mode colors */
+  --bg-primary: #141414;
+  --sidebar-bg: #001529;
+  --border-color: #303030;
+  --lock-gradient-start: #2d3748;
+  --lock-gradient-end: #1a202c;
+  --lock-card-bg: rgba(30, 30, 30, 0.95);
+
+  /* Table colors */
+  --table-header-bg: #1f1f1f;
+  --table-row-hover: #262626;
+  --table-summary-bg: #141414;
+
+  /* Status colors for dark mode */
+  --status-draft-bg: #2b2111;
+  --status-draft-hover: #3d2f18;
+  --status-new-bg: #162312;
+  --status-new-hover: #1f331a;
+  --status-editing-bg: #111d2c;
+  --status-editing-hover: #162a40;
+
+  /* Transaction row type colors for dark mode */
+  --row-expense-bg: #2b2111;
+  --row-expense-hover: #3d2f18;
+  --row-income-bg: #162312;
+  --row-income-hover: #1f331a;
+  --row-investment-bg: #111d2c;
+  --row-investment-hover: #162a40;
 }

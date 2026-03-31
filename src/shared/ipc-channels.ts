@@ -84,5 +84,9 @@ export const IPC_CHANNELS = {
 
   // 国际化
   I18N_GET_LANGUAGE: 'i18n:get-language',
-  I18N_SET_LANGUAGE: 'i18n:set-language'
+  I18N_SET_LANGUAGE: 'i18n:set-language',
+
+  // 主题
+  THEME_GET: 'theme:get',
+  THEME_SET: 'theme:set'
 } as const

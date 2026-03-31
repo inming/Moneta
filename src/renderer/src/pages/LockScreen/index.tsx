@@ -72,7 +72,7 @@ export default function LockScreen(): React.JSX.Element {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, var(--lock-gradient-start) 0%, var(--lock-gradient-end) 100%)',
         userSelect: 'none'
       }}
     >
@@ -83,7 +83,7 @@ export default function LockScreen(): React.JSX.Element {
           alignItems: 'center',
           padding: 48,
           borderRadius: 16,
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'var(--lock-card-bg)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)'
         }}
       >

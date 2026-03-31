@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { YearlyCategoryData } from '../../../../shared/types'
 import type { TransactionType } from '../../../../shared/types/transaction'
 import ContextMenu from '../../components/ContextMenu'
+import { useThemeStore } from '../../stores/theme.store'
 
 interface YearlyBarChartProps {
   data: YearlyCategoryData | null
@@ -29,6 +30,7 @@ function formatAmount(value: number): string {
 
 export default function YearlyBarChart({ data, type, year, initialSoloCategory }: YearlyBarChartProps): React.JSX.Element {
   const { t, i18n } = useTranslation('statistics')
+  const { isDark } = useThemeStore()
   const navigate = useNavigate()
   const chartRef = useRef<ReactECharts>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -262,6 +264,7 @@ export default function YearlyBarChart({ data, type, year, initialSoloCategory }
         <ReactECharts
           ref={chartRef}
           option={option}
+          theme={isDark ? 'dark' : undefined}
           notMerge={true}
           style={{ height: '100%', width: '100%' }}
           onEvents={{

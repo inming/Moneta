@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/auth.store'
+import { useThemeStore } from '../../stores/theme.store'
 
 const { Sider, Content } = AntLayout
 
@@ -18,6 +19,7 @@ export default function Layout(): React.JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
   const lock = useAuthStore((s) => s.lock)
+  const isDark = useThemeStore((s) => s.isDark)
 
   const menuItems = [
     { key: '/', icon: <TableOutlined />, label: t('menu.transactions') },
@@ -37,9 +39,10 @@ export default function Layout(): React.JSX.Element {
     <AntLayout style={{ height: '100vh' }}>
       <Sider
         width={180}
-        theme="light"
+        theme={isDark ? 'dark' : 'light'}
         style={{
-          borderRight: '1px solid #f0f0f0'
+          borderRight: '1px solid var(--border-color)',
+          background: 'var(--sidebar-bg)'
         }}
       >
         <div
@@ -56,7 +59,7 @@ export default function Layout(): React.JSX.Element {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
-              borderBottom: '1px solid #f0f0f0',
+              borderBottom: '1px solid var(--border-color)',
               userSelect: 'none'
             }}
           >
@@ -65,7 +68,7 @@ export default function Layout(): React.JSX.Element {
               alt="Moneta"
               style={{ height: 36, width: 'auto', objectFit: 'contain' }}
             />
-            <span style={{ fontSize: '18px', fontWeight: 600 }}>Moneta</span>
+            <span style={{ fontSize: '18px', fontWeight: 600, color: isDark ? '#ffffff' : '#000000' }}>Moneta</span>
           </div>
           <Menu
             mode="inline"
@@ -79,11 +82,11 @@ export default function Layout(): React.JSX.Element {
             selectable={false}
             items={[{ key: LOCK_KEY, icon: <LockOutlined />, label: t('menu.lock') }]}
             onClick={handleMenuClick}
-            style={{ borderTop: '1px solid #f0f0f0', userSelect: 'none' }}
+            style={{ borderTop: '1px solid var(--border-color)', userSelect: 'none' }}
           />
         </div>
       </Sider>
-      <Content style={{ padding: 24, overflow: 'auto', background: '#f5f5f5' }}>
+      <Content style={{ padding: 24, overflow: 'auto', background: 'var(--bg-primary)' }}>
         <Outlet />
       </Content>
     </AntLayout>

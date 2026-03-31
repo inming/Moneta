@@ -137,7 +137,7 @@ export default function YearlyTable({ data, loading }: YearlyTableProps): React.
         if (!data) return null
         return (
           <Table.Summary fixed>
-            <Table.Summary.Row style={{ fontWeight: 600, background: '#fafafa' }}>
+            <Table.Summary.Row style={{ fontWeight: 600, background: 'var(--table-summary-bg)' }}>
               <Table.Summary.Cell index={0} align="left">{t('table.total')}</Table.Summary.Cell>
               {data.totals.amounts.map((v, i) => (
                 <Table.Summary.Cell key={i} index={i + 1} align="right">

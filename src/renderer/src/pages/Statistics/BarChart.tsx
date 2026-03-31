@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { CrossTableData } from '../../../../shared/types'
 import type { TransactionType } from '../../../../shared/types/transaction'
 import ContextMenu from '../../components/ContextMenu'
+import { useThemeStore } from '../../stores/theme.store'
 
 interface BarChartProps {
   data: CrossTableData | null
@@ -29,6 +30,7 @@ function formatAmount(value: number): string {
 
 export default function BarChart({ data, year, type, initialSoloCategory }: BarChartProps): React.JSX.Element {
   const { t, i18n } = useTranslation('statistics')
+  const { isDark } = useThemeStore()
 
   const MONTH_LABELS = [
     t('months.jan'), t('months.feb'), t('months.mar'), t('months.apr'),
@@ -268,6 +270,7 @@ export default function BarChart({ data, year, type, initialSoloCategory }: BarC
         <ReactECharts
           ref={chartRef}
           option={option}
+          theme={isDark ? 'dark' : undefined}
           notMerge={true}
           style={{ height: '100%', width: '100%' }}
           onEvents={{

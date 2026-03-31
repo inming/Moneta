@@ -6,12 +6,13 @@ import OperatorManager from './OperatorManager'
 import AIProviderManager from './AIProviderManager'
 import MCPConfigManager from './MCPConfigManager'
 import LanguageManager from './LanguageManager'
+import ThemeManager from './ThemeManager'
 import PinManager from './PinManager'
 import DataManager from './DataManager'
 
 const { Text } = Typography
 
-const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'language', 'security', 'data']
+const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'language', 'appearance', 'security', 'data']
 const DEFAULT_TAB = 'categories'
 
 export default function Settings(): React.JSX.Element {
@@ -49,6 +50,11 @@ export default function Settings(): React.JSX.Element {
       key: 'language',
       label: t('tabs.language'),
       children: <LanguageManager />
+    },
+    {
+      key: 'appearance',
+      label: t('tabs.appearance'),
+      children: <ThemeManager />
     },
     {
       key: 'security',

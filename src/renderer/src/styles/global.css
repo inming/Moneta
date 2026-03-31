@@ -11,3 +11,34 @@ body {
 #root {
   height: 100vh;
 }
+
+/* Dark mode table overrides */
+[data-theme='dark'] .ant-table {
+  background: transparent;
+}
+
+[data-theme='dark'] .ant-table-container {
+  background: transparent;
+}
+
+[data-theme='dark'] .ant-table-content {
+  background: transparent;
+}
+
+[data-theme='dark'] .ant-table-cell {
+  background: transparent !important;
+}
+
+[data-theme='dark'] .ant-table-tbody > tr > td {
+  background: transparent;
+  border-bottom: 1px solid var(--border-color, #303030);
+}
+
+[data-theme='dark'] .ant-table-thead > tr > th {
+  background: var(--table-header-bg, #1f1f1f) !important;
+  border-bottom: 1px solid var(--border-color, #303030);
+}
+
+[data-theme='dark'] .ant-table-row:hover > td {
+  background: var(--table-row-hover, #262626) !important;
+}

@@ -965,9 +965,9 @@ export default function Transactions(): React.JSX.Element {
           alignItems: 'center',
           padding: '8px 12px',
           marginBottom: 8,
-          background: '#fafafa',
+          background: 'var(--table-summary-bg)',
           borderRadius: 6,
-          border: '1px solid #f0f0f0'
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ width: 130 }}>{renderNewRowCell('date')}</div>
           <div style={{ width: 100 }}>{renderNewRowCell('type')}</div>
@@ -1011,22 +1011,22 @@ export default function Transactions(): React.JSX.Element {
 
       <style>{`
         .row-type-expense > td {
-          background-color: #fff7e6 !important;
+          background-color: var(--row-expense-bg, #fff7e6) !important;
         }
         .row-type-expense:hover > td {
-          background-color: #fff1d6 !important;
+          background-color: var(--row-expense-hover, #fff1d6) !important;
         }
         .row-type-income > td {
-          background-color: #f6ffed !important;
+          background-color: var(--row-income-bg, #f6ffed) !important;
         }
         .row-type-income:hover > td {
-          background-color: #eeffdd !important;
+          background-color: var(--row-income-hover, #eeffdd) !important;
         }
         .row-type-investment > td {
-          background-color: #e6f4ff !important;
+          background-color: var(--row-investment-bg, #e6f4ff) !important;
         }
         .row-type-investment:hover > td {
-          background-color: #d6ebff !important;
+          background-color: var(--row-investment-hover, #d6ebff) !important;
         }
       `}</style>
     </div>
