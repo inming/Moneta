@@ -810,8 +810,7 @@ export default function Transactions(): React.JSX.Element {
           showIcon={false}
           style={{
             marginBottom: 12,
-            borderLeft: '4px solid #faad14',
-            backgroundColor: '#fffbe6'
+            borderLeft: '4px solid var(--warning-color)'
           }}
           action={
             <Space>
