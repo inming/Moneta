@@ -72,7 +72,8 @@
       "resources/**/*"
     ],
     "asarUnpack": [
-      "out/main/mcp.js"
+      "out/main/mcp.js",
+      "node_modules/better-sqlite3-multiple-ciphers/**"
     ],
     "npmRebuild": true,
     "buildDependenciesFromSource": true,
