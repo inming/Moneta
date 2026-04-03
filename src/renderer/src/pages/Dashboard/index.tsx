@@ -52,8 +52,9 @@ export default function Dashboard(): React.JSX.Element {
   const chartOption = useMemo(() => {
     if (!forecast) return {}
 
-    const actualData = forecast.months.map((m) => (m.isActual ? m.amount : null))
-    const predictedData = forecast.months.map((m) => (!m.isActual ? m.amount : null))
+    const currentMonthIdx = new Date().getMonth() // 0-based
+    const actualData = forecast.months.map((m, i) => (m.isActual && i !== currentMonthIdx ? m.amount : null))
+    const predictedData = forecast.months.map((m, i) => (!m.isActual || i === currentMonthIdx ? m.amount : null))
 
     // Build cumulative data
     const cumulativeActual: (number | null)[] = []
