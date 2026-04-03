@@ -564,7 +564,7 @@ export default function Transactions(): React.JSX.Element {
         return (
           <Space size={4}>
             <span>{(value as string) || '-'}</span>
-            {record.is_occasional && (
+            {!!record.is_occasional && (
               <Tag color="orange" style={{ fontSize: 11, lineHeight: '18px', padding: '0 4px' }}>
                 {t('transactions:fields.occasional')}
               </Tag>

@@ -72,25 +72,36 @@ function computeCategoryForecast(
   currentYear: number,
   currentMonth: number
 ): ForecastMonthData[] {
+  // currentMonth is 1-based; completed months are 0..(currentMonth-2)
+  const completedMonths = currentMonth - 1
   const predictedAnnual =
     computeWeightedAverage(annualHistory, currentYear) ||
-    computeYTDBasedAnnual(actualMonths, currentMonth)
+    computeYTDBasedAnnual(actualMonths, completedMonths)
 
-  const actualYTD = actualMonths.slice(0, currentMonth).reduce((sum, v) => sum + v, 0)
-  const remainingMonthCount = 12 - currentMonth
+  // YTD uses only completed months (exclude current month which is still in progress)
+  const completedYTD = actualMonths.slice(0, completedMonths).reduce((sum, v) => sum + v, 0)
+  // Remaining months include current month (still in progress) + future months
+  const remainingMonthCount = 12 - completedMonths
 
   let perMonth = 0
   if (remainingMonthCount > 0 && predictedAnnual > 0) {
-    const remaining = predictedAnnual - actualYTD
+    const remaining = predictedAnnual - completedYTD
     const historicalMonthly = predictedAnnual / 12
     perMonth = Math.max(remaining / remainingMonthCount, historicalMonthly)
   }
 
+  const currentMonthIdx = currentMonth - 1
+
   const months: ForecastMonthData[] = []
   for (let i = 0; i < 12; i++) {
-    if (i < currentMonth) {
+    if (i < completedMonths) {
+      // Completed past months: use actual value
       months.push({ amount: actualMonths[i], isActual: true })
+    } else if (i === currentMonthIdx) {
+      // Current month (in progress): use max(actual, predicted)
+      months.push({ amount: Math.max(actualMonths[i], perMonth), isActual: true })
     } else {
+      // Future months: use predicted value
       months.push({ amount: perMonth, isActual: false })
     }
   }
@@ -126,7 +137,7 @@ export function computeForecast(db: Database.Database, params: ForecastParams): 
   if (allCategoryIds.size === 0) {
     const emptyMonths: ForecastMonthData[] = Array.from({ length: 12 }, (_, i) => ({
       amount: 0,
-      isActual: i < currentMonth
+      isActual: i < currentMonth // current month included as actual
     }))
     return { months: emptyMonths, totalForecast: 0 }
   }
@@ -134,7 +145,7 @@ export function computeForecast(db: Database.Database, params: ForecastParams): 
   // Compute forecast for each category, then sum
   const aggregatedMonths: ForecastMonthData[] = Array.from({ length: 12 }, (_, i) => ({
     amount: 0,
-    isActual: i < currentMonth
+    isActual: i < currentMonth // current month (index currentMonth-1) is actual
   }))
 
   for (const catId of allCategoryIds) {

@@ -16,6 +16,7 @@ export interface ExportRow {
   description: string
   operator_name: string
   created_at: string
+  is_occasional: number
 }
 
 function buildWhereClause(params: TransactionListParams): { where: string; values: unknown[] } {
@@ -119,7 +120,7 @@ export function findAllForExport(
     .prepare(
       `SELECT t.date, t.type, t.amount, c.name as category_name,
               t.description, COALESCE(o.name, '') as operator_name,
-              t.created_at
+              t.created_at, t.is_occasional
        FROM transactions t
        LEFT JOIN categories c ON t.category_id = c.id
        LEFT JOIN operators o ON t.operator_id = o.id
@@ -131,21 +132,23 @@ export function findAllForExport(
 
 export interface CreateTransactionWithTimeDTO extends CreateTransactionDTO {
   created_at?: string
+  is_occasional?: boolean
 }
 
 export function batchCreate(db: Database.Database, items: CreateTransactionWithTimeDTO[]): void {
   // 预定义两个 statement：一个带自定义时间，一个使用数据库默认时间
   const stmtWithTime = db.prepare(
-    `INSERT INTO transactions (date, type, amount, category_id, description, operator_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO transactions (date, type, amount, category_id, description, operator_id, created_at, is_occasional)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   )
   const stmtDefaultTime = db.prepare(
-    `INSERT INTO transactions (date, type, amount, category_id, description, operator_id)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO transactions (date, type, amount, category_id, description, operator_id, is_occasional)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   )
 
   const insertAll = db.transaction(() => {
     for (const item of items) {
+      const occasional = item.is_occasional ? 1 : 0
       if (item.created_at) {
         stmtWithTime.run(
           item.date,
@@ -154,7 +157,8 @@ export function batchCreate(db: Database.Database, items: CreateTransactionWithT
           item.category_id,
           item.description ?? '',
           item.operator_id ?? null,
-          item.created_at
+          item.created_at,
+          occasional
         )
       } else {
         stmtDefaultTime.run(
@@ -163,7 +167,8 @@ export function batchCreate(db: Database.Database, items: CreateTransactionWithT
           item.amount,
           item.category_id,
           item.description ?? '',
-          item.operator_id ?? null
+          item.operator_id ?? null,
+          occasional
         )
       }
     }

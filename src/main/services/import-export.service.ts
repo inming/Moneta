@@ -15,6 +15,7 @@ interface ExcelRow {
   描述?: string
   操作人?: string
   添加时间?: string | number
+  偶发交易?: string | number
 }
 
 interface ParsedRow {
@@ -25,6 +26,7 @@ interface ParsedRow {
   description: string
   operatorName: string
   createdAt?: string
+  isOccasional: boolean
 }
 
 export interface PreviewResult {
@@ -142,8 +144,9 @@ export function parseExcel(filePath: string): PreviewResult {
     const description = String(raw['描述'] ?? '').trim()
     const operatorName = String(raw['操作人'] ?? '').trim()
     const createdAt = parseCreatedAt(raw['添加时间']) ?? undefined
+    const isOccasional = raw['偶发交易'] === '是' || raw['偶发交易'] === 1 || raw['偶发交易'] === 'Yes'
 
-    rows.push({ date, type, amount, categoryName, description, operatorName, createdAt })
+    rows.push({ date, type, amount, categoryName, description, operatorName, createdAt, isOccasional })
 
     if (operatorName) operatorSet.add(operatorName)
     categorySet.set(`${categoryName}:${type}`, type)
@@ -204,7 +207,8 @@ export function executeImport(db: Database.Database, preview: PreviewResult): Im
       category_id: categoryMap.get(`${row.categoryName}:${row.type}`)!,
       description: row.description,
       operator_id: row.operatorName ? (operatorMap.get(row.operatorName) ?? null) : null,
-      created_at: row.createdAt
+      created_at: row.createdAt,
+      is_occasional: row.isOccasional
     }))
 
     // Step 6: Batch insert
@@ -228,7 +232,7 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   investment: '投资'
 }
 
-const EXPORT_HEADERS = ['日期', '类型', '金额', '分组', '描述', '操作人', '添加时间']
+const EXPORT_HEADERS = ['日期', '类型', '金额', '分组', '描述', '操作人', '添加时间', '偶发交易']
 
 function rowToArray(row: ExportRow): (string | number)[] {
   return [
@@ -238,7 +242,8 @@ function rowToArray(row: ExportRow): (string | number)[] {
     row.category_name,
     row.description,
     row.operator_name,
-    row.created_at
+    row.created_at,
+    row.is_occasional ? '是' : ''
   ]
 }
 
@@ -273,7 +278,8 @@ export function exportToExcel(filePath: string, rows: ExportRow[]): void {
     { wch: 10 },  // 分组
     { wch: 30 },  // 描述
     { wch: 8 },   // 操作人
-    { wch: 18 }   // 添加时间
+    { wch: 18 },  // 添加时间
+    { wch: 10 }   // 偶发交易
   ]
 
   const wb = XLSX.utils.book_new()
