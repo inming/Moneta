@@ -1,6 +1,7 @@
 import { Layout as AntLayout, Menu } from 'antd'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
+  DashboardOutlined,
   TableOutlined,
   BarChartOutlined,
   SettingOutlined,
@@ -22,7 +23,8 @@ export default function Layout(): React.JSX.Element {
   const isDark = useThemeStore((s) => s.isDark)
 
   const menuItems = [
-    { key: '/', icon: <TableOutlined />, label: t('menu.transactions') },
+    { key: '/', icon: <DashboardOutlined />, label: t('menu.dashboard') },
+    { key: '/transactions', icon: <TableOutlined />, label: t('menu.transactions') },
     { key: '/statistics', icon: <BarChartOutlined />, label: t('menu.statistics') },
     { key: '/settings', icon: <SettingOutlined />, label: t('menu.settings') }
   ]

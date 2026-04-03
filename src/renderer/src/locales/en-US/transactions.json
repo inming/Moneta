@@ -72,6 +72,9 @@
     "lastEditedLabel": "Last Edited: ",
     "draftNotFound": "Draft not found"
   },
+  "fields": {
+    "occasional": "Occasional"
+  },
   "pagination": {
     "total": "Total {{total}} items",
     "showTotal": "Total {{total}}"

@@ -319,7 +319,7 @@ export default function ImportConfirm({
       await clearDraft()
       console.log('[ImportConfirm] Draft cleared after import')
       message.success(t('import:messages.importSuccess', { count: rows.length }))
-      navigate('/')
+      navigate('/transactions')
     } catch (err) {
       console.error('[ImportConfirm] Import failed:', err)
       message.error(err instanceof Error ? err.message : t('import:messages.importFailed'))
@@ -333,7 +333,7 @@ export default function ImportConfirm({
     if (onCancel) {
       onCancel()
     } else {
-      navigate('/')
+      navigate('/transactions')
     }
   }
 

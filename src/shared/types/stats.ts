@@ -58,3 +58,17 @@ export interface YearlyCategoryData {
     yearly: number
   }
 }
+
+export interface ForecastParams {
+  category_id?: number
+}
+
+export interface ForecastMonthData {
+  amount: number
+  isActual: boolean
+}
+
+export interface ForecastResult {
+  months: ForecastMonthData[]
+  totalForecast: number
+}

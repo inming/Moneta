@@ -178,7 +178,7 @@ export default function BarChart({ data, year, type, initialSoloCategory }: BarC
       queryParams.set('soloCategory', soloRef.current)
     }
 
-    navigate(`/?${queryParams.toString()}`)
+    navigate(`/transactions?${queryParams.toString()}`)
   }, [contextMenu, year, type, navigate])
 
   const closeContextMenu = useCallback((): void => {

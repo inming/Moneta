@@ -1,0 +1,10 @@
+{
+  "title": "{{year}} 年度消费预测",
+  "allCategories": "全部消费",
+  "actual": "实际消费",
+  "predicted": "预测消费",
+  "cumulativeActual": "累计实际",
+  "cumulativePredicted": "累计预测",
+  "annualForecast": "全年预测：¥{{amount}}",
+  "noData": "暂无历史数据"
+}

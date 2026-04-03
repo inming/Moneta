@@ -220,6 +220,10 @@ export function update(db: Database.Database, id: number, dto: UpdateTransaction
     sets.push('operator_id = ?')
     params.push(dto.operator_id)
   }
+  if (dto.is_occasional !== undefined) {
+    sets.push('is_occasional = ?')
+    params.push(dto.is_occasional ? 1 : 0)
+  }
 
   if (sets.length === 0) {
     return db.prepare('SELECT * FROM transactions WHERE id = ?').get(id) as Transaction

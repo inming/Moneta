@@ -184,6 +184,86 @@ export function getYearlyCategory(db: Database.Database, params: YearlyCategoryP
   }
 }
 
+interface AnnualHistoryRawRow {
+  year_num: number
+  category_id: number
+  total: number
+}
+
+export function getExpenseAnnualHistory(db: Database.Database, categoryId?: number): Map<number, Map<number, number>> {
+  let sql = `
+    SELECT CAST(strftime('%Y', t.date) AS INTEGER) AS year_num,
+           t.category_id,
+           SUM(t.amount) AS total
+    FROM transactions t
+    WHERE t.type = 'expense'
+      AND t.is_occasional = 0
+  `
+  const sqlParams: unknown[] = []
+
+  if (categoryId !== undefined) {
+    sql += ' AND t.category_id = ?'
+    sqlParams.push(categoryId)
+  }
+
+  sql += ' GROUP BY year_num, t.category_id ORDER BY year_num ASC'
+
+  const rawRows = db.prepare(sql).all(...sqlParams) as AnnualHistoryRawRow[]
+
+  // Map<category_id, Map<year, total>>
+  const result = new Map<number, Map<number, number>>()
+  for (const row of rawRows) {
+    let yearMap = result.get(row.category_id)
+    if (!yearMap) {
+      yearMap = new Map<number, number>()
+      result.set(row.category_id, yearMap)
+    }
+    yearMap.set(row.year_num, row.total)
+  }
+
+  return result
+}
+
+interface ActualMonthlyRawRow {
+  month_num: number
+  category_id: number
+  total: number
+}
+
+export function getActualMonthlyExpense(db: Database.Database, year: number, categoryId?: number): Map<number, number[]> {
+  let sql = `
+    SELECT CAST(strftime('%m', t.date) AS INTEGER) AS month_num,
+           t.category_id,
+           SUM(t.amount) AS total
+    FROM transactions t
+    WHERE t.type = 'expense'
+      AND t.date BETWEEN ? AND ?
+  `
+  const sqlParams: unknown[] = [`${year}-01-01`, `${year}-12-31`]
+
+  if (categoryId !== undefined) {
+    sql += ' AND t.category_id = ?'
+    sqlParams.push(categoryId)
+  }
+
+  sql += ' GROUP BY month_num, t.category_id'
+
+  const rawRows = db.prepare(sql).all(...sqlParams) as ActualMonthlyRawRow[]
+
+  // Map<category_id, number[12]>
+  const result = new Map<number, number[]>()
+  for (const row of rawRows) {
+    let months = result.get(row.category_id)
+    if (!months) {
+      months = new Array<number>(12).fill(0)
+      result.set(row.category_id, months)
+    }
+    months[row.month_num - 1] = row.total
+  }
+
+  return result
+}
+
 export function getYearRange(db: Database.Database): YearRangeData {
   const result = db.prepare(`
     SELECT MIN(CAST(strftime('%Y', date) AS INTEGER)) AS minYear,

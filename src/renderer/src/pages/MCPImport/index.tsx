@@ -114,7 +114,7 @@ export default function MCPImport(): React.JSX.Element {
       return true
     } catch (err) {
       message.error(err instanceof Error ? err.message : t('mcp.loadFailed'))
-      navigate('/')
+      navigate('/transactions')
       return false
     } finally {
       if (!isPoll) {
@@ -149,7 +149,7 @@ export default function MCPImport(): React.JSX.Element {
                 clearInterval(interval)
                 if (!result && attempts >= maxAttempts) {
                   message.error(t('mcp.noData'))
-                  navigate('/')
+                  navigate('/transactions')
                 }
               }
             }, 300)
@@ -197,7 +197,7 @@ export default function MCPImport(): React.JSX.Element {
   const handleCancel = async () => {
     // 清除待导入数据，避免下次进入时重复加载旧数据覆盖草稿
     await window.api.mcp.clearImportData()
-    navigate('/')
+    navigate('/transactions')
   }
 
   if (loading || initialRows.length === 0) {

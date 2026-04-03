@@ -7,6 +7,7 @@ import type {
   CrossTableParams, CrossTableData,
   SummaryParams, SummaryData,
   YearRangeData, YearlyCategoryParams, YearlyCategoryData,
+  ForecastParams, ForecastResult,
   AIProviderView, UpdateAIProviderDTO, AITestResult,
   RecognizeRequest, RecognizeResponse,
   VerifyPINResult, ChangePINResult,
@@ -42,6 +43,7 @@ export interface MonetaAPI {
     summary(params: SummaryParams): Promise<SummaryData>
     yearRange(): Promise<YearRangeData>
     yearlyCategory(params: YearlyCategoryParams): Promise<YearlyCategoryData>
+    forecast(params: ForecastParams): Promise<ForecastResult>
   }
   importExport: {
     preview(filePath: string): Promise<unknown>

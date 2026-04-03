@@ -79,7 +79,10 @@ export function registerMCPImportHandlers(): void {
       
       // 批量创建
       transactionRepo.batchCreate(db, items)
-      
+
+      const { invalidateCache: invalidateForecastCache } = await import('../services/forecast.service')
+      invalidateForecastCache()
+
       return { success: true, count: items.length }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

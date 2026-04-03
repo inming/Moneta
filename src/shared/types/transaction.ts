@@ -8,6 +8,7 @@ export interface Transaction {
   category_id: number
   description: string
   operator_id: number | null
+  is_occasional: boolean
   created_at: string
   updated_at: string
 }
@@ -28,6 +29,7 @@ export interface UpdateTransactionDTO {
   category_id?: number
   description?: string
   operator_id?: number | null
+  is_occasional?: boolean
 }
 
 export interface TransactionListParams {

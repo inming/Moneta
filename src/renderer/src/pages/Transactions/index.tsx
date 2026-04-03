@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Table, Button, Select, DatePicker, InputNumber, Input, Space,
-  Typography, message, Popconfirm, Tag, Alert, Modal
+  Typography, message, Popconfirm, Tag, Alert, Modal, Checkbox
 } from 'antd'
 import {
   PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, SearchOutlined,
@@ -355,6 +355,7 @@ export default function Transactions(): React.JSX.Element {
     if (editingRow.category_id !== original.category_id) dto.category_id = editingRow.category_id
     if (editingRow.description !== original.description) dto.description = editingRow.description ?? ''
     if (editingRow.operator_id !== original.operator_id) dto.operator_id = editingRow.operator_id ?? null
+    if (editingRow.is_occasional !== original.is_occasional) dto.is_occasional = editingRow.is_occasional ?? false
 
     if (Object.keys(dto).length === 0) {
       cancelEdit()
@@ -545,14 +546,31 @@ export default function Transactions(): React.JSX.Element {
       case 'description':
         if (isEditing) {
           return (
-            <Input
-              size="small"
-              value={editingRow.description ?? ''}
-              onChange={(e) => updateEditField('description', e.target.value)}
-            />
+            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+              <Input
+                size="small"
+                value={editingRow.description ?? ''}
+                onChange={(e) => updateEditField('description', e.target.value)}
+              />
+              <Checkbox
+                checked={editingRow.is_occasional ?? false}
+                onChange={(e) => updateEditField('is_occasional', e.target.checked)}
+              >
+                <span style={{ fontSize: 12 }}>{t('transactions:fields.occasional')}</span>
+              </Checkbox>
+            </Space>
           )
         }
-        return value as string || '-'
+        return (
+          <Space size={4}>
+            <span>{(value as string) || '-'}</span>
+            {record.is_occasional && (
+              <Tag color="orange" style={{ fontSize: 11, lineHeight: '18px', padding: '0 4px' }}>
+                {t('transactions:fields.occasional')}
+              </Tag>
+            )}
+          </Space>
+        )
 
       case 'operator_id':
         if (isEditing) {

@@ -170,7 +170,7 @@ export default function DataManager(): React.JSX.Element {
           message.success(t('settings:dataManager.messages.importSuccess', { count: result.imported }))
           // 导入成功后返回数据浏览页面
           setTimeout(() => {
-            navigate('/')
+            navigate('/transactions')
           }, 1500)
         } catch (err) {
           setError(err instanceof Error ? err.message : String(err))

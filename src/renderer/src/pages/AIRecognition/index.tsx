@@ -341,7 +341,7 @@ export default function AIRecognition(): React.JSX.Element {
         <Button
           type="text"
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/transactions')}
         />
         <Title level={4} style={{ margin: 0 }}>{t('ai:recognition.title')}</Title>
       </div>

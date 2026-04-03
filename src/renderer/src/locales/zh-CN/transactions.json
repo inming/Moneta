@@ -72,6 +72,9 @@
     "lastEditedLabel": "最后编辑：",
     "draftNotFound": "草稿已不存在"
   },
+  "fields": {
+    "occasional": "偶发交易"
+  },
   "pagination": {
     "total": "共 {{total}} 条",
     "showTotal": "共 {{total}} 条"

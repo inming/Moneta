@@ -26,6 +26,7 @@ export const IPC_CHANNELS = {
   STATS_SUMMARY: 'db:stats:summary',
   STATS_YEAR_RANGE: 'db:stats:year-range',
   STATS_YEARLY_CATEGORY: 'db:stats:yearly-category',
+  STATS_FORECAST: 'db:stats:forecast',
 
   // 导入导出
   IMPORT_PREVIEW: 'io:import:preview',

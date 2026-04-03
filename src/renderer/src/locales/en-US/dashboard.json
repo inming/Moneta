@@ -1,0 +1,10 @@
+{
+  "title": "{{year}} Annual Expense Forecast",
+  "allCategories": "All Expenses",
+  "actual": "Actual",
+  "predicted": "Predicted",
+  "cumulativeActual": "Cumulative Actual",
+  "cumulativePredicted": "Cumulative Predicted",
+  "annualForecast": "Annual Forecast: ¥{{amount}}",
+  "noData": "No historical data available"
+}

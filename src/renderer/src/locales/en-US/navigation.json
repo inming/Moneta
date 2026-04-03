@@ -1,5 +1,6 @@
 {
   "menu": {
+    "dashboard": "Forecast",
     "transactions": "Transactions",
     "statistics": "Statistics",
     "settings": "Settings",

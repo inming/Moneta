@@ -6,6 +6,7 @@ import { parseExcel, executeImport, exportToExcel, exportToCsv } from '../servic
 import * as transactionRepo from '../database/repositories/transaction.repo'
 import * as operatorRepo from '../database/repositories/operator.repo'
 import * as categoryRepo from '../database/repositories/category.repo'
+import { invalidateCache as invalidateForecastCache } from '../services/forecast.service'
 
 export function registerImportExportHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_FILE, async (_event, filters: Electron.FileFilter[]) => {
@@ -39,7 +40,9 @@ export function registerImportExportHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.IMPORT_EXECUTE, (_event, filePath: string) => {
     const db = getDatabase()
     const preview = parseExcel(filePath)
-    return executeImport(db, preview)
+    const result = executeImport(db, preview)
+    invalidateForecastCache()
+    return result
   })
 
   ipcMain.handle(IPC_CHANNELS.EXPORT_COUNT, (_event, params: TransactionListParams) => {
@@ -65,6 +68,7 @@ export function registerImportExportHandlers(): void {
       operatorRepo.deleteAll(db)
     })
     run()
+    invalidateForecastCache()
   })
 
   ipcMain.handle(IPC_CHANNELS.DATA_FACTORY_RESET, () => {
@@ -76,5 +80,6 @@ export function registerImportExportHandlers(): void {
       categoryRepo.resetSystemCategories(db)
     })
     run()
+    invalidateForecastCache()
   })
 }

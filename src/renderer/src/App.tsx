@@ -4,6 +4,7 @@ import { ConfigProvider, Spin, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import enUS from 'antd/locale/en_US'
 import Layout from './components/Layout'
+import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Settings from './pages/Settings'
 import AIRecognition from './pages/AIRecognition'
@@ -37,7 +38,8 @@ function MainAppContent(): React.JSX.Element {
   return (
     <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Transactions />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/ai-recognition" element={<AIRecognition />} />
           <Route path="/mcp-import" element={<MCPImport />} />
