@@ -25,6 +25,7 @@ import type {
   ConflictInfo,
   ConflictResolution
 } from '../../../../shared/types'
+import { AUTO_SYNC_INTERVAL_OPTIONS } from '../../../../shared/types'
 
 type SetupMode = 'initial' | 'join' | null
 
@@ -46,6 +47,7 @@ interface ConfigFormValues {
   bucket: string
   prefix: string
   pathStyle: boolean
+  autoSyncIntervalMinutes: number
   accessKeyId: string
   secretAccessKey: string
 }
@@ -78,6 +80,7 @@ export default function SyncManager(): React.JSX.Element {
       bucket: r.config.s3.bucket,
       prefix: r.config.s3.prefix,
       pathStyle: r.config.s3.pathStyle,
+      autoSyncIntervalMinutes: r.config.autoSyncIntervalMinutes,
       accessKeyId: '',
       secretAccessKey: ''
     })
@@ -111,7 +114,8 @@ export default function SyncManager(): React.JSX.Element {
         region: values.region,
         bucket: values.bucket,
         prefix: values.prefix,
-        pathStyle: values.pathStyle
+        pathStyle: values.pathStyle,
+        autoSyncIntervalMinutes: values.autoSyncIntervalMinutes ?? 0
       })
       if (values.accessKeyId && values.secretAccessKey) {
         await window.api.sync.setCredentials({
@@ -432,6 +436,7 @@ export default function SyncManager(): React.JSX.Element {
               bucket: '',
               prefix: 'moneta/',
               pathStyle: false,
+              autoSyncIntervalMinutes: 0,
               accessKeyId: '',
               secretAccessKey: ''
             }}
@@ -481,6 +486,22 @@ export default function SyncManager(): React.JSX.Element {
               extra={t('syncManager.fields.pathStyleHint')}
             >
               <Switch />
+            </Form.Item>
+            <Form.Item
+              label={t('syncManager.fields.autoSyncInterval')}
+              name="autoSyncIntervalMinutes"
+              extra={t('syncManager.fields.autoSyncIntervalHint')}
+            >
+              <Select
+                style={{ maxWidth: 240 }}
+                options={AUTO_SYNC_INTERVAL_OPTIONS.map((minutes) => ({
+                  value: minutes,
+                  label:
+                    minutes === 0
+                      ? t('syncManager.autoSyncIntervals.off')
+                      : t('syncManager.autoSyncIntervals.minutes', { minutes })
+                }))}
+              />
             </Form.Item>
             <Form.Item
               label={t('syncManager.fields.accessKey')}

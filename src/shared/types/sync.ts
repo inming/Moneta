@@ -17,6 +17,7 @@ export interface SyncConfig {
   cursor: SyncCursor | null
   lastSyncAt: string | null
   lastSyncError: string | null
+  autoSyncIntervalMinutes: number
 }
 
 export interface SyncCursor {
@@ -33,7 +34,10 @@ export interface SaveSyncConfigDTO {
   bucket: string
   prefix: string
   pathStyle: boolean
+  autoSyncIntervalMinutes: number
 }
+
+export const AUTO_SYNC_INTERVAL_OPTIONS: readonly number[] = [0, 15, 30, 60]
 
 export interface SetCredentialsDTO {
   accessKeyId: string

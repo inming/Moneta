@@ -19,6 +19,7 @@ import {
   changePassphrase,
   resetCloud
 } from '../services/sync/syncEngine'
+import { restartAutoSyncTimer } from '../services/sync/scheduler'
 import type {
   SaveSyncConfigDTO,
   SetCredentialsDTO,
@@ -35,16 +36,20 @@ export function registerSyncHandlers(): void {
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_CONFIG_SET, (_e, dto: SaveSyncConfigDTO) => {
-    return saveSyncConfig(dto)
+    const result = saveSyncConfig(dto)
+    restartAutoSyncTimer()
+    return result
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_CREDENTIALS_SET, (_e, dto: SetCredentialsDTO) => {
     setCredentials(dto.accessKeyId, dto.secretAccessKey)
+    restartAutoSyncTimer()
     return { ok: true }
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_CREDENTIALS_CLEAR, () => {
     clearCredentials()
+    restartAutoSyncTimer()
     return { ok: true }
   })
 
@@ -69,15 +74,21 @@ export function registerSyncHandlers(): void {
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_SETUP_INITIAL, async (_e, dto: SetupSyncDTO) => {
-    return setupInitial(dto.passphrase)
+    const result = await setupInitial(dto.passphrase)
+    restartAutoSyncTimer()
+    return result
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_SETUP_JOIN, async (_e, dto: SetupSyncDTO) => {
-    return setupJoin(dto.passphrase)
+    const result = await setupJoin(dto.passphrase)
+    restartAutoSyncTimer()
+    return result
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_SETUP_ADOPT_LOCAL, async (_e, dto: SetupSyncDTO) => {
-    return setupAdoptLocal(dto.passphrase)
+    const result = await setupAdoptLocal(dto.passphrase)
+    restartAutoSyncTimer()
+    return result
   })
 
   ipcMain.handle(
@@ -88,6 +99,8 @@ export function registerSyncHandlers(): void {
   )
 
   ipcMain.handle(IPC_CHANNELS.SYNC_RESET_CLOUD, async () => {
-    return resetCloud()
+    const result = await resetCloud()
+    restartAutoSyncTimer()
+    return result
   })
 }

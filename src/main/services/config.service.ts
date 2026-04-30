@@ -23,6 +23,7 @@ interface StoredSyncConfig {
   } | null
   lastSyncAt: string | null
   lastSyncError: string | null
+  autoSyncIntervalMinutes?: number
 }
 
 interface AppConfig {

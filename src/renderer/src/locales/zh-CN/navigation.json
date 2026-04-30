@@ -5,5 +5,22 @@
     "statistics": "统计报表",
     "settings": "设置",
     "lock": "锁屏"
+  },
+  "syncIndicator": {
+    "phases": {
+      "preparing": "准备同步",
+      "fetching-manifest": "获取版本",
+      "uploading": "上传中",
+      "downloading": "下载中",
+      "finalizing": "收尾中",
+      "conflict": "存在冲突",
+      "error": "同步失败",
+      "success": "已同步"
+    }
+  },
+  "syncToast": {
+    "conflict": "云端与本地不一致",
+    "error": "自动同步失败",
+    "viewDetails": "查看详情"
   }
 }

@@ -10,6 +10,8 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/auth.store'
 import { useThemeStore } from '../../stores/theme.store'
+import SyncIndicator from './SyncIndicator'
+import SyncToast from './SyncToast'
 
 const { Sider, Content } = AntLayout
 
@@ -79,6 +81,7 @@ export default function Layout(): React.JSX.Element {
             onClick={handleMenuClick}
             style={{ flex: 1, userSelect: 'none' }}
           />
+          <SyncIndicator />
           <Menu
             mode="inline"
             selectable={false}
@@ -91,6 +94,7 @@ export default function Layout(): React.JSX.Element {
       <Content style={{ padding: 24, overflow: 'auto', background: 'var(--bg-primary)' }}>
         <Outlet />
       </Content>
+      <SyncToast />
     </AntLayout>
   )
 }

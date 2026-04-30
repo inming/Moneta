@@ -271,6 +271,10 @@
       "aliyun": "Aliyun OSS (S3 compatible)",
       "custom": "Custom (S3 compatible)"
     },
+    "autoSyncIntervals": {
+      "off": "Off",
+      "minutes": "Every {{minutes}} min"
+    },
     "fields": {
       "provider": "Provider",
       "endpoint": "Endpoint",
@@ -282,6 +286,8 @@
       "prefixHint": "Lets multiple users share one bucket, e.g. moneta/",
       "pathStyle": "Path Style",
       "pathStyleHint": "Self-hosted MinIO usually needs this enabled",
+      "autoSyncInterval": "Auto-sync interval",
+      "autoSyncIntervalHint": "While the app is open, sync runs in the background at this interval; a sync is also attempted at launch and before quit",
       "accessKey": "Access Key ID",
       "secretKey": "Secret Access Key",
       "credentialsExistHint": "Credentials saved — leave blank to keep them",

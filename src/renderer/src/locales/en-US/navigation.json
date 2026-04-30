@@ -5,5 +5,22 @@
     "statistics": "Statistics",
     "settings": "Settings",
     "lock": "Lock"
+  },
+  "syncIndicator": {
+    "phases": {
+      "preparing": "Preparing",
+      "fetching-manifest": "Fetching version",
+      "uploading": "Uploading",
+      "downloading": "Downloading",
+      "finalizing": "Finalizing",
+      "conflict": "Conflict",
+      "error": "Sync failed",
+      "success": "Synced"
+    }
+  },
+  "syncToast": {
+    "conflict": "Cloud and local differ",
+    "error": "Background sync failed",
+    "viewDetails": "View details"
   }
 }

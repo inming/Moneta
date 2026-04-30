@@ -12,3 +12,4 @@ export type {
   ConflictInfo, ConflictResolution, SyncRunResult,
   SyncCloudInspect, SetupSyncDTO
 } from './sync'
+export { AUTO_SYNC_INTERVAL_OPTIONS } from './sync'

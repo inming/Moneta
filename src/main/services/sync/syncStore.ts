@@ -35,8 +35,12 @@ function getOrInitSyncBlock(): NonNullable<ReturnType<typeof loadConfig>['sync']
       deviceId: defaultDeviceId(),
       cursor: null,
       lastSyncAt: null,
-      lastSyncError: null
+      lastSyncError: null,
+      autoSyncIntervalMinutes: 0
     }
+    saveConfig(config)
+  } else if (config.sync.autoSyncIntervalMinutes === undefined) {
+    config.sync.autoSyncIntervalMinutes = 0
     saveConfig(config)
   }
   return config.sync
@@ -58,7 +62,8 @@ export function getSyncConfig(): SyncConfig {
     deviceId: stored.deviceId,
     cursor: stored.cursor,
     lastSyncAt: stored.lastSyncAt,
-    lastSyncError: stored.lastSyncError
+    lastSyncError: stored.lastSyncError,
+    autoSyncIntervalMinutes: stored.autoSyncIntervalMinutes ?? 0
   }
 }
 
@@ -71,6 +76,9 @@ export function saveSyncConfig(dto: SaveSyncConfigDTO): SyncConfig {
   sync.bucket = dto.bucket.trim()
   sync.prefix = normalizePrefix(dto.prefix)
   sync.pathStyle = dto.pathStyle
+  sync.autoSyncIntervalMinutes = Number.isFinite(dto.autoSyncIntervalMinutes)
+    ? Math.max(0, Math.floor(dto.autoSyncIntervalMinutes))
+    : 0
   sync.enabled = Boolean(sync.bucket && sync.endpoint)
   config.sync = sync
   saveConfig(config)

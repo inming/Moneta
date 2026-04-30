@@ -16,7 +16,47 @@ import { registerThemeIPC } from './ipc/theme.ipc'
 import { registerSyncHandlers } from './ipc/sync.ipc'
 import { setMCPMainWindow, mcpHttpServer } from './services/mcp-http-server'
 import { migrateLegacyEncryption } from './services/config.service'
+import { getSyncConfig, isSafeStorageAvailable } from './services/sync/syncStore'
+import { syncNow, waitForSyncIdle, isSyncRunning } from './services/sync/syncEngine'
+import { restartAutoSyncTimer, stopAutoSyncTimer } from './services/sync/scheduler'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
+
+const PRE_QUIT_SYNC_TIMEOUT_MS = 5000
+const STARTUP_SYNC_DELAY_MS = 2000
+
+function shouldAutoSync(): boolean {
+  if (!isSafeStorageAvailable()) return false
+  const cfg = getSyncConfig()
+  return cfg.enabled && cfg.hasCredentials && cfg.cursor !== null
+}
+
+async function maybeAutoSyncOnStartup(): Promise<void> {
+  if (!shouldAutoSync()) return
+  console.log('[startup] auto-sync triggered')
+  try {
+    const result = await syncNow()
+    console.log(`[startup] auto-sync result: ${result.outcome} — ${result.message}`)
+  } catch (e) {
+    console.error('[startup] auto-sync failed:', (e as Error).message)
+  }
+}
+
+let isQuitting = false
+async function preQuitSync(): Promise<void> {
+  if (isSyncRunning()) {
+    await waitForSyncIdle(PRE_QUIT_SYNC_TIMEOUT_MS)
+    return
+  }
+  if (!shouldAutoSync()) return
+  console.log('[before-quit] auto-sync triggered')
+  await Promise.race([
+    syncNow().then(
+      (r) => console.log(`[before-quit] sync result: ${r.outcome} — ${r.message}`),
+      (e) => console.error('[before-quit] sync error:', (e as Error).message)
+    ),
+    new Promise<void>((resolve) => setTimeout(resolve, PRE_QUIT_SYNC_TIMEOUT_MS))
+  ])
+}
 
 app.whenReady().then(() => {
   // Diagnose safeStorage availability — surfaces issues with macOS Keychain /
@@ -91,6 +131,24 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
     }
+  })
+
+  // Best-effort auto-sync on startup. Delay so the renderer has time to
+  // subscribe to SYNC_EVENT before the first phase change is broadcast.
+  setTimeout(() => {
+    void maybeAutoSyncOnStartup()
+    restartAutoSyncTimer()
+  }, STARTUP_SYNC_DELAY_MS)
+})
+
+app.on('before-quit', (event) => {
+  if (isQuitting) return
+  stopAutoSyncTimer()
+  if (!shouldAutoSync() && !isSyncRunning()) return
+  event.preventDefault()
+  isQuitting = true
+  void preQuitSync().finally(() => {
+    app.quit()
   })
 })
 

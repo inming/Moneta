@@ -95,6 +95,22 @@ export function getStatus(): SyncStatus {
   }
 }
 
+export function isSyncRunning(): boolean {
+  return isRunning
+}
+
+/**
+ * Wait until any in-flight sync settles, up to timeoutMs.
+ * Returns true if it became idle in time, false on timeout.
+ */
+export async function waitForSyncIdle(timeoutMs: number): Promise<boolean> {
+  const start = Date.now()
+  while (isRunning && Date.now() - start < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 100))
+  }
+  return !isRunning
+}
+
 function ensureClient(): { client: S3Client; config: S3Config; creds: S3Credentials } {
   if (!isSafeStorageAvailable()) {
     throw new Error('SAFE_STORAGE_UNAVAILABLE')
