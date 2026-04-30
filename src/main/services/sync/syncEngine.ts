@@ -39,7 +39,8 @@ import {
   putKeyEnvelope,
   wrapDbKey,
   unwrapDbKey,
-  WrongPassphraseError
+  WrongPassphraseError,
+  KEYENV_KEY
 } from './keyEnvelope'
 import { runMigrations } from '../../database/migrator'
 import {
@@ -711,6 +712,58 @@ export async function setupJoin(passphrase: string): Promise<SyncRunResult> {
     recordSyncResult(true)
     setStatus({ phase: 'success', message: '已加入云端，等待数据同步' })
     return { outcome: 'downloaded', message: '已加入云端（云端尚无数据）' }
+  } catch (e) {
+    const msg = (e as Error).message
+    recordSyncResult(false, msg)
+    setStatus({ phase: 'error', message: msg })
+    return { outcome: 'error', message: msg, error: msg }
+  } finally {
+    isRunning = false
+  }
+}
+
+/**
+ * "Use local" branch of join setup: take this device's local SQLCipher key as
+ * the source of truth. Replace the cloud's keyenv + manifest + db.sqlite.gz
+ * (existing remote data is wiped — caller has confirmed via UI).
+ */
+export async function setupAdoptLocal(passphrase: string): Promise<SyncRunResult> {
+  if (isRunning) return { outcome: 'error', message: '已有同步任务在进行中', error: 'busy' }
+  if (!passphrase || passphrase.length < 8) {
+    return { outcome: 'error', message: 'PASSPHRASE_TOO_SHORT', error: 'PASSPHRASE_TOO_SHORT' }
+  }
+  isRunning = true
+  setStatus({ phase: 'preparing', message: '替换云端数据为本机数据…' })
+  try {
+    const { client, config } = ensureClient()
+
+    // Wrap local key with new passphrase
+    const localKey = getDbKeyHex()
+    const envelope = wrapDbKey(localKey, passphrase)
+
+    // Wipe existing keyenv + manifest (best effort) so uploadFlow restarts at v1
+    await deleteObject(client, config, KEYENV_KEY).catch(() => undefined)
+    await deleteObject(client, config, 'manifest.json').catch(() => undefined)
+
+    // Upload new envelope
+    await putKeyEnvelope(client, config, envelope)
+
+    // Upload db + new manifest as initial
+    const result = await uploadFlow(client, config, null, true)
+
+    if (result.outcome === 'initial-uploaded') {
+      recordSyncResult(true)
+      setStatus({ phase: 'success', message: '已用本机数据替换云端' })
+      return {
+        outcome: 'uploaded',
+        message: '已用本机数据替换云端，云端版本重置为 v1'
+      }
+    }
+    if (result.outcome === 'error') {
+      recordSyncResult(false, result.error ?? result.message)
+      setStatus({ phase: 'error', message: result.message })
+    }
+    return result
   } catch (e) {
     const msg = (e as Error).message
     recordSyncResult(false, msg)

@@ -12,7 +12,8 @@ import {
   Modal,
   Alert,
   Tag,
-  Descriptions
+  Descriptions,
+  Radio
 } from 'antd'
 import { CloudUploadOutlined, CloudDownloadOutlined, SyncOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
@@ -60,6 +61,7 @@ export default function SyncManager(): React.JSX.Element {
   const [setupMode, setSetupMode] = useState<SetupMode>(null)
   const [passphrase, setPassphrase] = useState('')
   const [passphraseConfirm, setPassphraseConfirm] = useState('')
+  const [joinDirection, setJoinDirection] = useState<'use-remote' | 'use-local'>('use-remote')
 
   const reload = useCallback(async () => {
     const r = await window.api.sync.getConfig()
@@ -189,6 +191,17 @@ export default function SyncManager(): React.JSX.Element {
     setSetupMode(null)
     setPassphrase('')
     setPassphraseConfirm('')
+    setJoinDirection('use-remote')
+  }
+
+  const callSetupApi = async (): Promise<SyncRunResult> => {
+    if (setupMode === 'initial') {
+      return window.api.sync.setupInitial({ passphrase })
+    }
+    if (joinDirection === 'use-local') {
+      return window.api.sync.setupAdoptLocal({ passphrase })
+    }
+    return window.api.sync.setupJoin({ passphrase })
   }
 
   const handleSetupSubmit = async (): Promise<void> => {
@@ -203,10 +216,7 @@ export default function SyncManager(): React.JSX.Element {
     }
     setBusy(true)
     try {
-      const result =
-        setupMode === 'initial'
-          ? await window.api.sync.setupInitial({ passphrase })
-          : await window.api.sync.setupJoin({ passphrase })
+      const result = await callSetupApi()
       if (result.outcome === 'error') {
         if (result.error === 'wrong-passphrase') {
           message.error(t('syncManager.messages.wrongPassphrase'))
@@ -478,17 +488,41 @@ export default function SyncManager(): React.JSX.Element {
                 message={
                   setupMode === 'initial'
                     ? t('syncManager.setup.initialWarning')
-                    : t('syncManager.setup.joinWarning')
+                    : joinDirection === 'use-remote'
+                      ? t('syncManager.setup.joinWarning')
+                      : t('syncManager.setup.adoptLocalWarning')
                 }
                 style={{ marginBottom: 16 }}
               />
               <Form layout="vertical">
+                {setupMode === 'join' && (
+                  <Form.Item
+                    label={t('syncManager.setup.direction')}
+                    extra={t('syncManager.setup.directionHint')}
+                  >
+                    <Radio.Group
+                      value={joinDirection}
+                      onChange={(e) => setJoinDirection(e.target.value)}
+                    >
+                      <Space direction="vertical">
+                        <Radio value="use-remote">
+                          {t('syncManager.setup.directionUseRemote')}
+                        </Radio>
+                        <Radio value="use-local">
+                          {t('syncManager.setup.directionUseLocal')}
+                        </Radio>
+                      </Space>
+                    </Radio.Group>
+                  </Form.Item>
+                )}
                 <Form.Item
                   label={t('syncManager.setup.passphrase')}
                   extra={
                     setupMode === 'initial'
                       ? t('syncManager.setup.passphraseHintInitial')
-                      : t('syncManager.setup.passphraseHintJoin')
+                      : joinDirection === 'use-remote'
+                        ? t('syncManager.setup.passphraseHintJoin')
+                        : t('syncManager.setup.passphraseHintAdoptLocal')
                   }
                   required
                 >

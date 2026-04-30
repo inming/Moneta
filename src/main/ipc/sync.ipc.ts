@@ -15,6 +15,7 @@ import {
   inspectCloud,
   setupInitial,
   setupJoin,
+  setupAdoptLocal,
   resetCloud
 } from '../services/sync/syncEngine'
 import type {
@@ -72,6 +73,10 @@ export function registerSyncHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.SYNC_SETUP_JOIN, async (_e, dto: SetupSyncDTO) => {
     return setupJoin(dto.passphrase)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SYNC_SETUP_ADOPT_LOCAL, async (_e, dto: SetupSyncDTO) => {
+    return setupAdoptLocal(dto.passphrase)
   })
 
   ipcMain.handle(IPC_CHANNELS.SYNC_RESET_CLOUD, async () => {

@@ -119,6 +119,8 @@ const api = {
     inspect: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_INSPECT),
     setupInitial: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_INITIAL, dto),
     setupJoin: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_JOIN, dto),
+    setupAdoptLocal: (dto: unknown) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_ADOPT_LOCAL, dto),
     resetCloud: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_RESET_CLOUD),
     onEvent: (
       callback: (status: import('../shared/types').SyncStatus) => void

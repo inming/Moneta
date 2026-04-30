@@ -121,6 +121,7 @@ export interface MonetaAPI {
     inspect(): Promise<SyncCloudInspect>
     setupInitial(dto: SetupSyncDTO): Promise<SyncRunResult>
     setupJoin(dto: SetupSyncDTO): Promise<SyncRunResult>
+    setupAdoptLocal(dto: SetupSyncDTO): Promise<SyncRunResult>
     resetCloud(): Promise<{ ok: boolean; message: string }>
     onEvent(callback: (status: SyncStatus) => void): () => void
   }
