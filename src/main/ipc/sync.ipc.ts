@@ -16,6 +16,7 @@ import {
   setupInitial,
   setupJoin,
   setupAdoptLocal,
+  changePassphrase,
   resetCloud
 } from '../services/sync/syncEngine'
 import type {
@@ -78,6 +79,13 @@ export function registerSyncHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.SYNC_SETUP_ADOPT_LOCAL, async (_e, dto: SetupSyncDTO) => {
     return setupAdoptLocal(dto.passphrase)
   })
+
+  ipcMain.handle(
+    IPC_CHANNELS.SYNC_CHANGE_PASSPHRASE,
+    async (_e, dto: { oldPassphrase: string; newPassphrase: string }) => {
+      return changePassphrase(dto.oldPassphrase, dto.newPassphrase)
+    }
+  )
 
   ipcMain.handle(IPC_CHANNELS.SYNC_RESET_CLOUD, async () => {
     return resetCloud()

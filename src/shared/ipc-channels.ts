@@ -104,6 +104,7 @@ export const IPC_CHANNELS = {
   SYNC_SETUP_INITIAL: 'sync:setup:initial',
   SYNC_SETUP_JOIN: 'sync:setup:join',
   SYNC_SETUP_ADOPT_LOCAL: 'sync:setup:adopt-local',
+  SYNC_CHANGE_PASSPHRASE: 'sync:change-passphrase',
   SYNC_RESET_CLOUD: 'sync:reset-cloud',
   SYNC_EVENT: 'sync:event'
 } as const

@@ -774,6 +774,60 @@ export async function setupAdoptLocal(passphrase: string): Promise<SyncRunResult
   }
 }
 
+export async function changePassphrase(
+  oldPassphrase: string,
+  newPassphrase: string
+): Promise<{ ok: boolean; message: string; error?: string }> {
+  if (!newPassphrase || newPassphrase.length < 8) {
+    return { ok: false, message: '新口令至少需要 8 位', error: 'PASSPHRASE_TOO_SHORT' }
+  }
+  if (oldPassphrase === newPassphrase) {
+    return { ok: false, message: '新口令与旧口令相同', error: 'SAME_PASSPHRASE' }
+  }
+  if (isRunning) return { ok: false, message: '已有同步任务在进行中', error: 'busy' }
+  isRunning = true
+  setStatus({ phase: 'preparing', message: '修改同步口令…' })
+  try {
+    const { client, config } = ensureClient()
+
+    const envelope = await fetchKeyEnvelope(client, config)
+    if (!envelope) {
+      return { ok: false, message: '云端没有密钥信封，无法修改口令', error: 'no-envelope' }
+    }
+
+    if (envelope.body.keyFingerprint !== getDbKeyFingerprint()) {
+      return {
+        ok: false,
+        message: '本机尚未加入云端，请先完成「加入云端」再修改口令',
+        error: 'not-joined'
+      }
+    }
+
+    let hexKey: string
+    try {
+      hexKey = unwrapDbKey(envelope.body, oldPassphrase)
+    } catch (e) {
+      if (e instanceof WrongPassphraseError) {
+        return { ok: false, message: '旧口令错误', error: 'wrong-passphrase' }
+      }
+      throw e
+    }
+
+    const newEnvelope = wrapDbKey(hexKey, newPassphrase)
+    await deleteObject(client, config, KEYENV_KEY).catch(() => undefined)
+    await putKeyEnvelope(client, config, newEnvelope)
+
+    setStatus({ phase: 'success', message: '同步口令已修改' })
+    return { ok: true, message: '同步口令已修改' }
+  } catch (e) {
+    const msg = (e as Error).message
+    setStatus({ phase: 'error', message: msg })
+    return { ok: false, message: msg, error: msg }
+  } finally {
+    isRunning = false
+  }
+}
+
 export async function resetCloud(): Promise<{ ok: boolean; message: string }> {
   if (isRunning) return { ok: false, message: '已有同步任务在进行中' }
   isRunning = true

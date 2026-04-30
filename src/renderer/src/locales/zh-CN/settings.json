@@ -301,6 +301,7 @@
       "test": "测试连接",
       "syncNow": "立即同步",
       "clearCredentials": "清除凭证",
+      "changePassphrase": "修改同步口令",
       "resetCloud": "重置云端",
       "cancel": "取消",
       "confirm": "确定",
@@ -318,6 +319,16 @@
         "content": "将删除云端的 manifest、密钥信封、数据库和所有备份。本地数据不受影响，但下次同步需要重新执行「首次设置」。",
         "okText": "清空云端"
       }
+    },
+    "changePassphrase": {
+      "title": "修改同步口令",
+      "info": "修改口令只重新包裹云端的密钥信封，不影响本机数据库密钥和已同步内容。其他已加入的设备无需重新输入口令；尚未加入的新设备需要使用新口令。",
+      "oldPassphrase": "当前口令",
+      "newPassphrase": "新口令",
+      "confirmPassphrase": "再次输入新口令",
+      "oldPlaceholder": "请输入当前同步口令",
+      "newPlaceholder": "请输入新的同步口令",
+      "confirmPlaceholder": "再次输入新的同步口令"
     },
     "setup": {
       "initialTitle": "首次设置同步",
@@ -348,7 +359,10 @@
       "safeStorageUnavailable": "操作系统密钥环不可用，无法保存凭证",
       "passphraseTooShort": "口令至少需要 8 位",
       "passphraseMismatch": "两次输入的口令不一致",
+      "passphraseSame": "新口令与当前口令相同",
       "wrongPassphrase": "同步口令错误",
+      "wrongOldPassphrase": "当前口令错误",
+      "changePassphraseFailed": "修改口令失败",
       "setupInitialFailed": "首次设置失败",
       "setupJoinFailed": "加入云端失败"
     },

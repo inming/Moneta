@@ -62,6 +62,10 @@ export default function SyncManager(): React.JSX.Element {
   const [passphrase, setPassphrase] = useState('')
   const [passphraseConfirm, setPassphraseConfirm] = useState('')
   const [joinDirection, setJoinDirection] = useState<'use-remote' | 'use-local'>('use-remote')
+  const [changePassphraseOpen, setChangePassphraseOpen] = useState(false)
+  const [oldPassphrase, setOldPassphrase] = useState('')
+  const [newPassphrase, setNewPassphrase] = useState('')
+  const [newPassphraseConfirm, setNewPassphraseConfirm] = useState('')
 
   const reload = useCallback(async () => {
     const r = await window.api.sync.getConfig()
@@ -239,6 +243,48 @@ export default function SyncManager(): React.JSX.Element {
     }
   }
 
+  const closeChangePassphrase = (): void => {
+    setChangePassphraseOpen(false)
+    setOldPassphrase('')
+    setNewPassphrase('')
+    setNewPassphraseConfirm('')
+  }
+
+  const handleChangePassphrase = async (): Promise<void> => {
+    if (newPassphrase.length < 8) {
+      message.error(t('syncManager.messages.passphraseTooShort'))
+      return
+    }
+    if (newPassphrase !== newPassphraseConfirm) {
+      message.error(t('syncManager.messages.passphraseMismatch'))
+      return
+    }
+    if (oldPassphrase === newPassphrase) {
+      message.error(t('syncManager.messages.passphraseSame'))
+      return
+    }
+    setBusy(true)
+    try {
+      const r = await window.api.sync.changePassphrase({
+        oldPassphrase,
+        newPassphrase
+      })
+      if (r.ok) {
+        message.success(r.message)
+        closeChangePassphrase()
+      } else if (r.error === 'wrong-passphrase') {
+        message.error(t('syncManager.messages.wrongOldPassphrase'))
+      } else {
+        Modal.error({
+          title: t('syncManager.messages.changePassphraseFailed'),
+          content: r.message
+        })
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const handleResetCloud = (): void => {
     Modal.confirm({
       title: t('syncManager.confirm.resetCloud.title'),
@@ -350,6 +396,18 @@ export default function SyncManager(): React.JSX.Element {
               disabled={!safeStorageAvailable || !config?.hasCredentials || !config?.s3.bucket}
             >
               {t('syncManager.buttons.test')}
+            </Button>
+            <Button
+              onClick={() => setChangePassphraseOpen(true)}
+              loading={busy}
+              disabled={
+                !safeStorageAvailable ||
+                !config?.hasCredentials ||
+                !config?.s3.bucket ||
+                !config?.cursor
+              }
+            >
+              {t('syncManager.buttons.changePassphrase')}
             </Button>
             <Button
               danger
@@ -464,6 +522,53 @@ export default function SyncManager(): React.JSX.Element {
             </Space>
           </Form>
         </Card>
+
+        <Modal
+          open={changePassphraseOpen}
+          title={t('syncManager.changePassphrase.title')}
+          onCancel={closeChangePassphrase}
+          onOk={handleChangePassphrase}
+          okText={t('syncManager.buttons.confirm')}
+          cancelText={t('syncManager.buttons.cancel')}
+          confirmLoading={busy}
+          maskClosable={false}
+          destroyOnClose
+        >
+          <Alert
+            type="info"
+            showIcon
+            message={t('syncManager.changePassphrase.info')}
+            style={{ marginBottom: 16 }}
+          />
+          <Form layout="vertical">
+            <Form.Item label={t('syncManager.changePassphrase.oldPassphrase')} required>
+              <Input.Password
+                value={oldPassphrase}
+                onChange={(e) => setOldPassphrase(e.target.value)}
+                placeholder={t('syncManager.changePassphrase.oldPlaceholder')}
+                autoFocus
+              />
+            </Form.Item>
+            <Form.Item
+              label={t('syncManager.changePassphrase.newPassphrase')}
+              required
+              extra={t('syncManager.setup.passphraseHintInitial')}
+            >
+              <Input.Password
+                value={newPassphrase}
+                onChange={(e) => setNewPassphrase(e.target.value)}
+                placeholder={t('syncManager.changePassphrase.newPlaceholder')}
+              />
+            </Form.Item>
+            <Form.Item label={t('syncManager.changePassphrase.confirmPassphrase')} required>
+              <Input.Password
+                value={newPassphraseConfirm}
+                onChange={(e) => setNewPassphraseConfirm(e.target.value)}
+                placeholder={t('syncManager.changePassphrase.confirmPlaceholder')}
+              />
+            </Form.Item>
+          </Form>
+        </Modal>
 
         <Modal
           open={!!setupMode}

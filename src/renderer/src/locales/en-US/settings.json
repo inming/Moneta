@@ -301,6 +301,7 @@
       "test": "Test Connection",
       "syncNow": "Sync Now",
       "clearCredentials": "Clear Credentials",
+      "changePassphrase": "Change Passphrase",
       "resetCloud": "Reset Cloud",
       "cancel": "Cancel",
       "confirm": "OK",
@@ -318,6 +319,16 @@
         "content": "Deletes the cloud manifest, key envelope, database, and all backups. Local data is untouched, but the next sync will require running 'Initial Setup' again.",
         "okText": "Wipe Cloud"
       }
+    },
+    "changePassphrase": {
+      "title": "Change Sync Passphrase",
+      "info": "Changing the passphrase only re-wraps the cloud key envelope. Your local database key and synced data are untouched. Other already-joined devices keep working without entering the new passphrase; only future devices joining for the first time will need it.",
+      "oldPassphrase": "Current Passphrase",
+      "newPassphrase": "New Passphrase",
+      "confirmPassphrase": "Confirm New Passphrase",
+      "oldPlaceholder": "Enter current passphrase",
+      "newPlaceholder": "Enter new passphrase",
+      "confirmPlaceholder": "Re-enter new passphrase"
     },
     "setup": {
       "initialTitle": "Initial Sync Setup",
@@ -348,7 +359,10 @@
       "safeStorageUnavailable": "OS keyring unavailable, cannot save credentials",
       "passphraseTooShort": "Passphrase must be at least 8 characters",
       "passphraseMismatch": "Passphrases do not match",
+      "passphraseSame": "New passphrase is the same as current",
       "wrongPassphrase": "Incorrect sync passphrase",
+      "wrongOldPassphrase": "Incorrect current passphrase",
+      "changePassphraseFailed": "Failed to change passphrase",
       "setupInitialFailed": "Initial setup failed",
       "setupJoinFailed": "Join failed"
     },

@@ -122,6 +122,10 @@ export interface MonetaAPI {
     setupInitial(dto: SetupSyncDTO): Promise<SyncRunResult>
     setupJoin(dto: SetupSyncDTO): Promise<SyncRunResult>
     setupAdoptLocal(dto: SetupSyncDTO): Promise<SyncRunResult>
+    changePassphrase(dto: {
+      oldPassphrase: string
+      newPassphrase: string
+    }): Promise<{ ok: boolean; message: string; error?: string }>
     resetCloud(): Promise<{ ok: boolean; message: string }>
     onEvent(callback: (status: SyncStatus) => void): () => void
   }

@@ -121,6 +121,8 @@ const api = {
     setupJoin: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_JOIN, dto),
     setupAdoptLocal: (dto: unknown) =>
       ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_ADOPT_LOCAL, dto),
+    changePassphrase: (dto: unknown) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SYNC_CHANGE_PASSPHRASE, dto),
     resetCloud: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_RESET_CLOUD),
     onEvent: (
       callback: (status: import('../shared/types').SyncStatus) => void
