@@ -19,6 +19,27 @@ interface StoredProvider {
   model: string
 }
 
+interface StoredSyncConfig {
+  enabled: boolean
+  provider: 'aws' | 'aliyun' | 'custom'
+  endpoint: string
+  region: string
+  bucket: string
+  prefix: string
+  pathStyle: boolean
+  s3AccessKeyEncrypted: string
+  s3SecretKeyEncrypted: string
+  deviceId: string
+  cursor: {
+    manifestVersion: number
+    manifestEtag: string
+    localSha256: string
+    syncedAt: string
+  } | null
+  lastSyncAt: string | null
+  lastSyncError: string | null
+}
+
 interface AppConfig {
   aiProviders: StoredProvider[]
   defaultProviderId: string
@@ -30,6 +51,7 @@ interface AppConfig {
   dbKeyEncrypted?: string
   dbMigrationState?: 'pending' | 'done'
   theme?: 'system' | 'light' | 'dark'
+  sync?: StoredSyncConfig
 }
 
 /** 内置模型列表，后续新增模型只需往这里加一项 */
@@ -68,7 +90,13 @@ export function decryptString(encrypted: string): string {
   if (!encrypted) return ''
   if (safeStorage.isEncryptionAvailable()) {
     const buffer = Buffer.from(encrypted, 'base64')
-    return safeStorage.decryptString(buffer)
+    try {
+      return safeStorage.decryptString(buffer)
+    } catch {
+      // Legacy fallback: value was stored as plain base64 when safeStorage
+      // was unavailable on a previous launch. Decode and let migration re-wrap.
+      return Buffer.from(encrypted, 'base64').toString()
+    }
   }
   return Buffer.from(encrypted, 'base64').toString()
 }
@@ -87,7 +115,11 @@ function decryptApiKey(encryptedKey: string): string {
   if (!encryptedKey) return ''
   if (safeStorage.isEncryptionAvailable()) {
     const buffer = Buffer.from(encryptedKey, 'base64')
-    return safeStorage.decryptString(buffer)
+    try {
+      return safeStorage.decryptString(buffer)
+    } catch {
+      return Buffer.from(encryptedKey, 'base64').toString()
+    }
   }
   return Buffer.from(encryptedKey, 'base64').toString()
 }
@@ -172,6 +204,8 @@ export function loadConfig(): AppConfig {
     // Forward-compatibility: theme setting
     if (config.theme === undefined) config.theme = 'system'
 
+    // Forward-compatibility: sync config (lazily initialized on first use)
+
     // Validate default provider
     if (!config.defaultProviderId || !config.aiProviders.find((p) => p.id === config.defaultProviderId)) {
       config.defaultProviderId = BUILTIN_MODELS.length === 1 ? BUILTIN_MODELS[0].id : ''
@@ -189,6 +223,63 @@ export function loadConfig(): AppConfig {
 export function saveConfig(config: AppConfig): void {
   const configPath = getConfigPath()
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8')
+}
+
+/**
+ * One-shot migration: re-wrap any secrets that were stored as plain base64
+ * (when safeStorage was unavailable on a previous launch) using safeStorage now
+ * that it is available. Idempotent — only re-encrypts entries that fail
+ * safeStorage.decryptString.
+ */
+export function migrateLegacyEncryption(): void {
+  if (!safeStorage.isEncryptionAvailable()) return
+
+  const isLegacy = (encrypted: string): boolean => {
+    if (!encrypted) return false
+    try {
+      safeStorage.decryptString(Buffer.from(encrypted, 'base64'))
+      return false
+    } catch {
+      return true
+    }
+  }
+  const reencrypt = (encrypted: string): string => {
+    const plain = Buffer.from(encrypted, 'base64').toString()
+    return safeStorage.encryptString(plain).toString('base64')
+  }
+
+  const config = loadConfig()
+  let changed = 0
+
+  if (config.dbKeyEncrypted && isLegacy(config.dbKeyEncrypted)) {
+    config.dbKeyEncrypted = reencrypt(config.dbKeyEncrypted)
+    changed++
+  }
+  if (config.pinEncrypted && isLegacy(config.pinEncrypted)) {
+    config.pinEncrypted = reencrypt(config.pinEncrypted)
+    changed++
+  }
+  for (const provider of config.aiProviders) {
+    if (provider.apiKeyEncrypted && isLegacy(provider.apiKeyEncrypted)) {
+      provider.apiKeyEncrypted = reencrypt(provider.apiKeyEncrypted)
+      changed++
+    }
+  }
+  if (config.sync) {
+    if (config.sync.s3AccessKeyEncrypted && isLegacy(config.sync.s3AccessKeyEncrypted)) {
+      config.sync.s3AccessKeyEncrypted = reencrypt(config.sync.s3AccessKeyEncrypted)
+      changed++
+    }
+    if (config.sync.s3SecretKeyEncrypted && isLegacy(config.sync.s3SecretKeyEncrypted)) {
+      config.sync.s3SecretKeyEncrypted = reencrypt(config.sync.s3SecretKeyEncrypted)
+      changed++
+    }
+  }
+
+  if (changed > 0) {
+    saveConfig(config)
+    console.log(`[config] migrated ${changed} legacy plaintext-base64 secret(s) to safeStorage`)
+  }
 }
 
 function toView(stored: StoredProvider, defaultProviderId: string): AIProviderView {

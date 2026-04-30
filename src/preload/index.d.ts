@@ -12,7 +12,10 @@ import type {
   RecognizeRequest, RecognizeResponse,
   VerifyPINResult, ChangePINResult,
   ImportDraft, DraftSummary, SaveDraftDTO,
-  ThemeMode
+  ThemeMode,
+  SyncConfig, SaveSyncConfigDTO, SetCredentialsDTO, SetupSyncDTO,
+  SyncTestResult, SyncStatus, SyncRunResult, ConflictResolution,
+  SyncCloudInspect
 } from '../shared/types'
 
 export interface MonetaAPI {
@@ -105,6 +108,21 @@ export interface MonetaAPI {
   theme: {
     getMode(): Promise<ThemeMode>
     setMode(mode: ThemeMode): Promise<void>
+  }
+  sync: {
+    getConfig(): Promise<{ config: SyncConfig; safeStorageAvailable: boolean }>
+    saveConfig(dto: SaveSyncConfigDTO): Promise<SyncConfig>
+    setCredentials(dto: SetCredentialsDTO): Promise<{ ok: boolean }>
+    clearCredentials(): Promise<{ ok: boolean }>
+    test(): Promise<SyncTestResult>
+    syncNow(): Promise<SyncRunResult>
+    getStatus(): Promise<SyncStatus>
+    resolveConflict(resolution: ConflictResolution): Promise<SyncRunResult>
+    inspect(): Promise<SyncCloudInspect>
+    setupInitial(dto: SetupSyncDTO): Promise<SyncRunResult>
+    setupJoin(dto: SetupSyncDTO): Promise<SyncRunResult>
+    resetCloud(): Promise<{ ok: boolean; message: string }>
+    onEvent(callback: (status: SyncStatus) => void): () => void
   }
 }
 

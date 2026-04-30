@@ -89,5 +89,20 @@ export const IPC_CHANNELS = {
 
   // 主题
   THEME_GET: 'theme:get',
-  THEME_SET: 'theme:set'
+  THEME_SET: 'theme:set',
+
+  // S3 同步
+  SYNC_CONFIG_GET: 'sync:config:get',
+  SYNC_CONFIG_SET: 'sync:config:set',
+  SYNC_CREDENTIALS_SET: 'sync:credentials:set',
+  SYNC_CREDENTIALS_CLEAR: 'sync:credentials:clear',
+  SYNC_TEST: 'sync:test',
+  SYNC_NOW: 'sync:now',
+  SYNC_STATUS: 'sync:status',
+  SYNC_RESOLVE_CONFLICT: 'sync:resolve-conflict',
+  SYNC_INSPECT: 'sync:inspect',
+  SYNC_SETUP_INITIAL: 'sync:setup:initial',
+  SYNC_SETUP_JOIN: 'sync:setup:join',
+  SYNC_RESET_CLOUD: 'sync:reset-cloud',
+  SYNC_EVENT: 'sync:event'
 } as const

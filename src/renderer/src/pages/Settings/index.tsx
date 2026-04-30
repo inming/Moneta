@@ -9,10 +9,11 @@ import LanguageManager from './LanguageManager'
 import ThemeManager from './ThemeManager'
 import PinManager from './PinManager'
 import DataManager from './DataManager'
+import SyncManager from './SyncManager'
 
 const { Text } = Typography
 
-const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'language', 'appearance', 'security', 'data']
+const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'language', 'appearance', 'security', 'data', 'sync']
 const DEFAULT_TAB = 'categories'
 
 export default function Settings(): React.JSX.Element {
@@ -65,6 +66,11 @@ export default function Settings(): React.JSX.Element {
       key: 'data',
       label: t('tabs.data'),
       children: <DataManager />
+    },
+    {
+      key: 'sync',
+      label: t('tabs.sync'),
+      children: <SyncManager />
     }
   ]
 

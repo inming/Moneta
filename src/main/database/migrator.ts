@@ -50,6 +50,15 @@ export function runMigrations(db: Database.Database): void {
   }
 }
 
+export function getCurrentSchemaVersion(db: Database.Database): number {
+  try {
+    const row = db.prepare('SELECT MAX(id) as v FROM _migrations').get() as { v: number | null } | undefined
+    return row?.v ?? 0
+  } catch {
+    return 0
+  }
+}
+
 function extractUpSection(sql: string): string {
   const upIndex = sql.indexOf('-- up')
   const downIndex = sql.indexOf('-- down')

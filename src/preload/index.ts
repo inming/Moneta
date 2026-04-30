@@ -105,6 +105,31 @@ const api = {
   theme: {
     getMode: () => ipcRenderer.invoke(IPC_CHANNELS.THEME_GET),
     setMode: (mode: import('../shared/types').ThemeMode) => ipcRenderer.invoke(IPC_CHANNELS.THEME_SET, mode)
+  },
+  sync: {
+    getConfig: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_CONFIG_GET),
+    saveConfig: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_CONFIG_SET, dto),
+    setCredentials: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_CREDENTIALS_SET, dto),
+    clearCredentials: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_CREDENTIALS_CLEAR),
+    test: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_TEST),
+    syncNow: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_NOW),
+    getStatus: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_STATUS),
+    resolveConflict: (resolution: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SYNC_RESOLVE_CONFLICT, resolution),
+    inspect: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_INSPECT),
+    setupInitial: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_INITIAL, dto),
+    setupJoin: (dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SYNC_SETUP_JOIN, dto),
+    resetCloud: () => ipcRenderer.invoke(IPC_CHANNELS.SYNC_RESET_CLOUD),
+    onEvent: (
+      callback: (status: import('../shared/types').SyncStatus) => void
+    ): (() => void) => {
+      const handler = (_event: unknown, status: import('../shared/types').SyncStatus): void =>
+        callback(status)
+      ipcRenderer.on(IPC_CHANNELS.SYNC_EVENT, handler)
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.SYNC_EVENT, handler)
+      }
+    }
   }
 }
 

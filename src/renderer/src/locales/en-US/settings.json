@@ -8,7 +8,8 @@
     "language": "Language",
     "appearance": "Appearance",
     "security": "Security",
-    "data": "Data Management"
+    "data": "Data Management",
+    "sync": "Cloud Sync"
   },
   "language": {
     "title": "Language Settings",
@@ -241,6 +242,117 @@
       "portUpdateFailed": "Failed to update port",
       "instructionsCopied": "Usage guide copied to clipboard",
       "copyFailed": "Failed to copy"
+    }
+  },
+  "syncManager": {
+    "alerts": {
+      "safeStorageMissing": {
+        "title": "OS keyring unavailable",
+        "description": "Moneta requires the OS keyring (macOS Keychain / Windows DPAPI / Linux Secret Service) to safely store S3 credentials. Enable the keyring and restart the app — sync is disabled until then."
+      }
+    },
+    "statusCard": {
+      "title": "Sync Status",
+      "phase": "Current Phase",
+      "lastSyncAt": "Last Synced",
+      "lastError": "Last Error",
+      "remoteVersion": "Remote Version",
+      "deviceId": "This Device ID"
+    },
+    "phases": {
+      "idle": "Idle",
+      "preparing": "Preparing",
+      "fetching-manifest": "Fetching version",
+      "uploading": "Uploading",
+      "downloading": "Downloading",
+      "finalizing": "Finalizing",
+      "conflict": "Conflict",
+      "error": "Error",
+      "success": "Done"
+    },
+    "configCard": {
+      "title": "S3 Configuration"
+    },
+    "providers": {
+      "aliyun": "Aliyun OSS (S3 compatible)",
+      "custom": "Custom (S3 compatible)"
+    },
+    "fields": {
+      "provider": "Provider",
+      "endpoint": "Endpoint",
+      "endpointRequired": "Endpoint is required",
+      "region": "Region",
+      "bucket": "Bucket",
+      "bucketRequired": "Bucket is required",
+      "prefix": "Object Prefix",
+      "prefixHint": "Lets multiple users share one bucket, e.g. moneta/",
+      "pathStyle": "Path Style",
+      "pathStyleHint": "Self-hosted MinIO usually needs this enabled",
+      "accessKey": "Access Key ID",
+      "secretKey": "Secret Access Key",
+      "credentialsExistHint": "Credentials saved — leave blank to keep them",
+      "credentialsNewHint": "Credentials are stored encrypted via the OS keyring",
+      "keepUnchanged": "Leave blank to keep",
+      "accessKeyPlaceholder": "Enter Access Key ID",
+      "secretKeyPlaceholder": "Enter Secret Access Key"
+    },
+    "buttons": {
+      "save": "Save",
+      "test": "Test Connection",
+      "syncNow": "Sync Now",
+      "clearCredentials": "Clear Credentials",
+      "resetCloud": "Reset Cloud",
+      "cancel": "Cancel",
+      "confirm": "OK",
+      "useLocal": "Local overwrites remote",
+      "useRemote": "Remote overwrites local"
+    },
+    "confirm": {
+      "clearCredentials": {
+        "title": "Clear stored credentials?",
+        "content": "You will need to re-enter the Access Key to sync again.",
+        "okText": "Clear"
+      },
+      "resetCloud": {
+        "title": "Wipe all cloud data?",
+        "content": "Deletes the cloud manifest, key envelope, database, and all backups. Local data is untouched, but the next sync will require running 'Initial Setup' again.",
+        "okText": "Wipe Cloud"
+      }
+    },
+    "setup": {
+      "initialTitle": "Initial Sync Setup",
+      "joinTitle": "Join Existing Cloud",
+      "initialWarning": "Initial setup wraps your local database key with the sync passphrase and uploads it to the cloud. Keep the passphrase safe — losing it means cloud data cannot be recovered on a new device.",
+      "joinWarning": "Joining will use the passphrase to unwrap the cloud key, replace your local database key, and download the remote database. Local data will be overwritten.",
+      "passphrase": "Sync Passphrase",
+      "passphraseConfirm": "Confirm Passphrase",
+      "passphraseHintInitial": "At least 8 characters; pick a strong one. Never stored locally or remotely — only used to derive an encryption key.",
+      "passphraseHintJoin": "Enter the same passphrase used during initial setup on the other device",
+      "passphrasePlaceholder": "Enter sync passphrase",
+      "passphraseConfirmPlaceholder": "Re-enter sync passphrase"
+    },
+    "messages": {
+      "saved": "Configuration saved",
+      "saveFailed": "Failed to save",
+      "credentialsCleared": "Credentials cleared",
+      "testSuccess": "Connection successful — bucket is readable and writable",
+      "testFailed": "Connection test failed",
+      "syncFailed": "Sync failed",
+      "noop": "Already up to date",
+      "safeStorageUnavailable": "OS keyring unavailable, cannot save credentials",
+      "passphraseTooShort": "Passphrase must be at least 8 characters",
+      "passphraseMismatch": "Passphrases do not match",
+      "wrongPassphrase": "Incorrect sync passphrase",
+      "setupInitialFailed": "Initial setup failed",
+      "setupJoinFailed": "Join failed"
+    },
+    "conflict": {
+      "title": "Conflict detected",
+      "warning": "Both local and remote have unsynced changes. Pick which side wins — the loser is archived under backups/.",
+      "localChangedAt": "Local last sync time",
+      "remoteWriter": "Remote writer device",
+      "remoteWrittenAt": "Remote written at",
+      "remoteVersion": "Remote version"
     }
   },
   "aiProvider": {

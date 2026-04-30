@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, safeStorage } from 'electron'
 import { createWindow } from './window'
 import { getDatabase, closeDatabase } from './database/connection'
 import { runMigrations } from './database/migrator'
@@ -15,10 +15,45 @@ import { registerMCPImportHandlers } from './ipc/mcp-import.ipc'
 import { registerDraftHandlers } from './ipc/draft.ipc'
 import { setupI18nHandlers } from './ipc/i18n.ipc'
 import { registerThemeIPC } from './ipc/theme.ipc'
+import { registerSyncHandlers } from './ipc/sync.ipc'
 import { setMCPMainWindow, mcpHttpServer } from './services/mcp-http-server'
+import { migrateLegacyEncryption } from './services/config.service'
 import { IPC_CHANNELS } from '../shared/ipc-channels'
 
 app.whenReady().then(() => {
+  // Diagnose safeStorage availability — surfaces issues with macOS Keychain /
+  // Windows DPAPI / Linux libsecret early so the warnings make sense.
+  const ssAvailable = safeStorage.isEncryptionAvailable()
+  console.log(
+    `[startup] safeStorage.isEncryptionAvailable() = ${ssAvailable} ` +
+      `(platform=${process.platform}, electron=${process.versions.electron})`
+  )
+  if (!ssAvailable) {
+    if (process.platform === 'darwin') {
+      console.warn(
+        '[startup] macOS Keychain not accessible. Likely causes:\n' +
+          '  1. The app was launched in dev mode and Keychain Access denied the request\n' +
+          '  2. The keychain is locked (run `security unlock-keychain`)\n' +
+          '  3. The Electron binary in node_modules is unsigned and macOS rejected access\n' +
+          '  Cloud sync requires safeStorage; existing PIN/API keys fall back to base64 (insecure).'
+      )
+    } else if (process.platform === 'linux') {
+      console.warn(
+        '[startup] Linux libsecret/Secret Service not available. Install gnome-keyring or kwallet.'
+      )
+    }
+  }
+
+  // Migrate any legacy plaintext-base64 secrets (from sessions where
+  // safeStorage was unavailable) to safeStorage now that it works.
+  if (ssAvailable) {
+    try {
+      migrateLegacyEncryption()
+    } catch (e) {
+      console.error('[startup] legacy encryption migration failed:', e)
+    }
+  }
+
   // Initialize database and run migrations
   const db = getDatabase()
   runMigrations(db)
@@ -37,6 +72,7 @@ app.whenReady().then(() => {
   registerDraftHandlers()
   setupI18nHandlers()
   registerThemeIPC()
+  registerSyncHandlers()
 
   const mainWindow = createWindow()
 

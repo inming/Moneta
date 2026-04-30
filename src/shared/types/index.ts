@@ -7,3 +7,10 @@ export type { AIRecognizedItem, RecognitionResultRow, RecognizeRequest, Recogniz
 export type { VerifyPINResult, ChangePINResult } from './auth'
 export type { ImportDraft, DraftSource, DraftTransaction, DraftData, DraftSummary, SaveDraftDTO, AIDraftSpecific, MCPDraftSpecific } from './import-draft'
 export type { ThemeMode } from './theme'
+export type {
+  S3Provider, S3Config, SyncConfig, SyncCursor,
+  SaveSyncConfigDTO, SetCredentialsDTO, SyncTestResult,
+  SyncPhase, SyncStatus, RemoteManifest,
+  ConflictInfo, ConflictResolution, SyncRunResult,
+  SyncCloudInspect, SetupSyncDTO
+} from './sync'

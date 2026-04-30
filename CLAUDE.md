@@ -211,6 +211,7 @@ created_at DATETIME DEFAULT datetime('now', 'localtime')
 | 跨页面导航 | [`docs/architecture/cross-page-navigation.md`](docs/architecture/cross-page-navigation.md) | URL params 传状态；setTimeout(0) 恢复 ECharts 独显 |
 | 深色模式 | [`docs/architecture/dark-mode.md`](docs/architecture/dark-mode.md) | CSS 变量 + Ant Design Token；ECharts 内置 dark 主题；Zustand 状态管理；系统主题监听（matchMedia） |
 | 年度消费预测 | — | Dashboard 为首页（`/`）；按类目加权历史均值预测；`is_occasional` 偶发交易标记；双 Y 轴（柱状+累积折线）；历史数据内存缓存 + 交易变更时清缓存 |
+| S3 数据同步 | [`docs/architecture/s3-sync.md`](docs/architecture/s3-sync.md) | 整库文件级同步；复用 SQLCipher 加密；manifest CAS 抢占式写；冲突由用户决断；分 P1/P2/P3 阶段上线 |
 
 ### 产品需求文档
 

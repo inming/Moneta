@@ -205,3 +205,25 @@ export function closeDatabase(): void {
     db = null
   }
 }
+
+export function getDbKeyFingerprint(): string {
+  const { hexKey } = ensureDbKey()
+  return crypto.createHash('sha256').update(hexKey).digest('hex').slice(0, 32)
+}
+
+export function getDbKeyHex(): string {
+  const { hexKey } = ensureDbKey()
+  return hexKey
+}
+
+/**
+ * Replace the local SQLCipher key in config.json. Caller is responsible for
+ * having closed the database first and for arranging the new db file (e.g.
+ * downloading from sync) before reopening via getDatabase().
+ */
+export function replaceDbKey(newHexKey: string): void {
+  closeDatabase()
+  const config = loadConfig()
+  config.dbKeyEncrypted = encryptString(newHexKey)
+  saveConfig(config)
+}
