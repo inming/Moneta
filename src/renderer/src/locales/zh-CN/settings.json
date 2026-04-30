@@ -163,6 +163,7 @@
     "columns": {
       "sort": "排序",
       "name": "名称",
+      "description": "描述",
       "isSystem": "系统分类",
       "status": "状态",
       "actions": "操作"
@@ -186,7 +187,11 @@
       "titleAdd": "新增分类",
       "nameLabel": "分类名称",
       "namePlaceholder": "请输入分类名称",
-      "nameRequired": "请输入分类名称"
+      "nameRequired": "请输入分类名称",
+      "descriptionLabel": "描述",
+      "descriptionExtra": "供 MCP 工具按语义匹配分类，如：外卖、堂食、食堂",
+      "descriptionPlaceholder": "输入该分类的典型场景或关键词（选填）",
+      "descriptionMaxLength": "描述不超过 100 字符"
     },
     "deleteConfirm": {
       "title": "确定删除该分类？",

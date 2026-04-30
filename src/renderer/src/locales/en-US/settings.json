@@ -163,6 +163,7 @@
     "columns": {
       "sort": "Sort",
       "name": "Name",
+      "description": "Description",
       "isSystem": "System",
       "status": "Status",
       "actions": "Actions"
@@ -186,7 +187,11 @@
       "titleAdd": "Add Category",
       "nameLabel": "Category Name",
       "namePlaceholder": "Enter category name",
-      "nameRequired": "Please enter category name"
+      "nameRequired": "Please enter category name",
+      "descriptionLabel": "Description",
+      "descriptionExtra": "Helps MCP tools match categories semantically, e.g.: takeout, dine-in, cafeteria",
+      "descriptionPlaceholder": "Enter typical scenarios or keywords (optional)",
+      "descriptionMaxLength": "Description cannot exceed 100 characters"
     },
     "deleteConfirm": {
       "title": "Delete this category?",
