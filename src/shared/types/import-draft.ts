@@ -1,10 +1,10 @@
 /**
  * 导入草稿类型定义
- * 用于 AI 图片识别和 MCP 导入的自动保存功能
+ * 用于 MCP 导入的自动保存功能
  */
 
 /** 草稿来源类型 */
-export type DraftSource = 'ai' | 'mcp'
+export type DraftSource = 'mcp'
 
 /** 待导入交易条目（草稿用） */
 export interface DraftTransaction {
@@ -15,14 +15,6 @@ export interface DraftTransaction {
   category_id: number | null
   description: string
   operator_id: number | null
-}
-
-/** AI 识别草稿特有数据 */
-export interface AIDraftSpecific {
-  /** 记账日期 */
-  accountingDate: string
-  /** 图片文件路径列表 */
-  imagePaths: string[]
 }
 
 /** MCP 导入草稿特有数据 */
@@ -37,8 +29,6 @@ export interface DraftData {
   transactions: DraftTransaction[]
   /** 当前选中的操作人 ID */
   operatorId: number | null
-  /** AI 识别特有数据 */
-  aiSpecific?: AIDraftSpecific
   /** MCP 导入特有数据 */
   mcpSpecific?: MCPDraftSpecific
 }

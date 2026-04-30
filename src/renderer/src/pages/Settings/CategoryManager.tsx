@@ -49,7 +49,7 @@ export default function CategoryManager(): React.JSX.Element {
 
   const handleEdit = (record: Category): void => {
     setEditingCategory(record)
-    form.setFieldsValue({ name: record.name, description: record.description })
+    form.setFieldsValue({ name: record.name })
     setModalOpen(true)
   }
 
@@ -57,11 +57,11 @@ export default function CategoryManager(): React.JSX.Element {
     try {
       const values = await form.validateFields()
       if (editingCategory) {
-        const dto: UpdateCategoryDTO = { name: values.name, description: values.description ?? '' }
+        const dto: UpdateCategoryDTO = { name: values.name }
         await window.api.category.update(editingCategory.id, dto)
         message.success(t('settings:categoryManager.messages.updateSuccess'))
       } else {
-        const dto: CreateCategoryDTO = { name: values.name, type: activeType, description: values.description ?? '' }
+        const dto: CreateCategoryDTO = { name: values.name, type: activeType }
         await window.api.category.create(dto)
         message.success(t('settings:categoryManager.messages.createSuccess'))
       }
@@ -146,13 +146,7 @@ export default function CategoryManager(): React.JSX.Element {
         </Space>
       )
     },
-    { title: t('settings:categoryManager.columns.name'), dataIndex: 'name', width: 150 },
-    {
-      title: t('settings:categoryManager.columns.aiDescription'),
-      dataIndex: 'description',
-      ellipsis: true,
-      render: (val: string) => val || <span style={{ color: '#bbb' }}>{t('settings:categoryManager.status.notSet')}</span>
-    },
+    { title: t('settings:categoryManager.columns.name'), dataIndex: 'name' },
     {
       title: t('settings:categoryManager.columns.isSystem'),
       dataIndex: 'is_system',
@@ -224,7 +218,7 @@ export default function CategoryManager(): React.JSX.Element {
         afterOpenChange={(open) => {
           if (open) {
             if (editingCategory) {
-              form.setFieldsValue({ name: editingCategory.name, description: editingCategory.description })
+              form.setFieldsValue({ name: editingCategory.name })
             }
             setTimeout(() => inputRef.current?.focus(), 0)
           }
@@ -237,14 +231,6 @@ export default function CategoryManager(): React.JSX.Element {
             rules={[{ required: true, message: t('settings:categoryManager.modal.nameRequired') }]}
           >
             <Input ref={inputRef} placeholder={t('settings:categoryManager.modal.namePlaceholder')} />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label={t('settings:categoryManager.modal.aiDescriptionLabel')}
-            extra={t('settings:categoryManager.modal.aiDescriptionExtra')}
-            rules={[{ max: 100, message: t('settings:categoryManager.modal.aiDescriptionMaxLength') }]}
-          >
-            <Input placeholder={t('settings:categoryManager.modal.aiDescriptionPlaceholder')} maxLength={100} showCount />
           </Form.Item>
         </Form>
       </Modal>

@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CategoryManager from './CategoryManager'
 import OperatorManager from './OperatorManager'
-import AIProviderManager from './AIProviderManager'
 import MCPConfigManager from './MCPConfigManager'
 import LanguageManager from './LanguageManager'
 import ThemeManager from './ThemeManager'
@@ -13,7 +12,7 @@ import SyncManager from './SyncManager'
 
 const { Text } = Typography
 
-const VALID_TABS = ['categories', 'operators', 'ai-providers', 'mcp', 'language', 'appearance', 'security', 'data', 'sync']
+const VALID_TABS = ['categories', 'operators', 'mcp', 'language', 'appearance', 'security', 'data', 'sync']
 const DEFAULT_TAB = 'categories'
 
 export default function Settings(): React.JSX.Element {
@@ -36,11 +35,6 @@ export default function Settings(): React.JSX.Element {
       key: 'operators',
       label: t('tabs.operators'),
       children: <OperatorManager />
-    },
-    {
-      key: 'ai-providers',
-      label: t('tabs.aiProviders'),
-      children: <AIProviderManager />
     },
     {
       key: 'mcp',

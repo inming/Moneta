@@ -3,7 +3,6 @@
   "tabs": {
     "categories": "Categories",
     "operators": "Operators",
-    "aiProviders": "AI Models",
     "mcp": "MCP Config",
     "language": "Language",
     "appearance": "Appearance",
@@ -164,7 +163,6 @@
     "columns": {
       "sort": "Sort",
       "name": "Name",
-      "aiDescription": "AI Description",
       "isSystem": "System",
       "status": "Status",
       "actions": "Actions"
@@ -188,11 +186,7 @@
       "titleAdd": "Add Category",
       "nameLabel": "Category Name",
       "namePlaceholder": "Enter category name",
-      "nameRequired": "Please enter category name",
-      "aiDescriptionLabel": "AI Description",
-      "aiDescriptionExtra": "Helps AI image recognition match categories, e.g.: takeout, dine-in, cafeteria",
-      "aiDescriptionPlaceholder": "Enter typical scenarios or keywords (optional)",
-      "aiDescriptionMaxLength": "AI description cannot exceed 100 characters"
+      "nameRequired": "Please enter category name"
     },
     "deleteConfirm": {
       "title": "Delete this category?",
@@ -373,46 +367,6 @@
       "remoteWriter": "Remote writer device",
       "remoteWrittenAt": "Remote written at",
       "remoteVersion": "Remote version"
-    }
-  },
-  "aiProvider": {
-    "description": "Configure AI models to enable image recognition. Enter API Key to use, Endpoint can be changed to third-party platforms.",
-    "viewPrompt": "View Recognition Prompt",
-    "defaultTag": "Default",
-    "statusConfigured": "Configured",
-    "statusNotConfigured": "Not Configured",
-    "fields": {
-      "endpoint": "API Endpoint",
-      "model": "Model ID",
-      "apiKey": "API Key",
-      "apiKeyCurrent": "Current:",
-      "apiKeyHint": ", leave empty to keep unchanged",
-      "apiKeyPlaceholderKeep": "Leave empty to keep unchanged",
-      "apiKeyPlaceholderNew": "Enter API Key",
-      "modelPlaceholderDoubao": "Enter endpoint ID (e.g., ep-xxx)"
-    },
-    "buttons": {
-      "save": "Save",
-      "test": "Test Connection",
-      "setDefault": "Set as Default"
-    },
-    "promptModal": {
-      "title": "AI Recognition Prompt Preview",
-      "copyButton": "Copy to Clipboard",
-      "closeButton": "Close"
-    },
-    "messages": {
-      "noChanges": "No changes",
-      "saveSuccess": "Configuration saved",
-      "saveFailed": "Failed to save",
-      "testSuccess": "Connection successful! Model: {{model}}",
-      "testFailed": "Connection failed: {{error}}",
-      "testError": "Test failed",
-      "setDefaultSuccess": "Set as default model",
-      "setDefaultFailed": "Failed to set default model",
-      "promptFailed": "Failed to get prompt",
-      "clipboardSuccess": "Copied to clipboard",
-      "clipboardFailed": "Failed to copy"
     }
   }
 }

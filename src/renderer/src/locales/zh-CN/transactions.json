@@ -28,7 +28,6 @@
   },
   "buttons": {
     "manualEntry": "手工录入",
-    "aiRecognition": "图片识别导入",
     "batchDelete": "批量删除",
     "continueImport": "继续导入",
     "discard": "放弃",
@@ -58,12 +57,10 @@
   "draft": {
     "alertTitle": "有未完成的导入草稿（{{count}}条{{missingCategory}}）",
     "missingCategory": "，{{count}}条待补充分类",
-    "sourceAI": "AI识别",
     "sourceMCP": "MCP导入",
     "lastEdited": "最后编辑：{{time}}",
     "modalTitle": "继续未完成的导入",
     "source": "来源：",
-    "sourceAILabel": "AI 图片识别",
     "sourceMCPLabel": "MCP 导入",
     "count": "交易条数：",
     "countValue": "{{count}} 条",

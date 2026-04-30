@@ -3,7 +3,6 @@
   "tabs": {
     "categories": "分类管理",
     "operators": "操作人管理",
-    "aiProviders": "AI 模型",
     "mcp": "MCP 配置",
     "language": "语言",
     "appearance": "外观",
@@ -164,7 +163,6 @@
     "columns": {
       "sort": "排序",
       "name": "名称",
-      "aiDescription": "AI 描述",
       "isSystem": "系统分类",
       "status": "状态",
       "actions": "操作"
@@ -188,11 +186,7 @@
       "titleAdd": "新增分类",
       "nameLabel": "分类名称",
       "namePlaceholder": "请输入分类名称",
-      "nameRequired": "请输入分类名称",
-      "aiDescriptionLabel": "AI 描述",
-      "aiDescriptionExtra": "辅助 AI 图片识别时进行分类匹配，如：外卖、堂食、食堂",
-      "aiDescriptionPlaceholder": "输入该分类的典型场景或关键词（选填）",
-      "aiDescriptionMaxLength": "AI 描述不超过 100 字符"
+      "nameRequired": "请输入分类名称"
     },
     "deleteConfirm": {
       "title": "确定删除该分类？",
@@ -373,46 +367,6 @@
       "remoteWriter": "远端写入设备",
       "remoteWrittenAt": "远端写入时间",
       "remoteVersion": "远端版本"
-    }
-  },
-  "aiProvider": {
-    "description": "配置 AI 模型以启用图片识别功能。填入 API Key 即可使用，Endpoint 可修改为第三方平台地址。",
-    "viewPrompt": "查看识别 Prompt",
-    "defaultTag": "默认",
-    "statusConfigured": "已配置",
-    "statusNotConfigured": "未配置",
-    "fields": {
-      "endpoint": "API Endpoint",
-      "model": "模型标识",
-      "apiKey": "API Key",
-      "apiKeyCurrent": "当前：",
-      "apiKeyHint": "，留空则保持不变",
-      "apiKeyPlaceholderKeep": "留空保持不变",
-      "apiKeyPlaceholderNew": "请输入 API Key",
-      "modelPlaceholderDoubao": "请输入接入点 ID（如 ep-xxx）"
-    },
-    "buttons": {
-      "save": "保存",
-      "test": "测试连接",
-      "setDefault": "设为默认"
-    },
-    "promptModal": {
-      "title": "AI 识别 Prompt 预览",
-      "copyButton": "复制到剪贴板",
-      "closeButton": "关闭"
-    },
-    "messages": {
-      "noChanges": "无修改内容",
-      "saveSuccess": "配置已保存",
-      "saveFailed": "保存失败",
-      "testSuccess": "连接成功！模型: {{model}}",
-      "testFailed": "连接失败: {{error}}",
-      "testError": "测试失败",
-      "setDefaultSuccess": "已设为默认模型",
-      "setDefaultFailed": "设置默认模型失败",
-      "promptFailed": "获取 Prompt 失败",
-      "clipboardSuccess": "已复制到剪贴板",
-      "clipboardFailed": "复制失败"
     }
   }
 }

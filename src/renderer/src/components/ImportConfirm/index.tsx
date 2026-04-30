@@ -85,10 +85,8 @@ interface ImportConfirmProps {
   onCancel?: () => void
   /** 草稿来源 */
   draftSource: DraftSource
-  /** 记账日期（AI 识别用） */
+  /** 记账日期（草稿恢复用） */
   initialAccountingDate?: Dayjs
-  /** 图片路径列表（AI 识别用） */
-  imagePaths?: string[]
   /** MCP 数据来源描述 */
   mcpSource?: string
   /** 初始操作人 ID（草稿恢复用） */
@@ -105,7 +103,6 @@ export default function ImportConfirm({
   onCancel,
   draftSource,
   initialAccountingDate,
-  imagePaths,
   mcpSource,
   initialOperatorId,
   restoredFromDraft = false
@@ -156,13 +153,7 @@ export default function ImportConfirm({
             operator_id: row.operator_id ?? null
           })),
           operatorId: null,
-          ...(draftSource === 'ai' && {
-            aiSpecific: {
-              accountingDate: initialAccountingDate?.format('YYYY-MM-DD') ?? '',
-              imagePaths: imagePaths ?? []
-            }
-          }),
-          ...(draftSource === 'mcp' && mcpSource && {
+          ...(mcpSource && {
             mcpSpecific: { source: mcpSource }
           })
         }
@@ -209,13 +200,7 @@ export default function ImportConfirm({
     const draftData: DraftData = {
       transactions: toDraftTransactions(rows),
       operatorId: defaultOperatorId,
-      ...(draftSource === 'ai' && {
-        aiSpecific: {
-          accountingDate: accountingDate?.format('YYYY-MM-DD') ?? '',
-          imagePaths: imagePaths ?? []
-        }
-      }),
-      ...(draftSource === 'mcp' && mcpSource && {
+      ...(mcpSource && {
         mcpSpecific: { source: mcpSource }
       })
     }

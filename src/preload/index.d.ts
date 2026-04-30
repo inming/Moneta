@@ -8,8 +8,6 @@ import type {
   SummaryParams, SummaryData,
   YearRangeData, YearlyCategoryParams, YearlyCategoryData,
   ForecastParams, ForecastResult,
-  AIProviderView, UpdateAIProviderDTO, AITestResult,
-  RecognizeRequest, RecognizeResponse,
   VerifyPINResult, ChangePINResult,
   ImportDraft, DraftSummary, SaveDraftDTO,
   ThemeMode,
@@ -57,18 +55,6 @@ export interface MonetaAPI {
   data: {
     clearTransactions(): Promise<void>
     factoryReset(): Promise<void>
-  }
-  aiProvider: {
-    list(): Promise<AIProviderView[]>
-    update(id: string, dto: UpdateAIProviderDTO): Promise<AIProviderView>
-    setDefault(id: string): Promise<void>
-    test(id: string): Promise<AITestResult>
-  }
-  ai: {
-    recognize(request: RecognizeRequest): Promise<RecognizeResponse>
-    abortRecognize(): Promise<void>
-    getLogs(): Promise<string[]>
-    getPromptPreview(): Promise<string>
   }
   auth: {
     hasPIN(): Promise<boolean>

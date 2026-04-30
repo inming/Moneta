@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-Moneta 是一款面向个人/家庭的桌面端记账软件，支持手动录入、AI 截图识别、分类统计和数据导入导出。
+Moneta 是一款面向个人/家庭的桌面端记账软件，支持手动录入、MCP 接入、分类统计和数据导入导出。
 
 > **开发模式**：个人独立开发项目，直接在 `main` 分支上开发和推送，无需创建 PR。
 
@@ -30,32 +30,9 @@ scripts\setup-env.bat
 
 ## 测试与发布
 
-### 跨平台开发（WSL2 → Windows）
-
-本项目支持在 WSL2 中开发，在 Windows 上运行测试。
-
-**代码同步脚本**：`scripts/sync-to-windows.sh`
+### 开发与构建
 
 ```bash
-# 同步到 Windows 目录
-./scripts/sync-to-windows.sh /mnt/c/Users/<username>/workspace/Moneta
-
-# 或设置环境变量后使用
-export WIN_PATH=/mnt/c/Users/<username>/workspace/Moneta
-./scripts/sync-to-windows.sh
-```
-
-**Windows 端准备（只需一次）**：
-
-```powershell
-# 安装 Windows 版依赖
-cd C:\Users\<username>\workspace\Moneta
-npm install
-```
-
-**运行测试**：
-
-```powershell
 npm run dev        # 开发模式
 npm run build      # 生产构建
 ```
@@ -121,7 +98,7 @@ dist/Moneta-x.x.x.dmg
 |----------|------|------|
 | `db` | 数据库 CRUD 操作 | `db:category:create`, `db:operator:delete` |
 | `io` | 导入导出 | `io:import:preview`, `io:export:execute` |
-| `ai` | AI 功能 | `ai:recognize` |
+| `mcp` | MCP 集成 | `mcp:start-server`, `mcp:import:confirm` |
 | `auth` | 认证与安全 | `auth:pin:verify`, `auth:auto-lock:set` |
 | `dialog` | 系统对话框 | `dialog:open-file`, `dialog:save-file` |
 
@@ -205,7 +182,6 @@ created_at DATETIME DEFAULT datetime('now', 'localtime')
 | MCP 架构 | [`docs/architecture/mcp.md`](docs/architecture/mcp.md) | stdio+HTTP 分离架构；端口 9615；共享 ImportConfirm 组件 |
 | 统计报表 | [`docs/architecture/statistics.md`](docs/architecture/statistics.md) | 图例独显交互；右键下钻；SQL pivot 在 JS 层转换 |
 | 应用安全与锁屏 | [`docs/architecture/security.md`](docs/architecture/security.md) | PIN 存 config.json 不存 DB；SHA-256+salt；单窗口锁屏；ContextMenu 组件 |
-| AI 模型与识别 | [`docs/architecture/ai-recognition.md`](docs/architecture/ai-recognition.md) | 多层容错解析；AbortController 取消；300s 超时；确认界面全量编辑模式 |
 | 数据浏览与编辑 | [`docs/architecture/data-browsing.md`](docs/architecture/data-browsing.md) | 服务端分页排序；editingKey 互斥；URL 参数筛选；侧栏导航结构 |
 | 数据管理 | [`docs/architecture/data-management.md`](docs/architecture/data-management.md) | 导出用 xlsx-js-style；CSV UTF-8 BOM；导入全量覆盖；草稿 useEffect 即时保存 |
 | 跨页面导航 | [`docs/architecture/cross-page-navigation.md`](docs/architecture/cross-page-navigation.md) | URL params 传状态；setTimeout(0) 恢复 ECharts 独显 |

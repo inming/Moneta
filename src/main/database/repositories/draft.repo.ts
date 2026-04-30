@@ -3,7 +3,7 @@ import type { ImportDraft, DraftSummary, SaveDraftDTO } from '../../../shared/ty
 
 interface DraftRow {
   id: string
-  source: 'ai' | 'mcp'
+  source: 'mcp'
   data: string
   created_at: string
   updated_at: string
@@ -36,7 +36,7 @@ export function getSummary(db: Database.Database): DraftSummary {
   const row = db
     .prepare('SELECT source, data, created_at, updated_at FROM import_draft WHERE id = ?')
     .get('current') as
-    | { source: 'ai' | 'mcp'; data: string; created_at: string; updated_at: string }
+    | { source: 'mcp'; data: string; created_at: string; updated_at: string }
     | undefined
 
   if (!row) {

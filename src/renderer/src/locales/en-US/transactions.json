@@ -28,7 +28,6 @@
   },
   "buttons": {
     "manualEntry": "Manual Entry",
-    "aiRecognition": "AI Recognition",
     "batchDelete": "Batch Delete",
     "continueImport": "Continue Import",
     "discard": "Discard",
@@ -58,12 +57,10 @@
   "draft": {
     "alertTitle": "Unfinished import draft ({{count}} items{{missingCategory}})",
     "missingCategory": ", {{count}} need category",
-    "sourceAI": "AI Recognition",
     "sourceMCP": "MCP Import",
     "lastEdited": "Last edited: {{time}}",
     "modalTitle": "Continue Unfinished Import",
     "source": "Source: ",
-    "sourceAILabel": "AI Recognition",
     "sourceMCPLabel": "MCP Import",
     "count": "Transaction Count: ",
     "countValue": "{{count}} items",

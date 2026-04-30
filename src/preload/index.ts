@@ -41,18 +41,6 @@ const api = {
     clearTransactions: () => ipcRenderer.invoke(IPC_CHANNELS.DATA_CLEAR_TRANSACTIONS),
     factoryReset: () => ipcRenderer.invoke(IPC_CHANNELS.DATA_FACTORY_RESET)
   },
-  aiProvider: {
-    list: () => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_LIST),
-    update: (id: string, dto: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_UPDATE, id, dto),
-    setDefault: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_SET_DEFAULT, id),
-    test: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_PROVIDER_TEST, id)
-  },
-  ai: {
-    recognize: (request: unknown) => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE, request),
-    abortRecognize: () => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE_ABORT),
-    getLogs: () => ipcRenderer.invoke(IPC_CHANNELS.AI_RECOGNIZE_LOGS),
-    getPromptPreview: () => ipcRenderer.invoke(IPC_CHANNELS.AI_PROMPT_PREVIEW)
-  },
   auth: {
     hasPIN: () => ipcRenderer.invoke(IPC_CHANNELS.AUTH_HAS_PIN),
     setPIN: (pin: string) => ipcRenderer.invoke(IPC_CHANNELS.AUTH_SET_PIN, pin),

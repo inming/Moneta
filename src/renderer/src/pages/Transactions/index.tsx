@@ -6,7 +6,7 @@ import {
 } from 'antd'
 import {
   PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, SearchOutlined,
-  CameraOutlined, FileTextOutlined, ExclamationCircleOutlined, ArrowLeftOutlined
+  FileTextOutlined, ExclamationCircleOutlined, ArrowLeftOutlined
 } from '@ant-design/icons'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
@@ -18,7 +18,7 @@ import type { FilterValue, SorterResult } from 'antd/es/table/interface'
 import type {
   Transaction, TransactionType, Category, Operator,
   PaginatedResult, CreateTransactionDTO, UpdateTransactionDTO,
-  TransactionListParams, ImportDraft
+  TransactionListParams
 } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'
 import { useDraftStore } from '../../stores/draft.store'
@@ -814,8 +814,8 @@ export default function Transactions(): React.JSX.Element {
                     : ''
                 })}
               </span>
-              <Tag color={draftStore.summary.source === 'ai' ? 'blue' : 'purple'}>
-                {draftStore.summary.source === 'ai' ? t('transactions:draft.sourceAI') : t('transactions:draft.sourceMCP')}
+              <Tag color="purple">
+                {t('transactions:draft.sourceMCP')}
               </Tag>
               {draftStore.summary.updatedAt && (
                 <span style={{ color: '#888', fontSize: 12 }}>
@@ -879,11 +879,7 @@ export default function Transactions(): React.JSX.Element {
               setDraftModalOpen(false)
               const draft = await draftStore.getDraft()
               if (draft) {
-                if (draft.source === 'ai') {
-                  navigate('/ai-recognition')
-                } else {
-                  navigate('/mcp-import')
-                }
+                navigate('/mcp-import')
               }
             }}
           >
@@ -895,7 +891,7 @@ export default function Transactions(): React.JSX.Element {
           <div>
             <p>
               <strong>{t('transactions:draft.source')}</strong>
-              {draftStore.summary.source === 'ai' ? t('transactions:draft.sourceAILabel') : t('transactions:draft.sourceMCPLabel')}
+              {t('transactions:draft.sourceMCPLabel')}
             </p>
             <p>
               <strong>{t('transactions:draft.count')}</strong>
@@ -929,12 +925,6 @@ export default function Transactions(): React.JSX.Element {
             disabled={newRow !== null || editingKey !== null}
           >
             {t('transactions:buttons.manualEntry')}
-          </Button>
-          <Button
-            icon={<CameraOutlined />}
-            onClick={() => navigate('/ai-recognition')}
-          >
-            {t('transactions:buttons.aiRecognition')}
           </Button>
           {selectedRowKeys.length > 0 && (
             <Popconfirm

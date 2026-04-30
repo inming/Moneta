@@ -7,7 +7,6 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Settings from './pages/Settings'
-import AIRecognition from './pages/AIRecognition'
 import MCPImport from './pages/MCPImport'
 import Statistics from './pages/Statistics'
 import LockScreen from './pages/LockScreen'
@@ -41,7 +40,6 @@ function MainAppContent(): React.JSX.Element {
           <Route path="/" element={<Dashboard />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/statistics" element={<Statistics />} />
-          <Route path="/ai-recognition" element={<AIRecognition />} />
           <Route path="/mcp-import" element={<MCPImport />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
