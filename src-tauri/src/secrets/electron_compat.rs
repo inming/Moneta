@@ -96,11 +96,10 @@ mod platform {
     }
 
     pub fn dpapi_unprotect_bytes(blob: &[u8]) -> Result<Vec<u8>, String> {
-        use windows::Win32::Foundation::HLOCAL;
+        use windows::Win32::Foundation::{HLOCAL, LocalFree};
         use windows::Win32::Security::Cryptography::{
             CryptUnprotectData, CRYPT_INTEGER_BLOB,
         };
-        use windows::Win32::System::Memory::LocalFree;
 
         unsafe {
             let input = CRYPT_INTEGER_BLOB {
