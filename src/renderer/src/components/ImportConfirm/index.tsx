@@ -10,7 +10,6 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import type { ColumnsType } from 'antd/es/table'
-import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { Category, Operator, TransactionType, DraftSource, DraftData, DraftTransaction } from '@shared/types'
 import { TRANSACTION_TYPE_CONFIG } from '@shared/constants/transaction-type'

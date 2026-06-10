@@ -43,5 +43,11 @@
     "expense": "消费",
     "income": "收入",
     "investment": "投资"
+  },
+  "bootstrap": {
+    "title": "正在迁移本地数据",
+    "errorTitle": "数据迁移失败",
+    "retry": "重试",
+    "hint": "如果系统弹出钥匙串访问授权，请选择\"始终允许\"。"
   }
 }

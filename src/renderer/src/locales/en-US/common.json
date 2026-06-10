@@ -43,5 +43,11 @@
     "expense": "Expense",
     "income": "Income",
     "investment": "Investment"
+  },
+  "bootstrap": {
+    "title": "Migrating local data",
+    "errorTitle": "Data migration failed",
+    "retry": "Retry",
+    "hint": "If the system asks for Keychain access, please choose \"Always Allow\"."
   }
 }

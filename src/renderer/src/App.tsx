@@ -1,6 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
-import { ConfigProvider, Spin, theme } from 'antd'
+import { useTranslation } from 'react-i18next'
+import { Button, ConfigProvider, Result, Spin, theme } from 'antd'
+import type { BootstrapStatus } from './api/moneta-api'
 import zhCN from 'antd/locale/zh_CN'
 import enUS from 'antd/locale/en_US'
 import Layout from './components/Layout'
@@ -55,17 +57,82 @@ function MainApp(): React.JSX.Element {
   )
 }
 
+/** 首启数据迁移失败时的错误屏（旧 Electron 秘密迁移到 OS keyring） */
+function BootstrapErrorScreen({
+  message,
+  onRetry
+}: {
+  message?: string
+  onRetry: () => void
+}): React.JSX.Element {
+  const { t } = useTranslation('common')
+  return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Result
+        status="error"
+        title={t('bootstrap.errorTitle')}
+        subTitle={
+          <>
+            <div>{message}</div>
+            <div style={{ marginTop: 8 }}>{t('bootstrap.hint')}</div>
+          </>
+        }
+        extra={
+          <Button type="primary" onClick={onRetry}>
+            {t('bootstrap.retry')}
+          </Button>
+        }
+      />
+    </div>
+  )
+}
+
 function App(): React.JSX.Element {
   const { initialized: authInitialized, hasPIN, isLocked, initialize: initializeAuth } = useAuthStore()
   const { language, initialized: i18nInitialized, initialize: initializeI18n } = useI18nStore()
   const { isDark, initialized: themeInitialized, initialize: initializeTheme } = useThemeStore()
+  const [bootstrap, setBootstrap] = useState<BootstrapStatus>({ state: 'pending' })
 
-  // 初始化：加载认证、语言和主题配置
+  // 等待后端首启迁移完成（keychain 授权等），完成前不初始化依赖秘密的 store
   useEffect(() => {
-    initializeAuth()
+    let cancelled = false
+    const poll = async (): Promise<void> => {
+      try {
+        const status = await window.api.app.bootstrapStatus()
+        if (cancelled) return
+        if (status.state === 'pending') {
+          setTimeout(poll, 300)
+          return
+        }
+        setBootstrap(status)
+      } catch {
+        if (!cancelled) setTimeout(poll, 500)
+      }
+    }
+    void poll()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // 语言和主题不依赖秘密，可立即初始化
+  useEffect(() => {
     initializeI18n()
     initializeTheme()
-  }, [initializeAuth, initializeI18n, initializeTheme])
+  }, [initializeI18n, initializeTheme])
+
+  // 认证依赖 keyring，必须等迁移完成
+  useEffect(() => {
+    if (bootstrap.state === 'ready') {
+      initializeAuth()
+    }
+  }, [bootstrap.state, initializeAuth])
+
+  const handleRetryMigration = useCallback(async () => {
+    setBootstrap({ state: 'pending' })
+    const status = await window.api.app.retryMigration()
+    setBootstrap(status)
+  }, [])
 
   // 语言变化时同步 dayjs locale
   useEffect(() => {
@@ -81,8 +148,13 @@ function App(): React.JSX.Element {
     return localeMap[language as keyof typeof localeMap] || zhCN
   }, [language])
 
-  // 等待三个初始化都完成
-  if (!authInitialized || !i18nInitialized || !themeInitialized) {
+  // 首启迁移失败：显示错误屏（需要 i18n 就绪以显示文案）
+  if (bootstrap.state === 'error' && i18nInitialized) {
+    return <BootstrapErrorScreen message={bootstrap.message} onRetry={handleRetryMigration} />
+  }
+
+  // 等待迁移与三个初始化都完成
+  if (bootstrap.state !== 'ready' || !authInitialized || !i18nInitialized || !themeInitialized) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Spin size="large" />

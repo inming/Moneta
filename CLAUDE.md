@@ -8,59 +8,45 @@ Moneta 是一款面向个人/家庭的桌面端记账软件，支持手动录入
 
 > **开发模式**：个人独立开发项目，直接在 `main` 分支上开发和推送，无需创建 PR。
 
+> **架构**：本项目已从 Electron 整体迁移到 **Tauri 2.x**（后端全量 Rust 重写）。前端 React 代码通过 `src/renderer/src/api/` 适配层保持 `window.api` 形状基本零改动。修改后端/IPC/打包前请先读 [docs/architecture/tauri-architecture.md](docs/architecture/tauri-architecture.md)。
+
 ## 环境要求
 
 | 依赖 | 版本 | 说明 |
 |------|------|------|
 | Node.js | 24+ (LTS) | 见 `.nvmrc` 和 `package.json` engines |
-| Python | 3.x | 需要安装 setuptools 包 |
-| setuptools | - | `pip install setuptools` |
-| Visual Studio Build Tools | 2022 | Windows 编译原生模块需要 |
-
-**快速配置**：
-```bash
-# macOS / Linux / WSL2
-bash scripts/setup-env.sh
-
-# Windows
-scripts\setup-env.bat
-```
-
-详细说明见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+| Rust | stable | Tauri 后端 + MCP sidecar；`rustup` 安装 |
+| Visual Studio Build Tools | 2022 | Windows 编译 Rust 原生依赖需要 |
 
 ## 测试与发布
 
 ### 开发与构建
 
 ```bash
-npm run dev        # 开发模式
-npm run build      # 生产构建
+npm run dev:tauri      # 开发模式（Tauri 窗口 + vite HMR）
+npm run tauri build    # 生产打包（macOS DMG / Windows NSIS）
+npm run build:sidecar  # 单独构建 MCP sidecar 二进制
 ```
 
-### Windows 打包
+> 开发期保护真实数据：`MONETA_DATA_DIR=/tmp/xxx npm run dev:tauri` 把数据目录指向临时副本，绝不直接碰 `~/Library/Application Support/Moneta`。
 
-```powershell
-# 打包为 Windows 安装程序（NSIS）
-npm run package:win
-
-# 输出目录
-dist/Moneta Setup x.x.x.exe       # 安装程序
-dist/win-unpacked/                # 免安装版
-```
-
-### macOS 打包
+### 测试
 
 ```bash
-# 在 macOS 上运行
-npm run package:mac
-
-# 输出
-dist/Moneta-x.x.x.dmg
+npm run test                                    # 前端 vitest（excel 往返）
+cd src-tauri && MONETA_KEYRING=mock cargo test  # Rust 单测
+MONETA_MINIO=1 cargo test sync::integration     # 同步集成测试（需本地 MinIO）
 ```
 
-### GitHub Actions 自动构建
+### 打包产物
 
-项目配置了 GitHub Actions 自动构建（`.github/workflows/build.yml`），推送标签后自动编译 Windows 和 macOS 版本。
+- macOS：`src-tauri/target/release/bundle/dmg/Moneta_x.x.x_*.dmg`
+- Windows：`src-tauri/target/release/bundle/nsis/Moneta_x.x.x_*-setup.exe`
+
+### GitHub Actions
+
+- `.github/workflows/ci.yml`：push/PR 跑 tsc + vitest + clippy(-D warnings) + cargo test
+- `.github/workflows/release.yml`：推送 `v*` 标签触发 tauri-action，编译 macOS（aarch64/x86_64）+ Windows，产出草稿 Release
 
 ## 编码规范
 
@@ -88,33 +74,25 @@ dist/Moneta-x.x.x.dmg
 | 类型/接口 | PascalCase | `Transaction`, `CategoryType` |
 | 数据库表 | snake_case 复数 | `transactions`, `categories` |
 | 数据库列 | snake_case | `category_id`, `created_at` |
-| IPC 频道 | kebab-case + 命名空间 | `db:transaction:create` |
+| Tauri 命令 | snake_case | `transaction_create`, `operator_delete` |
 
-### IPC 通道命名规范
+### Tauri 命令规范
 
-通道名格式：`<namespace>:<entity>:<action>`
+前端通过 `window.api.<ns>.<method>()` 调用，适配层（`src/renderer/src/api/index.ts`）转为 `invoke('<command>', args)`。命名：实体_动作，如 `transaction_list`、`category_reorder`、`sync_now`。
 
-| 命名空间 | 用途 | 示例 |
-|----------|------|------|
-| `db` | 数据库 CRUD 操作 | `db:category:create`, `db:operator:delete` |
-| `io` | 导入导出 | `io:import:preview`, `io:export:execute` |
-| `mcp` | MCP 集成 | `mcp:start-server`, `mcp:import:confirm` |
-| `auth` | 认证与安全 | `auth:pin:verify`, `auth:auto-lock:set` |
-| `dialog` | 系统对话框 | `dialog:open-file`, `dialog:save-file` |
+新增命令时需同步修改三处：
+1. `src-tauri/src/commands/<entity>.rs` — `#[tauri::command] async fn` 实现
+2. `src-tauri/src/lib.rs` — 在 `invoke_handler![...]` 注册
+3. `src/renderer/src/api/index.ts` + `moneta-api.ts` — 适配层方法 + 类型
 
-常用 action：`list`、`list-all`（含停用数据）、`create`、`update`、`delete`、`reorder`
-
-新增 IPC 通道时需同步修改三处：
-1. `src/shared/ipc-channels.ts` — 通道常量定义
-2. `src/main/ipc/<entity>.ipc.ts` — 主进程 handler
-3. `src/preload/index.ts` + `index.d.ts` — 渲染进程 API 桥接及类型声明
+事件推送用 `AppHandle::emit("<event>", payload)`，前端经 `listen()` 订阅（适配层已封装为同步取消签名）。JSON 字段名以 `src/shared/types/*.ts` 为真源，Rust struct 显式 `#[serde(rename)]`。
 
 ### 文件组织
 
 - 每个组件一个文件，如果组件有专属子组件可建同名目录
 - 页面级组件放在 `src/renderer/src/pages/<PageName>/` 目录下，入口为 `index.tsx`，子组件同目录平铺（如 `Settings/CategoryManager.tsx`）
 - 共享类型放在 `src/shared/types/`，并在 `index.ts` 中统一导出
-- 业务逻辑尽量放在主进程（`src/main/services/`），渲染进程保持轻量
+- 业务逻辑放在 Rust 后端（`src-tauri/src/`：repo/service/command 分层），渲染进程保持轻量
 
 ## Git 提交规范
 
@@ -134,10 +112,10 @@ chore: 升级 electron-vite 版本
 
 ## 数据库迁移约定
 
-- 迁移文件放在 `src/main/database/migrations/`
+- 迁移文件放在 `src-tauri/migrations/`（`include_dir!` 编译期嵌入二进制）
 - 文件名格式：`001_create_transactions.sql`（三位数序号 + 描述）
 - 每个迁移文件包含 `-- up` 和 `-- down` 两部分（**注意**：使用 `-- up` 和 `-- down` 作为标记，后面不加冒号）
-- 应用启动时自动执行未运行的迁移
+- 应用启动时自动执行未运行的迁移（`src-tauri/src/db/migrator.rs`）
 - 迁移必须是幂等的，先检查再执行
 
 ### SQL 语法注意事项
@@ -177,7 +155,8 @@ created_at DATETIME DEFAULT datetime('now', 'localtime')
 
 | 功能 | 文档 | 关键决策 |
 |------|------|---------|
-| 数据库加密 | [`docs/architecture/database-encryption.md`](docs/architecture/database-encryption.md) | 不用 sqlcipher_export，JS 逐表复制；类型统一用 better-sqlite3-multiple-ciphers |
+| **Tauri 架构** | [`docs/architecture/tauri-architecture.md`](docs/architecture/tauri-architecture.md) | Rust 后端 + window.api 适配层；命令/事件约定；数据零拷贝接管；秘密迁移到 keyring |
+| 数据库加密 | [`docs/architecture/database-encryption.md`](docs/architecture/database-encryption.md) | 实际是 sqlite3mc chacha20（非 SQLCipher）；Rust 端 vendor libsqlite3-sys 顶替 amalgamation |
 | 多语言 i18n | [`docs/architecture/i18n.md`](docs/architecture/i18n.md) | key 层级命名；用户数据不翻译；JSON 改后需强刷 |
 | MCP 架构 | [`docs/architecture/mcp.md`](docs/architecture/mcp.md) | stdio+HTTP 分离架构；端口 9615；共享 ImportConfirm 组件 |
 | 统计报表 | [`docs/architecture/statistics.md`](docs/architecture/statistics.md) | 图例独显交互；右键下钻；SQL pivot 在 JS 层转换 |

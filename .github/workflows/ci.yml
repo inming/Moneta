@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.web.json
+      - name: Test (vitest)
+        run: npm run test
+
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Clippy
+        working-directory: src-tauri
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        working-directory: src-tauri
+        env:
+          MONETA_KEYRING: mock
+        run: cargo test --workspace

@@ -4,8 +4,7 @@ import { Spin, message, Alert } from 'antd'
 import { useTranslation } from 'react-i18next'
 import dayjs, { type Dayjs } from 'dayjs'
 import ImportConfirm, { type ImportRow } from '../../components/ImportConfirm'
-import type { MCPSendTransactionsParams } from '../../../mcp/types'
-import type { CreateTransactionDTO, ImportDraft } from '@shared/types'
+import type { MCPSendTransactionsParams, CreateTransactionDTO, ImportDraft } from '@shared/types'
 import { useDraftStore } from '../../stores/draft.store'
 
 export default function MCPImport(): React.JSX.Element {
@@ -153,9 +152,7 @@ export default function MCPImport(): React.JSX.Element {
                 }
               }
             }, 300)
-            
-            // 清理函数
-            return () => clearInterval(interval)
+            // 轮询通过 maxAttempts / importedRef 自行终止（promise 回调返回值不会被 React 当作清理函数）
           }
         })
       }

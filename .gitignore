@@ -13,4 +13,4 @@ Thumbs.db
 # Docker 构建缓存
 .cache/
 .npm/
-.docker-home/
+.docker-home/*.tsbuildinfo

@@ -5,6 +5,7 @@ export type { CrossTableParams, CrossTableData, CrossTableRow, SummaryParams, Su
 export type { VerifyPINResult, ChangePINResult } from './auth'
 export type { ImportDraft, DraftSource, DraftTransaction, DraftData, DraftSummary, SaveDraftDTO, MCPDraftSpecific } from './import-draft'
 export type { ThemeMode } from './theme'
+export type { MCPTransaction, MCPSendTransactionsParams } from './mcp'
 export type {
   S3Provider, S3Config, SyncConfig, SyncCursor,
   SaveSyncConfigDTO, SetCredentialsDTO, SyncTestResult,

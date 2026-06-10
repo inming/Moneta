@@ -17,7 +17,7 @@ export default function FilterBar({
 }: FilterBarProps): React.JSX.Element {
   const { t } = useTranslation(['statistics', 'common'])
 
-  const yearOptions = []
+  const yearOptions: { value: number; label: string }[] = []
   for (let y = maxYear; y >= minYear; y--) {
     yearOptions.push({ value: y, label: t('statistics:filter.yearLabel', { year: y }) })
   }

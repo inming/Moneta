@@ -143,8 +143,9 @@ const PinInput = forwardRef<PinInputRef, PinInputProps>(function PinInput(
             borderRadius: 8,
             outline: 'none',
             transition: 'border-color 0.2s',
+            // 非标准属性：把输入显示为圆点（密码样式）
             WebkitTextSecurity: 'disc'
-          }}
+          } as React.CSSProperties}
           onFocus={(e): void => {
             e.target.style.borderColor = '#1677ff'
           }}

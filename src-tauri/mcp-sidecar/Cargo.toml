@@ -1,0 +1,18 @@
+[package]
+name = "moneta-mcp"
+version = "0.5.0"
+description = "Moneta MCP stdio server（Claude Desktop 接入，转发到主应用 HTTP 桥）"
+edition = "2021"
+license = "MIT"
+
+[[bin]]
+name = "moneta-mcp"
+path = "src/main.rs"
+
+[dependencies]
+rmcp = { version = "1", features = ["server", "transport-io"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "1"

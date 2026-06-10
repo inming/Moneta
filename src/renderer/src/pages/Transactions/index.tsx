@@ -112,7 +112,7 @@ export default function Transactions(): React.JSX.Element {
 
   // Date range filter
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
-  const dateRangeDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const dateRangeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]))
   const operatorMap = new Map(operators.map((o) => [o.id, o.name]))
@@ -944,7 +944,8 @@ export default function Transactions(): React.JSX.Element {
             size="small"
             value={dateRange}
             onChange={(dates) => handleDateRangeChange(dates as [Dayjs | null, Dayjs | null] | null)}
-            presets={rangePresets}
+            // "全部" 预设的 value 为 null（清空范围）；antd 类型不接受 null，但运行时正常
+            presets={rangePresets as React.ComponentProps<typeof RangePicker>['presets']}
             format="YYYY-MM-DD"
             placeholder={[t('transactions:placeholders.dateRangeStart'), t('transactions:placeholders.dateRangeEnd')]}
             disabled={editingKey !== null || newRow !== null}

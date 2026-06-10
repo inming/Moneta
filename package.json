@@ -2,38 +2,32 @@
   "name": "moneta",
   "version": "0.1.0",
   "description": "个人/家庭桌面端记账软件",
-  "main": "./out/main/index.js",
   "homepage": "https://github.com/user/moneta",
   "author": "",
   "license": "MIT",
+  "type": "module",
   "engines": {
     "node": ">=24.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "preview": "electron-vite preview",
-    "postinstall": "electron-builder install-app-deps",
-    "package": "electron-vite build && electron-builder --config",
-    "package:win": "npm run rebuild:win && electron-vite build && electron-builder --win --config",
-    "package:win:docker": "mkdir -p .docker-home && docker run --rm --user $(id -u):$(id -g) -e HOME=/project/.docker-home -e ELECTRON_CACHE=/project/.cache -e npm_config_cache=/project/.npm -v $(pwd):/project -w /project electronuserland/builder:wine bash -c 'npm run build && npx electron-builder --win --x64 --config.npmRebuild=true'",
-    "package:mac": "electron-vite build && electron-builder --mac --config",
-    "rebuild:win": "electron-rebuild --platform=win32 --arch=x64 --force",
+    "dev": "tauri dev",
+    "dev:renderer": "vite",
+    "dev:tauri": "tauri dev",
+    "build:renderer": "vite build",
+    "build:sidecar": "node scripts/build-sidecar.mjs",
+    "build:full": "npm run build:renderer && npm run build:sidecar",
+    "tauri": "tauri",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
-    "@aws-sdk/client-s3": "^3.1039.0",
-    "@aws-sdk/lib-storage": "^3.1039.0",
-    "@electron-toolkit/utils": "^3.0.0",
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@tauri-apps/api": "^2.11.0",
     "antd": "^5.22.0",
-    "better-sqlite3-multiple-ciphers": "^12.8.0",
     "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.2",
@@ -46,49 +40,14 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@electron-toolkit/eslint-config-ts": "^2.0.0",
-    "@electron-toolkit/tsconfig": "^1.0.1",
-    "@electron/rebuild": "^3.7.2",
-    "@types/better-sqlite3": "^7.6.12",
+    "@tauri-apps/cli": "^2.11.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
-    "electron-vite": "^2.3.0",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.2",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
-  },
-  "build": {
-    "appId": "com.moneta.app",
-    "productName": "Moneta",
-    "directories": {
-      "buildResources": "resources",
-      "output": "dist"
-    },
-    "files": [
-      "out/**/*",
-      "resources/**/*"
-    ],
-    "asarUnpack": [
-      "out/main/mcp.js",
-      "node_modules/better-sqlite3-multiple-ciphers/**"
-    ],
-    "npmRebuild": true,
-    "buildDependenciesFromSource": true,
-    "win": {
-      "target": "nsis",
-      "icon": "resources/logo.ico"
-    },
-    "mac": {
-      "target": "dmg"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
   }
 }

@@ -1,0 +1,5 @@
+# Rust 构建产物
+/target/
+
+# sidecar 二进制（由 scripts/build-sidecar.mjs 生成）
+/binaries/

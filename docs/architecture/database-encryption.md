@@ -1,6 +1,11 @@
 # 数据库加密架构（v0.7）
 
-> 从 CLAUDE.md 拆分。修改加密、数据库连接、迁移相关代码时请先阅读本文档。
+> ⚠️ **本文档描述的是 Electron 时代的实现。** 项目已迁移到 Tauri（Rust 后端），关键事实有更正：
+> - 实测旧 `moneta.db` 的真实格式是 **SQLite3MultipleCiphers 默认的 chacha20**（旧 connection.ts 把 `cipher='sqlcipher'` pragma 写在 `key` 之后从未生效，库实际从未用 SQLCipher 算法）。
+> - Rust 端 vendor `libsqlite3-sys` 并以 sqlite3mc 2.3.3 amalgamation 顶替捆绑 sqlite3（`src-tauri/vendor/`），打开序列：`cipher='chacha20'` → `key="x'<hex>'"`。已实测 Node↔Rust 双向读写互通。
+> - 密钥不再用 Electron safeStorage，改存 OS keyring；首启从旧 config.json 兼容迁移。
+>
+> 详见 [tauri-architecture.md](tauri-architecture.md)。以下为历史实现记录。
 
 ## 技术选型
 

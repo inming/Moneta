@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Moneta",
+  "version": "0.1.0",
+  "identifier": "com.moneta.app",
+  "build": {
+    "beforeDevCommand": "npm run dev:renderer",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build:full",
+    "frontendDist": "../dist/renderer"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Moneta",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "nsis"],
+    "externalBin": ["binaries/moneta-mcp"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

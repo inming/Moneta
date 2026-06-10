@@ -24,11 +24,12 @@ scripts\setup-env.bat
 
 | 依赖 | 版本要求 | 说明 |
 |------|---------|------|
-| **Node.js** | 24+ (LTS) | 锁定主版本，允许小版本更新 |
+| **Node.js** | 24+ (LTS) | 渲染层（vite + React） |
 | **npm** | 10.x+ | 随 Node.js 安装 |
-| **Python** | 3.x | 推荐 3.11+，需要安装 setuptools |
-| **setuptools** | - | Python 包，编译原生模块必需 |
+| **Rust** | stable | Tauri 后端 + MCP sidecar，`rustup` 安装 |
 | **Git** | 2.x+ | 版本控制 |
+
+> 本项目已迁移到 **Tauri 2.x**（Rust 后端），不再需要 Node 原生模块编译链（Python / setuptools / node-gyp）。开发命令见 [CLAUDE.md](../CLAUDE.md#测试与发布)。
 
 ### 平台特定依赖
 
