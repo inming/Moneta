@@ -12,7 +12,7 @@
 
 ### 用途
 
-在 WSL2 中编辑代码，但需要到 Windows 上运行测试（Electron 需要 Windows 原生依赖）。
+在 WSL2 中编辑代码，但需要到 Windows 上运行/打包（Tauri Windows 构建需要 MSVC 工具链与原生环境）。
 
 ### 使用
 
@@ -36,10 +36,10 @@ npm install
 
 ```powershell
 cd C:\Users\<username>\workspace\Moneta  # 替换为你的实际路径
-npm run dev
+npm run dev:tauri
 ```
 
 ### 说明
 
-- 同步时排除：`node_modules/`、`dist/`、`out/`、`.git/`、`.vscode/`、`scripts/`、`*.log`
+- 同步时排除：`node_modules/`、`dist/`、`src-tauri/target/`、`.git/`、`.vscode/`、`scripts/`、`*.log`
 - Windows 的依赖和构建产物不会被覆盖

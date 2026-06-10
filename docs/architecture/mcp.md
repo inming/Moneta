@@ -2,6 +2,12 @@
 
 > 从 CLAUDE.md 拆分。修改 MCP Server、HTTP Server、MCP 配置或导入流程时请先阅读本文档。
 
+> ⚠️ **已迁移到 Tauri，文中 Electron 路径与实现已变更**（业务流程仍有效）：
+> - MCP HTTP 桥：`src/main/services/mcp-http-server.ts`（node http）→ `src-tauri/src/mcp/http_server.rs`（axum，绑 127.0.0.1:9615）
+> - MCP 配置/导入 IPC → `src-tauri/src/commands/mcp.rs` + `src-tauri/src/mcp/claude_config.rs`
+> - stdio MCP server：`node out/main/mcp.js --mcp` → **Rust sidecar 二进制** `moneta-mcp --mcp`（`src-tauri/mcp-sidecar/`，rmcp 实现，与主程序同目录，**用户机器无需 Node**）
+> - 三个工具（send_transactions/get_categories/get_operators）与端口 9615 不变。详见 [tauri-architecture.md](tauri-architecture.md)
+
 ## 整体架构
 
 MCP 功能采用**分离式架构**：MCP Server 作为独立进程通过 stdio 与 Claude Desktop 通信，通过 HTTP 与 Moneta 主应用通信。

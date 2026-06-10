@@ -40,88 +40,43 @@ scripts\setup-env.bat
   ```
 
 #### Windows
-- **Visual Studio Build Tools 2022**
+- **Visual Studio Build Tools 2022**（Rust MSVC 工具链编译需要）
   - 下载：https://visualstudio.microsoft.com/downloads/
   - 勾选「使用 C++ 的桌面开发」
-  - 或运行：`npm install -g windows-build-tools`
-
-- **Python setuptools**（必需）
-  ```cmd
-  pip install setuptools
-  ```
 
 #### Linux / WSL2
-- **build-essential**
-  ```bash
-  sudo apt-get install build-essential
-  ```
+- Tauri 系统依赖（webkit2gtk 等），见 https://tauri.app/start/prerequisites/
 
 ---
 
 ## 安装步骤
 
-### 1. 安装 Node.js
+### 1. 安装 Node.js（前端）
 
-**推荐使用 nvm（版本管理器）：**
+**推荐使用 nvm：**
 
 macOS / Linux / WSL2:
 ```bash
-# 安装 nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-
-# 重启终端后
-nvm install 24
-nvm use 24
+nvm install 24 && nvm use 24
 ```
 
-Windows:
-```cmd
-# 下载 nvm-windows: https://github.com/coreybutler/nvm-windows/releases
-# 安装后运行:
-nvm install 24
-nvm use 24
-```
+Windows: 下载 [nvm-windows](https://github.com/coreybutler/nvm-windows/releases) 后 `nvm install 24 && nvm use 24`，或直接装 [Node.js LTS](https://nodejs.org/)。
 
-**或直接下载最新 LTS：**
-- https://nodejs.org/ (下载 LTS 版本)
+### 2. 安装 Rust（后端）
 
-### 2. 安装 Python 和 setuptools
-
-**macOS (Homebrew):**
 ```bash
-brew install python
-pip3 install setuptools
-```
-
-**Windows:**
-- 下载：https://www.python.org/downloads/
-- 勾选「Add Python to PATH」
-- 安装完成后运行：
-  ```cmd
-  pip install setuptools
-  ```
-
-**Linux / WSL2:**
-```bash
-sudo apt-get update
-sudo apt-get install python3 python3-pip
-pip3 install setuptools
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# Windows: 下载 https://rustup.rs/ 的安装器
 ```
 
 ### 3. 验证环境
 
 ```bash
-# Node.js
-node -v     # 应显示 v24.x.x
-
-# npm
-npm -v      # 应显示 10.x+
-
-# Python
-python --version    # 应显示 Python 3.x
-
-# setuptools
-python -c "import setuptools; print(setuptools.__version__)"
+node -v        # v24.x.x
+npm -v         # 10.x+
+rustc --version  # 1.x
+cargo --version
 ```
 
 ### 4. 克隆项目并安装依赖
@@ -129,56 +84,24 @@ python -c "import setuptools; print(setuptools.__version__)"
 ```bash
 git clone <repo-url>
 cd Moneta
-npm install
+npm install     # 前端依赖（Rust 依赖在首次 cargo build / tauri dev 时拉取）
 ```
 
 ---
 
 ## 常见问题
 
-### ❌ `ModuleNotFoundError: No module named 'distutils'`
+### ❌ `tauri dev` 首次启动很慢
 
-**原因**：缺少 setuptools 包
+首次会编译整套 Rust 依赖（含 sqlite3mc amalgamation、aws-sdk），需几分钟；之后增量编译很快。
 
-**解决**：
-```bash
-# 安装 setuptools
-pip install setuptools
+### ❌ Windows `link.exe not found` / MSVC 缺失
 
-# 或使用 pip3
-pip3 install setuptools
-```
+安装 Visual Studio Build Tools 2022，勾选「使用 C++ 的桌面开发」。
 
-### ❌ `gyp ERR! find VS` (Windows)
+### ❌ 数据库打不开 / 钥匙串授权弹窗
 
-**原因**：缺少 Visual Studio Build Tools
-
-**解决**：
-1. 安装 Visual Studio 2022 Community
-2. 勾选「使用 C++ 的桌面开发」
-3. 或运行：`npm install -g windows-build-tools`
-
-### ❌ `better-sqlite3` 编译失败
-
-**解决**：
-```bash
-# 清理并重新安装
-rm -rf node_modules package-lock.json
-npm install
-
-# Windows:
-rmdir /s /q node_modules
-del package-lock.json
-npm install
-```
-
-### ❌ `EACCES` 权限错误 (macOS/Linux)
-
-**解决**：
-```bash
-# 修复 npm 权限
-sudo chown -R $(whoami) ~/.npm
-```
+首启会从旧 Electron 数据迁移密钥到 OS keyring，macOS 会弹钥匙串授权——选「始终允许」。开发期想保护真实数据，用 `MONETA_DATA_DIR=/tmp/xxx` 指向临时目录。
 
 ---
 
@@ -186,23 +109,18 @@ sudo chown -R $(whoami) ~/.npm
 
 ```bash
 # 启动开发环境
-npm run dev
+npm run dev:tauri
 
-# 构建
-npm run build
-
-# 打包
-npm run package          # 当前平台
-npm run package:mac      # macOS DMG
-npm run package:win      # Windows NSIS
+# 打包（macOS DMG / Windows NSIS）
+npm run tauri build
 
 # 代码检查
-npm run lint             # ESLint
-npm run typecheck        # TypeScript 类型检查
+npm run typecheck                          # 前端 TS 类型检查
+cd src-tauri && cargo clippy --workspace   # Rust lint
 
 # 测试
-npm run test             # 运行测试
-npm run test:watch       # 监听模式
+npm run test                               # 前端 vitest
+cd src-tauri && MONETA_KEYRING=mock cargo test  # Rust 测试
 ```
 
 ---
@@ -211,42 +129,26 @@ npm run test:watch       # 监听模式
 
 ### 换新电脑时
 
-1. **确保已安装**：
-   - Git
-   - Node.js 24+（通过 nvm 或直接安装 LTS）
-   - Python 3.x + setuptools
-
+1. **确保已安装**：Git、Node.js 24+、Rust（rustup）
 2. **克隆项目**：
    ```bash
-   git clone <repo-url>
-   cd Moneta
+   git clone <repo-url> && cd Moneta
    ```
-
 3. **运行自动化脚本**：
    ```bash
-   # macOS/Linux/WSL2
-   bash scripts/setup-env.sh
-
-   # Windows
-   scripts\setup-env.bat
+   bash scripts/setup-env.sh   # macOS/Linux/WSL2
+   scripts\setup-env.bat       # Windows
    ```
-
-4. **开始开发**：
-   ```bash
-   npm run dev
-   ```
+4. **开始开发**：`npm run dev:tauri`
 
 ### 版本锁定文件说明
 
 | 文件 | 作用 |
 |------|------|
-| `.nvmrc` | Node.js 主版本锁定（`24`），nvm 自动读取最新的 24.x |
-| `package.json` engines | Node.js 版本范围要求（`>=24.0.0`） |
-| `package-lock.json` | npm 依赖精确版本锁定 |
-
-**注**：
-- Node.js 只锁定主版本号，允许获取安全更新和小版本改进
-- Python 版本不锁定，但需要安装 setuptools 包
+| `.nvmrc` | Node.js 主版本锁定（`24`） |
+| `package.json` engines | Node.js 版本范围（`>=24.0.0`） |
+| `package-lock.json` | npm 依赖精确锁定 |
+| `src-tauri/Cargo.lock` | Rust 依赖精确锁定 |
 
 ---
 

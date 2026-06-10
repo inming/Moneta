@@ -1,38 +1,39 @@
 # Moneta — 技术架构文档
 
+> ⚠️ **本文档部分内容描述的是 Electron 时代实现。** 项目已整体迁移到 **Tauri 2.x**（后端 Rust 重写）。进程模型、技术选型、IPC、目录结构均已更新见 [architecture/tauri-architecture.md](architecture/tauri-architecture.md)。以下"目录结构/数据流/IPC"等小节中涉及 `src/main`、`preload`、`better-sqlite3`、`safeStorage` 的描述为历史记录，对应的 Rust 实现位于 `src-tauri/src/`。
+
 ## 1. 架构总览
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Electron Application                     │
+│                       Tauri Application                      │
 │                                                              │
-│  ┌─────────────────────┐         ┌────────────────────────┐ │
-│  │   Renderer Process   │   IPC   │     Main Process       │ │
-│  │                      │ ◄─────► │                        │ │
-│  │  React 18 + Zustand  │         │  Services + DB Layer   │ │
+│  ┌─────────────────────┐  invoke  ┌────────────────────────┐ │
+│  │   WebView (前端)      │ ◄─────► │   Rust 后端 (src-tauri) │ │
+│  │                      │  event  │                        │ │
+│  │  React 18 + Zustand  │         │  commands / services   │ │
 │  │  Ant Design + ECharts│         │                        │ │
 │  │                      │         │  ┌──────────────────┐  │ │
-│  │  ┌────────────────┐  │         │  │  better-sqlite3   │  │ │
-│  │  │  Pages         │  │         │  │                    │  │ │
+│  │  ┌────────────────┐  │         │  │  rusqlite +       │  │ │
+│  │  │  Pages         │  │         │  │  sqlite3mc        │  │ │
 │  │  │  Components    │  │         │  │  ┌──────────────┐ │  │ │
-│  │  │  Stores        │  │         │  │  │  SQLite DB   │ │  │ │
+│  │  │  Stores        │  │         │  │  │  加密 SQLite  │ │  │ │
 │  │  │  Hooks         │  │         │  │  │  (本地文件)   │ │  │ │
-│  │  └────────────────┘  │         │  │  └──────────────┘ │  │ │
-│  └─────────────────────┘         │  └──────────────────┘  │ │
-│                                   │                        │ │
-│         ┌──────────┐              │  ┌──────────────────┐  │ │
-│         │ Preload  │              │  │  AI Service      │  │ │
-│         │ Script   │              │  │  (外部 API 调用)  │  │ │
-│         └──────────┘              │  └──────────────────┘  │ │
+│  │  │  api/ 适配层    │  │         │  │  └──────────────┘ │  │ │
+│  │  └────────────────┘  │         │  └──────────────────┘  │ │
+│  └─────────────────────┘         │  + sync / mcp / keyring │ │
 │                                   └────────────────────────┘ │
+│                       ┌─────────────────────────┐            │
+│                       │ moneta-mcp sidecar (Rust)│            │
+│                       └─────────────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 **核心设计原则**：
 
-- **主进程负责数据**：所有数据库操作、文件 I/O、外部 API 调用均在主进程完成
-- **渲染进程负责 UI**：仅处理界面渲染和用户交互
-- **IPC 桥接**：通过类型安全的 IPC 通道通信，preload 脚本暴露最小 API
+- **Rust 后端负责数据**：数据库操作、文件 I/O、同步、密钥管理均在 Rust 侧完成
+- **WebView 负责 UI**：仅处理界面渲染和用户交互
+- **命令/事件桥接**：前端 `window.api` 适配层转为 Tauri `invoke`/`listen`（命名 `<entity>_<action>`）
 
 ---
 
@@ -40,15 +41,16 @@
 
 | 技术 | 选型 | 理由 |
 |------|------|------|
-| 桌面框架 | Electron | 成熟稳定，React 生态完善，跨 Windows/macOS |
-| 构建工具 | electron-vite | 为 Electron 优化的 Vite 配置，HMR 快速，开发体验好 |
+| 桌面框架 | Tauri 2.x | 安装包小（~15MB）、无 Node 运行时、Rust 后端性能与安全 |
+| 构建工具 | vite（前端）+ cargo（后端） | vite HMR + Tauri CLI |
 | 前端框架 | React 18 | 生态丰富、社区活跃、函数组件 + Hooks 模式清晰 |
 | 状态管理 | Zustand | 轻量、TS 友好、无 boilerplate，适合中小型应用 |
 | UI 组件 | Ant Design 5 | 桌面端风格、组件丰富（Table、Form、DatePicker 等） |
 | 图表 | Apache ECharts | 功能强大，支持交叉表热力图、饼图、折线图、柱状图 |
-| 数据库 | better-sqlite3 | 同步 API 在 Electron 主进程中使用简单可靠，性能优秀 |
-| 语言 | TypeScript | 严格类型检查，减少运行时错误 |
-| 打包 | electron-builder | 成熟的跨平台打包方案，支持自动更新 |
+| 数据库 | rusqlite + sqlite3mc | chacha20 加密，与旧库格式互通（vendor amalgamation） |
+| 语言 | TypeScript（前端）+ Rust（后端） | 严格类型检查，减少运行时错误 |
+| 密钥存储 | OS keyring | macOS Keychain / Windows Credential Manager |
+| 打包 | tauri bundler | DMG / NSIS，CI 经 tauri-action |
 
 ---
 
@@ -432,8 +434,9 @@ stores/
 
 ### 8.1 工具链
 
-- **开发**：`electron-vite` — 集成 Vite 的 Electron 开发环境
-- **打包**：`electron-builder` — 生成安装程序
+- **开发**：`vite`（前端 HMR）+ `tauri dev`（Rust 后端 + WebView）
+- **打包**：`tauri build` → DMG / NSIS；CI 经 `tauri-action`（见 `.github/workflows/`）
+- **sidecar**：`scripts/build-sidecar.mjs` 构建 `moneta-mcp` 二进制（externalBin）
 
 ### 8.2 平台输出
 

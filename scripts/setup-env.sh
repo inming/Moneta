@@ -73,33 +73,16 @@ fi
 
 echo ""
 
-# 2. 检查 Python 和 setuptools
-echo "🐍 检查 Python..."
+# 2. 检查 Rust 工具链（Tauri 后端 + MCP sidecar）
+echo "🦀 检查 Rust..."
 
-if command -v python3 &> /dev/null; then
-    CURRENT_PYTHON_VERSION=$(python3 --version | awk '{print $2}')
-    echo "   当前版本: $CURRENT_PYTHON_VERSION"
-    echo -e "${GREEN}✅ Python 已安装${NC}"
-
-    # 检查 setuptools（编译原生模块需要）
-    echo "   检查 setuptools..."
-    if ! python3 -c "import setuptools" &> /dev/null; then
-        echo -e "${YELLOW}⚠️  setuptools 未安装${NC}"
-        echo "   正在安装 setuptools..."
-        pip3 install setuptools
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✅ setuptools 安装成功${NC}"
-        else
-            echo -e "${RED}❌ setuptools 安装失败${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${GREEN}✅ setuptools 已安装${NC}"
-    fi
+if command -v cargo &> /dev/null; then
+    echo "   当前版本: $(rustc --version)"
+    echo -e "${GREEN}✅ Rust 已安装${NC}"
 else
-    echo -e "${RED}❌ 未找到 Python3${NC}"
-    echo "   请安装 Python 3.x"
-    echo "   推荐版本: Python 3.11+"
+    echo -e "${RED}❌ 未找到 Rust（cargo）${NC}"
+    echo "   请安装 Rust（rustup）："
+    echo "   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
     exit 1
 fi
 
@@ -137,8 +120,7 @@ echo "  ✅ 环境配置完成！"
 echo "========================================${NC}"
 echo ""
 echo "🚀 可以开始开发了："
-echo "   npm run dev          # 启动开发环境"
-echo "   npm run build        # 构建"
-echo "   npm run package:mac  # 打包 macOS"
-echo "   npm run package:win  # 打包 Windows"
+echo "   npm run dev:tauri    # 启动开发环境（Tauri）"
+echo "   npm run tauri build  # 打包（macOS DMG / Windows NSIS）"
+echo "   cd src-tauri && cargo test  # Rust 测试"
 echo ""

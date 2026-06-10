@@ -81,10 +81,11 @@ rsync -avc --no-times --no-perms \
     --exclude=.git \
     --exclude=out \
     --exclude=dist \
+    --exclude=src-tauri/target \
+    --exclude=src-tauri/binaries \
     --exclude=*.log \
     --exclude=.vscode \
     --exclude=.cache \
-    --exclude=.electron-vite \
     --exclude=.turbo \
     --exclude=.DS_Store \
     --exclude=.docker-home \

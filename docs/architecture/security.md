@@ -2,6 +2,10 @@
 
 > 从 CLAUDE.md 拆分。修改 PIN 码、锁屏、自动锁屏、右键菜单组件时请先阅读本文档。
 
+> ⚠️ **已迁移到 Tauri**（算法与锁定逻辑不变，存储位置变更）：
+> - PIN 哈希仍为 `SHA-256(salt + pin)`、格式 `salt:hash`，但**不再用 Electron safeStorage 加密存 config.json**，改存 **OS keyring**（`src-tauri/src/secrets/`）。连续错误锁定/计数逻辑在 `src-tauri/src/services/pin.rs`
+> - 单窗口锁屏不变；首启从旧 config.json 的 safeStorage 密文兼容迁移 PIN 到 keyring。详见 [tauri-architecture.md](tauri-architecture.md)
+
 ## PIN 码存储
 
 - PIN 存储在 `config.json`（应用级配置），不存数据库（非业务数据）

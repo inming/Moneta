@@ -4,6 +4,13 @@
 >
 > 设计参考：`/Users/inming/workspace/Shibei` 的 `crates/shibei-sync`，按 Moneta 单库整体同步的需求做了简化。
 
+> ⚠️ **已迁移到 Tauri（Rust）**，同步状态机、manifest CAS、keyenv.json 格式、冲突流程**逐字段对齐保留**（保证与旧 Electron 版云端互通），但实现位置与依赖已变更：
+> - 整个 `src/main/services/sync/` → `src-tauri/src/sync/`（store/s3/manifest/key_envelope/db_package/engine/scheduler）
+> - S3 客户端：`@aws-sdk/client-s3`（Node）→ **`aws-sdk-s3`（Rust）**，且 client 设 `request/response_checksum = WhenRequired` 以兼容阿里云 OSS（默认 CRC32 校验头会被 OSS 拒）
+> - 凭证：Electron `safeStorage` → **OS keyring**；DB 密钥同理
+> - WAL checkpoint：`better-sqlite3` → rusqlite `PRAGMA wal_checkpoint(TRUNCATE)`
+> - 下文凡 `safeStorage` / `better-sqlite3` / `src/main` / `src/preload` / `ipc-channels` 均为历史描述。详见 [tauri-architecture.md](tauri-architecture.md)
+
 ## 设计目标
 
 - **多设备共享**：同一用户在 macOS / Windows 桌面之间共享账本数据
@@ -19,8 +26,8 @@
 | 端到端加密 | XChaCha20-Poly1305 包一层 | **复用 SQLCipher**，S3 上直接是密文 db |
 | 多端冲突 | 自动 LWW 合并 | **manifest CAS 抢占 + 用户选择** |
 | 移动端配对 | QR 配对 | 不需要（仅桌面） |
-| 凭证存储 | OS keystore（keyring crate） | **Electron `safeStorage`** |
-| 技术栈 | Rust + Tauri + rust-s3 | Node + Electron + `@aws-sdk/client-s3` |
+| 凭证存储 | OS keystore（keyring crate） | **OS keyring（keyring crate）** |
+| 技术栈 | Rust + Tauri + rust-s3 | **Rust + Tauri + `aws-sdk-s3`** |
 
 整库同步的核心代价：**两台设备同时改不能合并**。通过 manifest 版本号 + S3 条件写实现 CAS（compare-and-swap），冲突时让用户做选择。
 

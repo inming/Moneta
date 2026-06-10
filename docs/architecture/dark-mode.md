@@ -4,6 +4,8 @@
 > 最后更新：2026-03-31  
 > 状态：已实现
 
+> ⚠️ **已迁移到 Tauri**：CSS 变量 + AntD Token + matchMedia 系统主题监听等前端逻辑不变；持久化从 `src/main/ipc/theme.ipc.ts` 改为 Rust 命令 `theme_get`/`theme_set`（`src-tauri/src/commands/app.rs`，仍写 config.json）。
+
 ---
 
 ## 1. 概述
